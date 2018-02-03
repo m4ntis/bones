@@ -1,3 +1,9 @@
 language: go
 go:
-  - 1.x
+- 1.x
+before_deploy: cd web
+deploy:
+  provider: heroku
+  api_key:
+    secure: LuJMep3CvlJ/eGTTgcwSnjrsay0ITsQSbUZPzOVkjzLeQAI4JDnK2VZuIJ+xbty8/bD1a73ZqeHfjZ3hkfeN4kCwcIsdSRu3NgAZt9YPcxkyMJlX8wQiVW4Clzlsvf0sVOgPcuo2w32Axr5kha4vVsiSaBW9qnaNIzYvThe1nqD4Xz5xqhxn/UpG8F8y2O95xD4gLCj9JV1veUA0Zybsoxf/SUd29VMm7rCjtbHRmyIC9CAa61rD6MVovM4N3S068V1h2lWQUKUATqW/R9nJWifC0vkjFQrXqwGWe9J19+njCMymzdWZNznEl/zvJe8bWf9jZeFmZV+4QUcFElpUyBYMF+/MvmWL6zPSoE4pAdnZEPGzyET82CEC8IraU/5PzHWQnkN8kxGuBnNKr5dU262AbGFREpEDYBKlpgSgIIoDgRTrNVoBAMWlnJkEPHwXHURAM76fbHfsjjHswFMZlvoK1oiXtwSFN9MKNE3K6wNXlV5XIneNIpZ9FzWjX8YNa8QfFKt2P4ti+vMZzlrpG0gHXv7QWCh+ly6bdouA7rfH3xk3WtmU5i1URgutjDqYkRyVER9qps5+PqCJXp6y/62vba+Gt7BnEWNu/KIAMvGTAAhlU3O/TWgff0nODwJlXIiLlIk0+XZEqNXrIn6tuK2RyHHELhX+u67WeCDjBy8=
+  app: bones-web

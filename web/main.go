@@ -19,7 +19,21 @@ var (
 )
 
 func getPallette() []byte {
-	b := []byte{1, 0, 255, 0, 0, 1, 0, 255, 0, 2, 0, 0, 255}
+	//b := []byte{1, 0, 255, 0, 0, 1, 0, 255, 0, 2, 0, 0, 255}
+	b := make([]byte, 13)
+	b[0] = 1
+	b[1] = 0
+	b[2] = 255
+	b[3] = 0
+	b[4] = 0
+	b[5] = 1
+	b[6] = 0
+	b[7] = 255
+	b[8] = 0
+	b[9] = 2
+	b[10] = 0
+	b[11] = 0
+	b[12] = 255
 	return b
 }
 
@@ -38,11 +52,12 @@ func getColour() []byte {
 }
 
 func handleClient(ws *websocket.Conn) {
+	time.Sleep(100 * time.Millisecond)
 	ws.WriteMessage(websocket.BinaryMessage, getPallette())
 
 	for {
 		ws.WriteMessage(websocket.BinaryMessage, getColour())
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 

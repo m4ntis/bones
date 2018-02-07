@@ -22,9 +22,11 @@ function init() {
 
 function onMessage(evt) {
     var buffer = new Uint8Array(evt.data);
-    if buffer[0] == SET_PIXEL {
+
+    var code = buffer[0];
+    if code == SET_PIXEL {
         setPixel(buffer);
-    else {
+    else if code == SET_PALLETTE {
         setPallette(buffer);
     }
 }

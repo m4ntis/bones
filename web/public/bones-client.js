@@ -26,7 +26,7 @@ function onMessage(evt) {
     var code = buffer[0];
     if (code == SET_PIXEL) {
         setPixel(buffer);
-    else if (code == SET_PALLETTE) {
+    } else if (code == SET_PALLETTE) {
         setPallette(buffer);
     }
 }

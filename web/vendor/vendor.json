@@ -9,6 +9,12 @@
 			"revisionTime": "2018-02-07T01:40:45Z"
 		},
 		{
+			"checksumSHA1": "qWSfv6nFxKXv9aIvOB/A+oJ47a8=",
+			"path": "github.com/gorilla/websocket",
+			"revision": "4ac909741dfa57448bfadfdbca0cf7eeaa68f0e2",
+			"revisionTime": "2018-02-01T01:52:56Z"
+		},
+		{
 			"checksumSHA1": "6U7dCaxxIMjf5V02iWgyAwppczw=",
 			"path": "golang.org/x/crypto/ssh/terminal",
 			"revision": "d9133f5469342136e669e85192a26056b587f503",

@@ -1,6 +1,8 @@
 const SET_PIXEL = 0
 const SET_PALLETTE = 1
 
+var pallette = []
+
 function init_canvas(name) {
     var canvas = document.getElementById(name);
     var ctx = canvas.getContext("2d");
@@ -29,6 +31,12 @@ function onMessage(evt) {
 
 // buffer = type(1), x(1), y(1), colour(1)
 function setPixel(buffer) {
+    x = buffer[1];
+    y = buffer[2];
+    i = buffer[3];
+
+    ctx.fillStyle = pallette[i]
+    ctx.fillRect(x * 3, y * 3, 3, 3)
 }
 
 function setPallette(buffer) {

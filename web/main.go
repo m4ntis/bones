@@ -2,12 +2,20 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello bones!")
+	f, err := os.Open("index.html")
+	defer f.Close()
+	if err != nil {
+		fmt.Fprint(w, "index.html not found")
+		return
+	}
+
+	io.Copy(w, f)
 }
 
 func handleHTTP() {

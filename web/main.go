@@ -15,6 +15,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "text/html")
 	io.Copy(w, f)
 }
 

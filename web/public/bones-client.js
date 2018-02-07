@@ -36,10 +36,18 @@ function setPixel(buffer) {
     i = buffer[3];
 
     ctx.fillStyle = pallette[i]
-    ctx.fillRect(x * 3, y * 3, 3, 3)
+    ctx.fillRect(x*3, y*3, 3, 3)
 }
 
+// buffer = type(1), index(1), r(1), g(1), b(1), ...
 function setPallette(buffer) {
+    for(i=1; i<buffer.byteLength; i+=4) {
+        pallette[i] = hexCodeFromBytes(buffer[i+1], buffer[i+2], buffer[i+3]);
+    }
+}
+
+function hexCodeFromBytes(r, g, b) {
+    return "#" + r.toString(16) + g.toString(16) + b.toString(16);
 }
 
 init();

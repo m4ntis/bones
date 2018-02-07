@@ -1,6 +1,31 @@
 {
 	"comment": "",
 	"ignore": "test",
-	"package": [],
+	"package": [
+		{
+			"checksumSHA1": "8NaiMp/YckGWnSgMMvptknAIwEk=",
+			"path": "github.com/Sirupsen/logrus",
+			"revision": "dcf2d47dfb9dfc8f2727c7096e358cadac7d1423",
+			"revisionTime": "2018-02-07T01:40:45Z"
+		},
+		{
+			"checksumSHA1": "6U7dCaxxIMjf5V02iWgyAwppczw=",
+			"path": "golang.org/x/crypto/ssh/terminal",
+			"revision": "d9133f5469342136e669e85192a26056b587f503",
+			"revisionTime": "2018-02-05T11:39:33Z"
+		},
+		{
+			"checksumSHA1": "CNHEeGnucEUlTHJrLS2kHtfNbws=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "37707fdb30a5b38865cfb95e5aab41707daec7fd",
+			"revisionTime": "2018-02-02T13:35:31Z"
+		},
+		{
+			"checksumSHA1": "eQq+ZoTWPjyizS9XalhZwfGjQao=",
+			"path": "golang.org/x/sys/windows",
+			"revision": "37707fdb30a5b38865cfb95e5aab41707daec7fd",
+			"revisionTime": "2018-02-02T13:35:31Z"
+		}
+	],
 	"rootPath": "github.com/m4ntis/bones/web"
 }

@@ -1,19 +1,22 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"os"
+
+	"github.com/Sirupsen/logrus"
 )
 
-func handleHTTP() {
-	http.Handle("/", http.FileServer(http.Dir(".")))
-	err := http.ListenAndServe(":"+os.Getenv("PORT"), nil)
-	if err != nil {
-		fmt.Println(err)
-	}
-}
+var (
+	log = logrus.WithField("cmd", "web")
+)
 
 func main() {
-	handleHTTP()
+	port := os.Getenv("PORT")
+	if port == "" {
+		log.WithField("PORT", port).Fatal("$PORT must be set")
+	}
+
+	http.Handle("/", http.FileServer(http.Dir("./public")))
+	log.Println(http.ListenAndServe(":"+port, nil))
 }

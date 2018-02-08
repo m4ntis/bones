@@ -88,7 +88,7 @@ func handleClient(ws *websocket.Conn) {
 	time.Sleep(100 * time.Millisecond)
 	ws.WriteMessage(websocket.BinaryMessage, getPallette())
 
-	for colour := range getColours() {
+	for _, colour := range getColours() {
 		ws.WriteMessage(websocket.BinaryMessage, colour)
 		time.Sleep(200 * time.Millisecond)
 	}

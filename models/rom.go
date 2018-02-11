@@ -17,5 +17,5 @@ type ROM struct {
 }
 
 func NewROM(trainer Trainer, prgROM []PrgROMPage, chrROM []ChrROMPage) *ROM {
-	return &ROM{Trainer, PrgROM, ChrROM}
+	return &ROM{Trainer: trainer, PrgROM: prgROM, ChrROM: chrROM}
 }

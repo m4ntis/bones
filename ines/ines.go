@@ -14,8 +14,6 @@ const (
 
 	HORIZONTAL_MIRRORING = 0
 	VERTICAL_MIRRORING   = 1
-
-	TRAINER = 1
 )
 
 type inesHeader struct {

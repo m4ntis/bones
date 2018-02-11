@@ -45,9 +45,9 @@ func readHeader(r io.Reader) (header []byte, err error) {
 // disregards the trailing data if longer, so the caller must ensure that the
 // sent buffer is of len() >= 16.
 func parseHeader(headerBuff []byte) (header *inesHeader, err error) {
-	if !bytes.Equal(headerBuff[:3], []byte{0x4e, 0x45, 0x53, 0x1a}) {
+	if !bytes.Equal(headerBuff[:4], []byte{0x4e, 0x45, 0x53, 0x1a}) {
 		return nil, errors.Errorf("Incorrect iNes header prefix: %s",
-			hex.Dump(headerBuff[:3]))
+			hex.Dump(headerBuff[:4]))
 	}
 
 	prgROMSize := headerBuff[4]
@@ -109,7 +109,7 @@ func Parse(r io.Reader) (rom *models.ROM, err error) {
 
 	// Populate ROM fields
 	var trainer models.Trainer
-	copy(trainer[:], romBuff[:models.TRAINER_SIZE])
+	copy(trainer[:], romBuff[:trainerSize])
 
 	prgROM := make([]models.PrgROMPage, header.PrgROMSize)
 	for i := range prgROM {

@@ -21,6 +21,6 @@ type OpCode struct {
 //
 // It runs it's addressing mode, which in turn fetches the operands and calls
 // the operation
-func (op OpCode) Exec(args ...byte) {
+func (op OpCode) Exec(args []byte) {
 	mode(op, args)
 }

@@ -167,6 +167,24 @@ func CPY(cpu *CPU, args []byte) {
 	}
 }
 
+func DEC(cpu *CPU, args []byte) {
+	args[0]--
+	setN(cpu.reg, args[0])
+	setZ(cpu.reg, args[0])
+}
+
+func DEX(cpu *CPU, args []byte) {
+	cpu.reg.x--
+	setN(cpu.reg, args[0])
+	setZ(cpu.reg, args[0])
+}
+
+func DEY(cpu *CPU, args []byte) {
+	cpu.reg.y--
+	setN(cpu.reg, args[0])
+	setZ(cpu.reg, args[0])
+}
+
 func setZ(reg *Registers, val byte) {
 	if val == 0x0 {
 		reg.z = SET

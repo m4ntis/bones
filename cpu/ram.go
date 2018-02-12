@@ -1,5 +1,7 @@
 package cpu
 
+import "sync"
+
 const (
 	ZERO_PAGE_BEGIN_IDX           = 0x0
 	STACK_BEGIN_IDX               = 0x100
@@ -15,7 +17,10 @@ const (
 	RAM_SIZE                      = 0x10000
 )
 
-type RAM [RAM_SIZE]byte
+type RAM struct {
+	data [RAM_SIZE]byte
+	mux  sync.RWMutex
+}
 
 func getIndex(index int) int {
 	if index < 0 || index > RAM_SIZE {
@@ -34,9 +39,13 @@ func getIndex(index int) int {
 }
 
 func (r *RAM) Read(index int) byte {
-	return r[getIndex(index)]
+	r.mux.RLock()
+	defer r.mux.RUnlock()
+	return r.data[getIndex(index)]
 }
 
 func (r *RAM) Write(index int, val byte) {
-	r[getIndex(index)] = val
+	r.mux.Lock()
+	defer r.mux.Unlock()
+	r.data[getIndex(index)] = val
 }

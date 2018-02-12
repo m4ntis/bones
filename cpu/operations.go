@@ -76,11 +76,11 @@ func BEQ(cpu *CPU, args []byte) {
 }
 
 func BIT(cpu *CPU, args []byte) {
-	res := cpu.reg.a & args[0]
+	setN(cpu.reg, args[0])
+	cpu.reg.v = args[0] & 64
 
-	setN(cpu.reg, res)
+	res := cpu.reg.a & args[0]
 	setZ(cpu.reg, res)
-	cpu.reg.v = res & 64
 }
 
 func BMI(cpu *CPU, args []byte) {

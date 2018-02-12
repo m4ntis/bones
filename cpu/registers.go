@@ -1,5 +1,10 @@
 package cpu
 
+const (
+	SET   = 1
+	RESET = 0
+)
+
 type Registers struct {
 	pc int
 	sp int
@@ -8,11 +13,11 @@ type Registers struct {
 	x byte
 	y byte
 
-	c int
-	z int
-	i int
-	d int
-	b int
-	v int
-	n int
+	c byte
+	z byte
+	i byte
+	d byte
+	b byte
+	v byte
+	n byte
 }

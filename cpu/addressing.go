@@ -5,4 +5,4 @@ package cpu
 //
 // Each addressing mode is responsible of fetching the operands in it's way,
 // and calling the operation with them
-type AddressingMode func(Operation, []byte)
+type AddressingMode func(*CPU, Operation, []byte)

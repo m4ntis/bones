@@ -131,6 +131,42 @@ func CLV(cpu *CPU, args []byte) {
 	cpu.reg.v = CLEAR
 }
 
+func CMP(cpu *CPU, args []byte) {
+	res := cpu.reg.a - args[0]
+
+	setN(cpu.reg, res)
+	setZ(cpu.reg, res)
+	if args[0] > cpu.reg.a {
+		cpu.reg.c = SET
+	} else {
+		cpu.reg.c = CLEAR
+	}
+}
+
+func CPX(cpu *CPU, args []byte) {
+	res := cpu.reg.x - args[0]
+
+	setN(cpu.reg, res)
+	setZ(cpu.reg, res)
+	if args[0] > cpu.reg.a {
+		cpu.reg.c = SET
+	} else {
+		cpu.reg.c = CLEAR
+	}
+}
+
+func CPY(cpu *CPU, args []byte) {
+	res := cpu.reg.y - args[0]
+
+	setN(cpu.reg, res)
+	setZ(cpu.reg, res)
+	if args[0] > cpu.reg.a {
+		cpu.reg.c = SET
+	} else {
+		cpu.reg.c = CLEAR
+	}
+}
+
 func setZ(reg *Registers, val byte) {
 	if val == 0x0 {
 		reg.z = SET

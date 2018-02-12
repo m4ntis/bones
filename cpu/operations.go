@@ -185,6 +185,30 @@ func DEY(cpu *CPU, args []byte) {
 	setZ(cpu.reg, args[0])
 }
 
+func EOR(cpu *CPU, args []byte) {
+	cpu.reg.a ^= args[0]
+	setN(cpu.reg, cpu.reg.a)
+	setZ(cpu.reg, cpu.reg.z)
+}
+
+func INC(cpu *CPU, args []byte) {
+	args[0]++
+	setN(cpu.reg, args[0])
+	setZ(cpu.reg, args[0])
+}
+
+func INX(cpu *CPU, args []byte) {
+	cpu.reg.x++
+	setN(cpu.reg, args[0])
+	setZ(cpu.reg, args[0])
+}
+
+func INY(cpu *CPU, args []byte) {
+	cpu.reg.y++
+	setN(cpu.reg, args[0])
+	setZ(cpu.reg, args[0])
+}
+
 func setZ(reg *Registers, val byte) {
 	if val == 0x0 {
 		reg.z = SET

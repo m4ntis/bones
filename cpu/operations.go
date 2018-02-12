@@ -33,14 +33,14 @@ func ADC(cpu *CPU, args []byte) {
 		int(signed_arg2)+int(signed_arg3) {
 		cpu.reg.v = SET
 	} else {
-		cpu.reg.v = RESET
+		cpu.reg.v = CLEAR
 	}
 
 	// Carry
 	if int(res) != int(arg1)+int(arg2)+int(arg3) {
 		cpu.reg.c = SET
 	} else {
-		cpu.reg.c = RESET
+		cpu.reg.c = CLEAR
 	}
 }
 
@@ -57,12 +57,70 @@ func ASL(cpu *CPU, args []byte) {
 	setZ(cpu.reg, args[0])
 }
 
+func BCC(cpu *CPU, args []byte) {
+	if cpu.reg.c == CLEAR {
+		cpu.reg.pc += int(int8(args[0]))
+	}
+}
+
+func BCS(cpu *CPU, args []byte) {
+	if cpu.reg.c == SET {
+		cpu.reg.pc += int(int8(args[0]))
+	}
+}
+
+func BEQ(cpu *CPU, args []byte) {
+	if cpu.reg.z == SET {
+		cpu.reg.pc += int(int8(args[0]))
+	}
+}
+
+func BIT(cpu *CPU, args []byte) {
+	res := cpu.reg.a & args[0]
+
+	setN(cpu.reg, res)
+	setZ(cpu.reg, res)
+	cpu.reg.v = res & 64
+}
+
+func BMI(cpu *CPU, args []byte) {
+	if cpu.reg.n == SET {
+		cpu.reg.pc += int(int8(args[0]))
+	}
+}
+
+func BNE(cpu *CPU, args []byte) {
+	if cpu.reg.z == CLEAR {
+		cpu.reg.pc += int(int8(args[0]))
+	}
+}
+
+func BPL(cpu *CPU, args []byte) {
+	if cpu.reg.n == CLEAR {
+		cpu.reg.pc += int(int8(args[0]))
+	}
+}
+
+//TODO:BRK
+
+func BVC(cpu *CPU, args []byte) {
+	if cpu.reg.v == CLEAR {
+		cpu.reg.pc += int(int8(args[0]))
+	}
+}
+
+func BVS(cpu *CPU, args []byte) {
+	if cpu.reg.v == SET {
+		cpu.reg.pc += int(int8(args[0]))
+	}
+}
+
 func setZ(reg *Registers, val byte) {
 	if val == 0x0 {
 		reg.z = SET
 		return
 	}
-	reg.z = RESET
+	reg.z = CLEAR
 }
 
 func setN(reg *Registers, val byte) {

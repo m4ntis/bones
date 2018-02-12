@@ -7,7 +7,10 @@ package cpu
 // value might be nil, depends on the operation. There isn't a gurantee that
 // the operation will check for the correct number of arguments, so make sure
 // you pass in the correct amount.
-type Operation func(...byte) interface{}
+//
+// The operation also gets a reference to the cpu's registers, in order to be
+// able to test and change them
+type Operation func(*Registers, ...byte) interface{}
 
 // OpCode defines an opcode of the 2a03.
 //

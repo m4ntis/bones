@@ -1,7 +1,7 @@
 package cpu
 
 type CPU struct {
-	ram RAM
+	ram *RAM
 
 	pc int
 	sp int

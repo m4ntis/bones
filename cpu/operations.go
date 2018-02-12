@@ -115,6 +115,22 @@ func BVS(cpu *CPU, args []byte) {
 	}
 }
 
+func CLC(cpu *CPU, args []byte) {
+	cpu.reg.c = CLEAR
+}
+
+func CLD(cpu *CPU, args []byte) {
+	cpu.reg.d = CLEAR
+}
+
+func CLI(cpu *CPU, args []byte) {
+	cpu.reg.i = CLEAR
+}
+
+func CLV(cpu *CPU, args []byte) {
+	cpu.reg.v = CLEAR
+}
+
 func setZ(reg *Registers, val byte) {
 	if val == 0x0 {
 		reg.z = SET

@@ -209,6 +209,8 @@ func INY(cpu *CPU, args []byte) {
 	setZ(cpu.reg, args[0])
 }
 
+//TODO: Think about how JMP fits within our design
+
 func setZ(reg *Registers, val byte) {
 	if val == 0x0 {
 		reg.z = SET

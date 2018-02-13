@@ -45,7 +45,7 @@ func getColour() []byte {
 }
 
 func sendPallette(pallette map[color.NRGBA]bool, ws *websocket.Conn) map[color.NRGBA]int {
-	var internalPallette map[color.NRGBA]int
+	internalPallette := make(map[color.NRGBA]int)
 	data := []byte{1}
 
 	i := 0
@@ -80,7 +80,7 @@ func sendImage(img image.Image, pallette map[color.NRGBA]int, ws *websocket.Conn
 }
 
 func handleImage(r io.Reader, ws *websocket.Conn) {
-	var pallette map[color.NRGBA]bool
+	pallette := make(map[color.NRGBA]bool)
 
 	img, _ := png.Decode(r)
 	b := img.Bounds()

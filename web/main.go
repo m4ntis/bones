@@ -1,6 +1,12 @@
 package main
 
 import (
+	"fmt"
+	"image"
+	"image/color"
+	"image/png"
+	"io"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
@@ -19,6 +25,7 @@ var (
 )
 
 func getPallette() []byte {
+	// set pallette command, [colour num, r, g, b]...
 	b := []byte{1, 0, 255, 0, 0, 1, 0, 255, 0, 2, 0, 0, 255}
 	return b
 }
@@ -35,6 +42,71 @@ func getColour() []byte {
 	colour[3] = i
 
 	return colour
+}
+
+func sendPallette(pallette map[color.NRGBA]bool, ws *websocket.Conn) map[color.NRGBA]int {
+	var internalPallette map[color.NRGBA]int
+	data := []byte{1}
+
+	i := 0
+	for color := range pallette {
+		data = append(data, byte(i))
+		data = append(data, color.R)
+		data = append(data, color.G)
+		data = append(data, color.B)
+
+		internalPallette[color] = i
+		i++
+	}
+
+	ws.WriteMessage(websocket.BinaryMessage, data)
+	return internalPallette
+}
+
+func sendImage(img image.Image, pallette map[color.NRGBA]int, ws *websocket.Conn) {
+	b := img.Bounds()
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			c := img.At(x, y)
+			data := make([]byte, 4)
+			data[0] = 0
+			data[1] = byte(x)
+			data[2] = byte(y)
+			data[3] = byte(pallette[c.(color.NRGBA)])
+			ws.WriteMessage(websocket.BinaryMessage, data)
+			//time.Sleep(500, time.Microsecond)
+		}
+	}
+}
+
+func handleImage(r io.Reader, ws *websocket.Conn) {
+	var pallette map[color.NRGBA]bool
+
+	img, _ := png.Decode(r)
+	b := img.Bounds()
+
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			c := img.At(x, y)
+
+			if !pallette[c.(color.NRGBA)] {
+				pallette[c.(color.NRGBA)] = true
+			}
+		}
+	}
+
+	internalPallette := sendPallette(pallette, ws)
+	sendImage(img, internalPallette, ws)
+}
+
+func handleClientSlideshow(ws *websocket.Conn) {
+	time.Sleep(100 * time.Millisecond)
+	files, _ := ioutil.ReadDir("./public/slides/")
+	for _, file := range files {
+		f, _ := os.Open(fmt.Sprintf("./public/slides/%s", file.Name()))
+		handleImage(f, ws)
+		f.Close()
+	}
 }
 
 func handleClient(ws *websocket.Conn) {
@@ -61,7 +133,7 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go handleClient(ws)
+	go handleClientSlideshow(ws)
 }
 
 func main() {

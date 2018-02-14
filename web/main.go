@@ -75,7 +75,7 @@ func sendImage(img image.Image, pallette map[color.NRGBA]int, ws *websocket.Conn
 			data[3] = byte(pallette[c.(color.NRGBA)])
 			fmt.Println(data)
 			ws.WriteMessage(websocket.BinaryMessage, data)
-			time.Sleep(5 * time.Millisecond)
+			time.Sleep(7 * time.Millisecond)
 		}
 	}
 }

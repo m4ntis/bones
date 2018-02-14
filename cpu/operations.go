@@ -13,7 +13,7 @@ import (
 // you pass in the correct amount.
 //
 // The operation also gets a reference to the cpu so it can test and change the
-// registers and RAM.
+// reg.spters and RAM.
 type Operation func(*CPU, []byte)
 
 func ADC(cpu *CPU, args []byte) {
@@ -325,6 +325,66 @@ func SBC(cpu *CPU, args []byte) {
 	} else {
 		cpu.reg.v = CLEAR
 	}
+}
+
+func SEC(cpu *CPU, args []byte) {
+	cpu.reg.c = SET
+}
+
+func SED(cpu *CPU, args []byte) {
+	cpu.reg.d = SET
+}
+
+func SEI(cpu *CPU, args []byte) {
+	cpu.reg.i = SET
+}
+
+func STA(cpu *CPU, args []byte) {
+	args[0] = cpu.reg.a
+}
+
+func STX(cpu *CPU, args []byte) {
+	args[0] = cpu.reg.x
+}
+
+func STY(cpu *CPU, args []byte) {
+	args[0] = cpu.reg.y
+}
+
+func TAX(cpu *CPU, args []byte) {
+	cpu.reg.x = cpu.reg.a
+	setN(cpu.reg, cpu.reg.x)
+	setZ(cpu.reg, cpu.reg.x)
+}
+
+func TAY(cpu *CPU, args []byte) {
+	cpu.reg.y = cpu.reg.a
+	setN(cpu.reg, cpu.reg.y)
+	setZ(cpu.reg, cpu.reg.y)
+}
+
+func TSX(cpu *CPU, args []byte) {
+	cpu.reg.x = cpu.reg.sp
+	setN(cpu.reg, cpu.reg.x)
+	setZ(cpu.reg, cpu.reg.x)
+}
+
+func TXA(cpu *CPU, args []byte) {
+	cpu.reg.a = cpu.reg.x
+	setN(cpu.reg, cpu.reg.a)
+	setZ(cpu.reg, cpu.reg.a)
+}
+
+func TYA(cpu *CPU, args []byte) {
+	cpu.reg.a = cpu.reg.y
+	setN(cpu.reg, cpu.reg.a)
+	setZ(cpu.reg, cpu.reg.a)
+}
+
+func TXS(cpu *CPU, args []byte) {
+	cpu.reg.sp = cpu.reg.x
+	setN(cpu.reg, cpu.reg.sp)
+	setZ(cpu.reg, cpu.reg.sp)
 }
 
 func setZ(reg *Registers, val byte) {

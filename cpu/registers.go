@@ -7,7 +7,7 @@ const (
 
 type Registers struct {
 	pc int
-	sp int
+	sp byte
 
 	a byte
 	x byte

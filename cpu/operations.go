@@ -1,5 +1,9 @@
 package cpu
 
+import (
+	"math"
+)
+
 // Operation defines an operation that the CPU executes in one or more of it's
 // opcodes.
 //
@@ -37,7 +41,7 @@ func ADC(cpu *CPU, args []byte) {
 	}
 
 	// Carry
-	if int(res) != int(arg1)+int(arg2)+int(arg3) {
+	if int(arg1)+int(arg2)+int(arg3) > 255 {
 		cpu.reg.c = SET
 	} else {
 		cpu.reg.c = CLEAR
@@ -51,7 +55,7 @@ func AND(cpu *CPU, args []byte) {
 }
 
 func ASL(cpu *CPU, args []byte) {
-	cpu.reg.c = args[0] & 128
+	cpu.reg.c = args[0] >> 7
 	args[0] <<= 1
 	setN(cpu.reg, args[0])
 	setZ(cpu.reg, args[0])
@@ -77,7 +81,7 @@ func BEQ(cpu *CPU, args []byte) {
 
 func BIT(cpu *CPU, args []byte) {
 	setN(cpu.reg, args[0])
-	cpu.reg.v = args[0] & 64
+	cpu.reg.v = (args[0] >> 6) & 1
 
 	res := cpu.reg.a & args[0]
 	setZ(cpu.reg, res)
@@ -273,13 +277,54 @@ func PLP(cpu *CPU, args []byte) {
 
 func ROL(cpu *CPU, args []byte) {
 	carry := cpu.reg.c
-	cpu.reg.c = args[0] & 128
+	cpu.reg.c = args[0] >> 7
 
 	args[0] <<= 1
-	args[0] &= carry
+	args[0] |= carry
 
 	setN(cpu.reg, args[0])
 	setZ(cpu.reg, args[0])
+}
+
+func ROR(cpu *CPU, args []byte) {
+	carry := cpu.reg.c
+	cpu.reg.c = args[0] & 1
+
+	args[0] >>= 1
+	args[0] |= (carry << 7)
+
+	setN(cpu.reg, args[0])
+	setZ(cpu.reg, args[0])
+}
+
+func RTI(cpu *CPU, args []byte) {
+	//TODO: Pull from stack
+}
+
+func RTS(cpu *CPU, args []byte) {
+	//TODO: Pull from stack
+}
+
+func SBC(cpu *CPU, args []byte) {
+	// Calculate result and store in a
+	arg1 := int8(cpu.reg.a)
+	arg2 := int8(args[0])
+
+	res := byte(arg1 - arg2)
+	cpu.reg.a = res
+
+	// Set flags
+	setZ(cpu.reg, res)
+	setN(cpu.reg, res)
+
+	cpu.reg.c = (res >> 7) ^ 1
+
+	// Overflow
+	if math.Abs(float64(arg1)-float64(arg2)) > 127 {
+		cpu.reg.v = SET
+	} else {
+		cpu.reg.v = CLEAR
+	}
 }
 
 func setZ(reg *Registers, val byte) {
@@ -291,5 +336,5 @@ func setZ(reg *Registers, val byte) {
 }
 
 func setN(reg *Registers, val byte) {
-	reg.n = val & 128
+	reg.n = val >> 7
 }

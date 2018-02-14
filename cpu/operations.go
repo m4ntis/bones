@@ -175,20 +175,20 @@ func DEC(cpu *CPU, args []byte) {
 
 func DEX(cpu *CPU, args []byte) {
 	cpu.reg.x--
-	setN(cpu.reg, args[0])
-	setZ(cpu.reg, args[0])
+	setN(cpu.reg, cpu.reg.x)
+	setZ(cpu.reg, cpu.reg.x)
 }
 
 func DEY(cpu *CPU, args []byte) {
 	cpu.reg.y--
-	setN(cpu.reg, args[0])
-	setZ(cpu.reg, args[0])
+	setN(cpu.reg, cpu.reg.y)
+	setZ(cpu.reg, cpu.reg.y)
 }
 
 func EOR(cpu *CPU, args []byte) {
 	cpu.reg.a ^= args[0]
 	setN(cpu.reg, cpu.reg.a)
-	setZ(cpu.reg, cpu.reg.z)
+	setZ(cpu.reg, cpu.reg.a)
 }
 
 func INC(cpu *CPU, args []byte) {
@@ -199,17 +199,88 @@ func INC(cpu *CPU, args []byte) {
 
 func INX(cpu *CPU, args []byte) {
 	cpu.reg.x++
-	setN(cpu.reg, args[0])
-	setZ(cpu.reg, args[0])
+	setN(cpu.reg, cpu.reg.x)
+	setZ(cpu.reg, cpu.reg.x)
 }
 
 func INY(cpu *CPU, args []byte) {
 	cpu.reg.y++
-	setN(cpu.reg, args[0])
+	setN(cpu.reg, cpu.reg.y)
+	setZ(cpu.reg, cpu.reg.y)
+}
+
+//TODO: Think about how JMP fits within our design, accessing 2 bytes
+func JMP(cpu *CPU, args []byte) {
+	jmpPC := int(args[0]) + int(args[1])<<8
+	cpu.reg.pc = jmpPC
+}
+
+func JSR(cpu *CPU, args []byte) {
+	//TODO: save cpu.reg.pc + 2 to stack
+	jmpPC := int(args[0]) + int(args[1])<<8
+	cpu.reg.pc = jmpPC
+}
+
+func LDA(cpu *CPU, args []byte) {
+	cpu.reg.a = args[0]
+	setN(cpu.reg, cpu.reg.a)
+	setZ(cpu.reg, cpu.reg.a)
+}
+
+func LDX(cpu *CPU, args []byte) {
+	cpu.reg.x = args[0]
+	setN(cpu.reg, cpu.reg.x)
+	setZ(cpu.reg, cpu.reg.x)
+}
+
+func LDY(cpu *CPU, args []byte) {
+	cpu.reg.y = args[0]
+	setN(cpu.reg, cpu.reg.y)
+	setZ(cpu.reg, cpu.reg.y)
+}
+
+func LSR(cpu *CPU, args []byte) {
+	cpu.reg.c = args[0] & 1
+	args[0] >>= 1
+	cpu.reg.n = CLEAR
 	setZ(cpu.reg, args[0])
 }
 
-//TODO: Think about how JMP fits within our design
+func NOP(cpu *CPU, args []byte) {
+}
+
+func ORA(cpu *CPU, args []byte) {
+	cpu.reg.a |= args[0]
+	setN(cpu.reg, cpu.reg.a)
+	setZ(cpu.reg, cpu.reg.z)
+}
+
+func PHA(cpu *CPU, args []byte) {
+	// TODO: push to stack
+}
+
+func PHP(cpu *CPU, args []byte) {
+	// TODO: push to stack
+}
+
+func PLA(cpu *CPU, args []byte) {
+	// TODO: pull from stack
+}
+
+func PLP(cpu *CPU, args []byte) {
+	// TODO: pull from stack
+}
+
+func ROL(cpu *CPU, args []byte) {
+	carry := cpu.reg.c
+	cpu.reg.c = args[0] & 128
+
+	args[0] <<= 1
+	args[0] &= carry
+
+	setN(cpu.reg, args[0])
+	setZ(cpu.reg, args[0])
+}
 
 func setZ(reg *Registers, val byte) {
 	if val == 0x0 {

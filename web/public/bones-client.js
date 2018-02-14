@@ -42,7 +42,7 @@ function setPixel(buffer) {
     i = buffer[3];
 
     ctx.fillStyle = pallette[i]
-    ctx.fillRect(x*3, y*3, 3, 3)
+    ctx.fillRect(x*6, y*6, 6, 6)
 }
 
 // buffer = type(1), index(1), r(1), g(1), b(1), ...

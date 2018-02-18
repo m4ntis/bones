@@ -7,7 +7,7 @@ type CPU struct {
 }
 
 func (cpu *CPU) push(b byte) {
-	cpu.ram.Write(cpu.getStackAddr())
+	cpu.ram.Write(cpu.getStackAddr(), b)
 	cpu.reg.sp--
 }
 

@@ -1,7 +1,5 @@
 package cpu
 
-import "sync"
-
 const (
 	ZERO_PAGE_BEGIN_IDX           = 0x0
 	STACK_BEGIN_IDX               = 0x100
@@ -19,7 +17,6 @@ const (
 
 type RAM struct {
 	data [RAM_SIZE]byte
-	mux  sync.RWMutex
 }
 
 func getIndex(index int) int {
@@ -38,14 +35,6 @@ func getIndex(index int) int {
 	return index
 }
 
-func (r *RAM) Read(index int) byte {
-	r.mux.RLock()
-	defer r.mux.RUnlock()
-	return r.data[getIndex(index)]
-}
-
-func (r *RAM) Write(index int, val byte) {
-	r.mux.Lock()
-	defer r.mux.Unlock()
-	r.data[getIndex(index)] = val
+func (r *RAM) Get(index int) *byte {
+	return &r.data[getIndex(index)]
 }

@@ -6,7 +6,6 @@ package cpu
 // itself
 type OpCode struct {
 	name   string
-	argLen int
 	cycles int
 
 	mode AddressingMode

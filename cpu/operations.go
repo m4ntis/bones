@@ -61,6 +61,15 @@ func ASL(cpu *CPU, args []byte) {
 	setZ(cpu.reg, args[0])
 }
 
+// ASLA is ASL with Accumulator addressing. This is the workaround I found in
+// order to implement this kind of addressing mode.
+func ASLA(cpu *CPU, args []byte) {
+	cpu.reg.c = cpu.reg.a >> 7
+	cpu.reg.a <<= 1
+	setN(cpu.reg, cpu.reg.a)
+	setZ(cpu.reg, cpu.reg.a)
+}
+
 func BCC(cpu *CPU, args []byte) {
 	if cpu.reg.c == CLEAR {
 		cpu.reg.pc += int(int8(args[0]))
@@ -264,6 +273,15 @@ func LSR(cpu *CPU, args []byte) {
 	setZ(cpu.reg, args[0])
 }
 
+// LSRA is LSR with Accumulator addressing. This is the workaround I found in
+// order to implement this kind of addressing mode.
+func LSRA(cpu *CPU, args []byte) {
+	cpu.reg.c = cpu.reg.a & 1
+	cpu.reg.a >>= 1
+	cpu.reg.n = CLEAR
+	setZ(cpu.reg, cpu.reg.a)
+}
+
 func NOP(cpu *CPU, args []byte) {
 }
 
@@ -302,6 +320,19 @@ func ROL(cpu *CPU, args []byte) {
 	setZ(cpu.reg, args[0])
 }
 
+// ROLA is ROL with Accumulator addressing. This is the workaround I found in
+// order to implement this kind of addressing mode.
+func ROLA(cpu *CPU, args []byte) {
+	carry := cpu.reg.c
+	cpu.reg.c = cpu.reg.a >> 7
+
+	cpu.reg.a <<= 1
+	cpu.reg.a |= carry
+
+	setN(cpu.reg, cpu.reg.a)
+	setZ(cpu.reg, cpu.reg.a)
+}
+
 func ROR(cpu *CPU, args []byte) {
 	carry := cpu.reg.c
 	cpu.reg.c = args[0] & 1
@@ -311,6 +342,19 @@ func ROR(cpu *CPU, args []byte) {
 
 	setN(cpu.reg, args[0])
 	setZ(cpu.reg, args[0])
+}
+
+// RORA is ROR with Accumulator addressing. This is the workaround I found in
+// order to implement this kind of addressing mode.
+func RORA(cpu *CPU, args []byte) {
+	carry := cpu.reg.c
+	cpu.reg.c = cpu.reg.a & 1
+
+	cpu.reg.a >>= 1
+	cpu.reg.a |= (carry << 7)
+
+	setN(cpu.reg, cpu.reg.a)
+	setZ(cpu.reg, cpu.reg.a)
 }
 
 func RTI(cpu *CPU, args []byte) {

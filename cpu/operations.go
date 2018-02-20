@@ -105,7 +105,17 @@ func BPL(cpu *CPU, args []byte) {
 	}
 }
 
-//TODO:BRK
+func BRK(cpu *CPU, args []byte) {
+	// push PCH
+	cpu.push(byte(cpu.reg.pc >> 8))
+	// push PCL
+	cpu.push(byte(cpu.reg.pc & 0xff))
+	// push P
+	cpu.push(cpu.reg.getP())
+
+	// fetch PCL from $fffe and PCH from $ffff
+	cpu.reg.pc = int(cpu.ram.Read(0xfffe)) | int(cpu.ram.Read(0xffff))<<8
+}
 
 func BVC(cpu *CPU, args []byte) {
 	if cpu.reg.v == CLEAR {
@@ -215,13 +225,18 @@ func INY(cpu *CPU, args []byte) {
 
 //TODO: Think about how JMP fits within our design, accessing 2 bytes
 func JMP(cpu *CPU, args []byte) {
-	jmpPC := int(args[0]) + int(args[1])<<8
+	jmpPC := int(args[0]) | int(args[1])<<8
 	cpu.reg.pc = jmpPC
 }
 
 func JSR(cpu *CPU, args []byte) {
-	//TODO: save cpu.reg.pc + 2 to stack
-	jmpPC := int(args[0]) + int(args[1])<<8
+	cpu.reg.pc += 2
+	// push PCH
+	cpu.push(byte(cpu.reg.pc >> 8))
+	// push PCL
+	cpu.push(byte(cpu.reg.pc & 0xff))
+
+	jmpPC := int(args[0]) | int(args[1])<<8
 	cpu.reg.pc = jmpPC
 }
 
@@ -256,23 +271,25 @@ func NOP(cpu *CPU, args []byte) {
 func ORA(cpu *CPU, args []byte) {
 	cpu.reg.a |= args[0]
 	setN(cpu.reg, cpu.reg.a)
-	setZ(cpu.reg, cpu.reg.z)
+	setZ(cpu.reg, cpu.reg.a)
 }
 
 func PHA(cpu *CPU, args []byte) {
-	// TODO: push to stack
+	cpu.push(cpu.reg.a)
 }
 
 func PHP(cpu *CPU, args []byte) {
-	// TODO: push to stack
+	cpu.push(cpu.reg.getP())
 }
 
 func PLA(cpu *CPU, args []byte) {
-	// TODO: pull from stack
+	cpu.reg.a = cpu.pull()
+	setN(cpu.reg, cpu.reg.a)
+	setZ(cpu.reg, cpu.reg.a)
 }
 
 func PLP(cpu *CPU, args []byte) {
-	// TODO: pull from stack
+	cpu.reg.setP(cpu.pull())
 }
 
 func ROL(cpu *CPU, args []byte) {
@@ -298,11 +315,15 @@ func ROR(cpu *CPU, args []byte) {
 }
 
 func RTI(cpu *CPU, args []byte) {
-	//TODO: Pull from stack
+	cpu.reg.setP(cpu.pull())
+	// pull PCL and then PHC
+	cpu.reg.pc = int(cpu.pull()) | int(cpu.pull())<<8
 }
 
 func RTS(cpu *CPU, args []byte) {
-	//TODO: Pull from stack
+	// pull PCL and then PHC
+	cpu.reg.pc = int(cpu.pull()) | int(cpu.pull())<<8
+	cpu.reg.pc++
 }
 
 func SBC(cpu *CPU, args []byte) {

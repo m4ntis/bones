@@ -7,13 +7,13 @@ type CPU struct {
 }
 
 func (cpu *CPU) push(b byte) {
-	cpu.ram.Write(cpu.getStackAddr(), b)
+	*cpu.ram.Fetch(cpu.getStackAddr()) = b
 	cpu.reg.sp--
 }
 
 func (cpu *CPU) pull() byte {
 	cpu.reg.sp++
-	return cpu.ram.Read(cpu.getStackAddr())
+	return *cpu.ram.Fetch(cpu.getStackAddr())
 }
 
 func (cpu *CPU) getStackAddr() int {

@@ -223,7 +223,6 @@ func INY(cpu *CPU, args []byte) {
 	setZ(cpu.reg, cpu.reg.y)
 }
 
-//TODO: Think about how JMP fits within our design, accessing 2 bytes
 func JMP(cpu *CPU, args []byte) {
 	jmpPC := int(args[0]) | int(args[1])<<8
 	cpu.reg.pc = jmpPC

@@ -116,7 +116,7 @@ func BRK(cpu *CPU, args ...*byte) {
 	cpu.push(cpu.reg.getP())
 
 	// fetch PCL from $fffe and PCH from $ffff
-	cpu.reg.pc = int(*cpu.ram.Get(0xfffe)) | int(*cpu.ram.Get(0xffff))<<8
+	cpu.reg.pc = int(*cpu.ram.Fetch(0xfffe)) | int(*cpu.ram.Fetch(0xffff))<<8
 }
 
 func BVC(cpu *CPU, args ...*byte) {

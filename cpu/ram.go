@@ -35,6 +35,6 @@ func getIndex(index int) int {
 	return index
 }
 
-func (r *RAM) Get(index int) *byte {
+func (r *RAM) Fetch(index int) *byte {
 	return &r.data[getIndex(index)]
 }

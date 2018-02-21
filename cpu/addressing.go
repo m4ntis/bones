@@ -10,113 +10,190 @@ package cpu
 //
 // The addressing mode returns the amount of extra cycles caused by page boundry
 // crossing, if any.
-type AddressingMode func(*CPU, Operation, bool, ...*byte) int
+type AddressingMode struct {
+	name string
 
-func ZeroPage(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
-	op(cpu, cpu.ram.Fetch(int(*args[0])))
-	cpu.reg.pc += 2
-	return
+	argLen  int
+	address func(*CPU, Operation, bool, ...*byte) int
 }
 
-func ZeroPageX(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
-	op(cpu, cpu.ram.Fetch(int(*args[0]+cpu.reg.x)))
-	cpu.reg.pc += 2
-	return
-}
+var (
+	ZeroPage = AddressingMode{
+		name: "ZeroPage",
 
-func ZeroPageY(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
-	op(cpu, cpu.ram.Fetch(int(*args[0]+cpu.reg.y)))
-	cpu.reg.pc += 2
-	return
-}
-
-func Absolute(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
-	// ADL stored at *args[0], ADH at *args[1]
-	op(cpu, cpu.ram.Fetch(int(*args[0])|int(*args[1])<<8))
-	cpu.reg.pc += 3
-	return
-}
-
-func AbsoluteX(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
-	addr := int(*args[0]) | int(*args[1])<<8
-	if addr/256 != (addr+int(cpu.reg.x))/256 && pageBoundryCheck {
-		extraCycles++
+		argLen: 1,
+		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
+			op(cpu, cpu.ram.Fetch(int(*args[0])))
+			cpu.reg.pc += 2
+			return
+		},
 	}
 
-	op(cpu, cpu.ram.Fetch(addr+int(cpu.reg.x)))
-	cpu.reg.pc += 3
-	return
-}
+	ZeroPageX = AddressingMode{
+		name: "ZeroPageX",
 
-func AbsoluteY(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
-	addr := int(*args[0]) | int(*args[1])<<8
-	if addr/256 != (addr+int(cpu.reg.y))/256 && pageBoundryCheck {
-		extraCycles++
+		argLen: 1,
+		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
+			op(cpu, cpu.ram.Fetch(int(*args[0]+cpu.reg.x)))
+			cpu.reg.pc += 2
+			return
+		},
 	}
 
-	op(cpu, cpu.ram.Fetch(addr+int(cpu.reg.y)))
-	cpu.reg.pc += 3
-	return
-}
+	ZeroPageY = AddressingMode{
+		name: "ZeroPageY",
 
-// AbsoluteJMP is here because the absolute JMP operation take the immediate
-// arguments instead of their value at the new location like Absolute
-func AbsoluteJMP(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
-	op(cpu, args[0], args[1])
-	return
-}
-
-func Indirect(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
-	adl := cpu.ram.Fetch(int(*args[0]) | int(*args[1])<<8)
-	adh := cpu.ram.Fetch(int(*args[0]) | int(*args[1])<<8 + 1)
-
-	op(cpu, adl, adh)
-	return
-}
-
-func IndirectX(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
-	adl := cpu.ram.Fetch(int(*args[0] + cpu.reg.x))
-	adh := cpu.ram.Fetch(int(*args[0] + cpu.reg.x + 1))
-
-	op(cpu, cpu.ram.Fetch(int(*adl)|int(*adh)<<8))
-	cpu.reg.pc += 2
-	return
-}
-
-func IndirectY(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
-	adl := cpu.ram.Fetch(int(*args[0]))
-	adh := cpu.ram.Fetch(int(*args[0] + 1))
-
-	addr := int(*adl) | int(*adh)<<8
-	if addr/256 != (addr+int(cpu.reg.y))/256 && pageBoundryCheck {
-		extraCycles++
+		argLen: 1,
+		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
+			op(cpu, cpu.ram.Fetch(int(*args[0]+cpu.reg.y)))
+			cpu.reg.pc += 2
+			return
+		},
 	}
 
-	op(cpu, cpu.ram.Fetch(addr+int(cpu.reg.y)))
-	cpu.reg.pc += 2
-	return
-}
+	Absolute = AddressingMode{
+		name: "Absolute",
 
-func Implied(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
-	op(cpu)
-	cpu.reg.pc++
-	return
-}
+		argLen: 2,
+		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
+			// ADL stored at *args[0], ADH at *args[1]
+			op(cpu, cpu.ram.Fetch(int(*args[0])|int(*args[1])<<8))
+			cpu.reg.pc += 3
+			return
+		},
+	}
 
-func Accumulator(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
-	op(cpu, &cpu.reg.a)
-	cpu.reg.pc++
-	return
-}
+	AbsoluteX = AddressingMode{
+		name: "AbsoluteX",
 
-func Immediate(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
-	op(cpu, args[0])
-	cpu.reg.pc += 2
-	return
-}
+		argLen: 2,
+		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
+			addr := int(*args[0]) | int(*args[1])<<8
+			if addr/256 != (addr+int(cpu.reg.x))/256 && pageBoundryCheck {
+				extraCycles++
+			}
 
-func Relative(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
-	extraCycles = op(cpu, args[0])
-	cpu.reg.pc += 2
-	return
-}
+			op(cpu, cpu.ram.Fetch(addr+int(cpu.reg.x)))
+			cpu.reg.pc += 3
+			return
+		},
+	}
+
+	AbsoluteY = AddressingMode{
+		name: "AbsoluteY",
+
+		argLen: 2,
+		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
+			addr := int(*args[0]) | int(*args[1])<<8
+			if addr/256 != (addr+int(cpu.reg.y))/256 && pageBoundryCheck {
+				extraCycles++
+			}
+
+			op(cpu, cpu.ram.Fetch(addr+int(cpu.reg.y)))
+			cpu.reg.pc += 3
+			return
+		},
+	}
+
+	// AbsoluteJMP is here because the absolute JMP operation take the immediate
+	// arguments instead of their value at the new location like Absolute
+	AbsoluteJMP = AddressingMode{
+		name: "AbsoluteJMP",
+
+		argLen: 2,
+		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
+			op(cpu, args[0], args[1])
+			return
+		},
+	}
+
+	Indirect = AddressingMode{
+		name: "Indirect",
+
+		argLen: 2,
+		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
+			adl := cpu.ram.Fetch(int(*args[0]) | int(*args[1])<<8)
+			adh := cpu.ram.Fetch(int(*args[0]) | int(*args[1])<<8 + 1)
+
+			op(cpu, adl, adh)
+			return
+		},
+	}
+
+	IndirectX = AddressingMode{
+		name: "IndirectX",
+
+		argLen: 1,
+		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
+			adl := cpu.ram.Fetch(int(*args[0] + cpu.reg.x))
+			adh := cpu.ram.Fetch(int(*args[0] + cpu.reg.x + 1))
+
+			op(cpu, cpu.ram.Fetch(int(*adl)|int(*adh)<<8))
+			cpu.reg.pc += 2
+			return
+		},
+	}
+
+	IndirectY = AddressingMode{
+		name: "IndirectY",
+
+		argLen: 1,
+		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
+			adl := cpu.ram.Fetch(int(*args[0]))
+			adh := cpu.ram.Fetch(int(*args[0] + 1))
+
+			addr := int(*adl) | int(*adh)<<8
+			if addr/256 != (addr+int(cpu.reg.y))/256 && pageBoundryCheck {
+				extraCycles++
+			}
+
+			op(cpu, cpu.ram.Fetch(addr+int(cpu.reg.y)))
+			cpu.reg.pc += 2
+			return
+		},
+	}
+
+	Implied = AddressingMode{
+		name: "Implied",
+
+		argLen: 0,
+		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
+			op(cpu)
+			cpu.reg.pc++
+			return
+		},
+	}
+
+	Accumulator = AddressingMode{
+		name: "Accumulator",
+
+		argLen: 0,
+		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
+			op(cpu, &cpu.reg.a)
+			cpu.reg.pc++
+			return
+		},
+	}
+
+	Immediate = AddressingMode{
+		name: "Immediate",
+
+		argLen: 1,
+		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
+			op(cpu, args[0])
+			cpu.reg.pc += 2
+			return
+		},
+	}
+
+	Relative = AddressingMode{
+		name: "Relative",
+
+		argLen: 1,
+		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
+			extraCycles = op(cpu, args[0])
+			cpu.reg.pc += 2
+			return
+		},
+	}
+)

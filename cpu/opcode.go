@@ -23,5 +23,5 @@ type OpCode struct {
 // It runs it's addressing mode, which in turn fetches the arguments and calls
 // the operation
 func (op OpCode) Exec(cpu *CPU, args ...*byte) (extraCycles int) {
-	return op.mode(cpu, op.oper, op.pageBoundryCheck, args...)
+	return op.mode.address(cpu, op.oper, op.pageBoundryCheck, args...)
 }

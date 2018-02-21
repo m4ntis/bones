@@ -2,1360 +2,1360 @@ package cpu
 
 var OpCodes = map[byte]OpCode{
 	0x69: OpCode{
-		name: "ADC",
+		Name: "ADC",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Immediate,
-		oper: ADC,
+		Mode: Immediate,
+		Oper: ADC,
 	},
 	0x65: OpCode{
-		name: "ADC",
+		Name: "ADC",
 
 		cycles:           3,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: ADC,
+		Mode: ZeroPage,
+		Oper: ADC,
 	},
 	0x75: OpCode{
-		name: "ADC",
+		Name: "ADC",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: ZeroPageX,
-		oper: ADC,
+		Mode: ZeroPageX,
+		Oper: ADC,
 	},
 	0x6d: OpCode{
-		name: "ADC",
+		Name: "ADC",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: ADC,
+		Mode: Absolute,
+		Oper: ADC,
 	},
 	0x7d: OpCode{
-		name: "ADC",
+		Name: "ADC",
 
 		cycles:           4,
 		pageBoundryCheck: true,
 
-		mode: AbsoluteX,
-		oper: ADC,
+		Mode: AbsoluteX,
+		Oper: ADC,
 	},
 	0x79: OpCode{
-		name: "ADC",
+		Name: "ADC",
 
 		cycles:           4,
 		pageBoundryCheck: true,
 
-		mode: AbsoluteY,
-		oper: ADC,
+		Mode: AbsoluteY,
+		Oper: ADC,
 	},
 	0x61: OpCode{
-		name: "ADC",
+		Name: "ADC",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: IndirectX,
-		oper: ADC,
+		Mode: IndirectX,
+		Oper: ADC,
 	},
 	0x71: OpCode{
-		name: "ADC",
+		Name: "ADC",
 
 		cycles:           5,
 		pageBoundryCheck: true,
 
-		mode: IndirectY,
-		oper: ADC,
+		Mode: IndirectY,
+		Oper: ADC,
 	},
 	0x29: OpCode{
-		name: "AND",
+		Name: "AND",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Immediate,
-		oper: AND,
+		Mode: Immediate,
+		Oper: AND,
 	},
 	0x25: OpCode{
-		name: "AND",
+		Name: "AND",
 
 		cycles:           3,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: AND,
+		Mode: ZeroPage,
+		Oper: AND,
 	},
 	0x35: OpCode{
-		name: "AND",
+		Name: "AND",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: ZeroPageX,
-		oper: AND,
+		Mode: ZeroPageX,
+		Oper: AND,
 	},
 	0x2d: OpCode{
-		name: "AND",
+		Name: "AND",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: AND,
+		Mode: Absolute,
+		Oper: AND,
 	},
 	0x3d: OpCode{
-		name: "AND",
+		Name: "AND",
 
 		cycles:           4,
 		pageBoundryCheck: true,
 
-		mode: AbsoluteX,
-		oper: AND,
+		Mode: AbsoluteX,
+		Oper: AND,
 	},
 	0x39: OpCode{
-		name: "AND",
+		Name: "AND",
 
 		cycles:           4,
 		pageBoundryCheck: true,
 
-		mode: AbsoluteY,
-		oper: AND,
+		Mode: AbsoluteY,
+		Oper: AND,
 	},
 	0x21: OpCode{
-		name: "AND",
+		Name: "AND",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: IndirectX,
-		oper: AND,
+		Mode: IndirectX,
+		Oper: AND,
 	},
 	0x31: OpCode{
-		name: "AND",
+		Name: "AND",
 
 		cycles:           5,
 		pageBoundryCheck: true,
 
-		mode: IndirectY,
-		oper: AND,
+		Mode: IndirectY,
+		Oper: AND,
 	},
 	0x0a: OpCode{
-		name: "ASL",
+		Name: "ASL",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Accumulator,
-		oper: ASL,
+		Mode: Accumulator,
+		Oper: ASL,
 	},
 	0x06: OpCode{
-		name: "ASL",
+		Name: "ASL",
 
 		cycles:           5,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: ASL,
+		Mode: ZeroPage,
+		Oper: ASL,
 	},
 	0x16: OpCode{
-		name: "ASL",
+		Name: "ASL",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: ZeroPageX,
-		oper: ASL,
+		Mode: ZeroPageX,
+		Oper: ASL,
 	},
 	0x0e: OpCode{
-		name: "ASL",
+		Name: "ASL",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: ASL,
+		Mode: Absolute,
+		Oper: ASL,
 	},
 	0x1e: OpCode{
-		name: "ASL",
+		Name: "ASL",
 
 		cycles:           7,
 		pageBoundryCheck: false,
 
-		mode: AbsoluteX,
-		oper: ASL,
+		Mode: AbsoluteX,
+		Oper: ASL,
 	},
 	0x90: OpCode{
-		name: "BCC",
+		Name: "BCC",
 
 		cycles:           2,
 		pageBoundryCheck: true,
 
-		mode: Relative,
-		oper: BCC,
+		Mode: Relative,
+		Oper: BCC,
 	},
 	0xb0: OpCode{
-		name: "BCS",
+		Name: "BCS",
 
 		cycles:           2,
 		pageBoundryCheck: true,
 
-		mode: Relative,
-		oper: BCS,
+		Mode: Relative,
+		Oper: BCS,
 	},
 	0xf0: OpCode{
-		name: "BEQ",
+		Name: "BEQ",
 
 		cycles:           2,
 		pageBoundryCheck: true,
 
-		mode: Relative,
-		oper: BEQ,
+		Mode: Relative,
+		Oper: BEQ,
 	},
 	0x24: OpCode{
-		name: "BIT",
+		Name: "BIT",
 
 		cycles:           3,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: BIT,
+		Mode: ZeroPage,
+		Oper: BIT,
 	},
 	0x2c: OpCode{
-		name: "BIT",
+		Name: "BIT",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: BIT,
+		Mode: Absolute,
+		Oper: BIT,
 	},
 	0x30: OpCode{
-		name: "BMI",
+		Name: "BMI",
 
 		cycles:           2,
 		pageBoundryCheck: true,
 
-		mode: Relative,
-		oper: BMI,
+		Mode: Relative,
+		Oper: BMI,
 	},
 	0xd0: OpCode{
-		name: "BNE",
+		Name: "BNE",
 
 		cycles:           2,
 		pageBoundryCheck: true,
 
-		mode: Relative,
-		oper: BNE,
+		Mode: Relative,
+		Oper: BNE,
 	},
 	0x10: OpCode{
-		name: "BPL",
+		Name: "BPL",
 
 		cycles:           2,
 		pageBoundryCheck: true,
 
-		mode: Relative,
-		oper: BPL,
+		Mode: Relative,
+		Oper: BPL,
 	},
 	0x00: OpCode{
-		name: "BRK",
+		Name: "BRK",
 
 		cycles:           7,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: BRK,
+		Mode: Implied,
+		Oper: BRK,
 	},
 	0x50: OpCode{
-		name: "BVC",
+		Name: "BVC",
 
 		cycles:           2,
 		pageBoundryCheck: true,
 
-		mode: Relative,
-		oper: BVC,
+		Mode: Relative,
+		Oper: BVC,
 	},
 	0x70: OpCode{
-		name: "BVS",
+		Name: "BVS",
 
 		cycles:           2,
 		pageBoundryCheck: true,
 
-		mode: Relative,
-		oper: BVS,
+		Mode: Relative,
+		Oper: BVS,
 	},
 	0x18: OpCode{
-		name: "CLC",
+		Name: "CLC",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: CLC,
+		Mode: Implied,
+		Oper: CLC,
 	},
 	0xd8: OpCode{
-		name: "CLD",
+		Name: "CLD",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: CLD,
+		Mode: Implied,
+		Oper: CLD,
 	},
 	0x58: OpCode{
-		name: "CLI",
+		Name: "CLI",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: CLI,
+		Mode: Implied,
+		Oper: CLI,
 	},
 	0xb8: OpCode{
-		name: "CLV",
+		Name: "CLV",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: CLV,
+		Mode: Implied,
+		Oper: CLV,
 	},
 	0xc9: OpCode{
-		name: "CMP",
+		Name: "CMP",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Immediate,
-		oper: CMP,
+		Mode: Immediate,
+		Oper: CMP,
 	},
 	0xc5: OpCode{
-		name: "CMP",
+		Name: "CMP",
 
 		cycles:           3,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: CMP,
+		Mode: ZeroPage,
+		Oper: CMP,
 	},
 	0xd5: OpCode{
-		name: "CMP",
+		Name: "CMP",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: ZeroPageX,
-		oper: CMP,
+		Mode: ZeroPageX,
+		Oper: CMP,
 	},
 	0xcd: OpCode{
-		name: "CMP",
+		Name: "CMP",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: CMP,
+		Mode: Absolute,
+		Oper: CMP,
 	},
 	0xdd: OpCode{
-		name: "CMP",
+		Name: "CMP",
 
 		cycles:           4,
 		pageBoundryCheck: true,
 
-		mode: AbsoluteX,
-		oper: CMP,
+		Mode: AbsoluteX,
+		Oper: CMP,
 	},
 	0xd9: OpCode{
-		name: "CMP",
+		Name: "CMP",
 
 		cycles:           4,
 		pageBoundryCheck: true,
 
-		mode: AbsoluteY,
-		oper: CMP,
+		Mode: AbsoluteY,
+		Oper: CMP,
 	},
 	0xc1: OpCode{
-		name: "CMP",
+		Name: "CMP",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: IndirectX,
-		oper: CMP,
+		Mode: IndirectX,
+		Oper: CMP,
 	},
 	0xd1: OpCode{
-		name: "CMP",
+		Name: "CMP",
 
 		cycles:           5,
 		pageBoundryCheck: true,
 
-		mode: IndirectY,
-		oper: CMP,
+		Mode: IndirectY,
+		Oper: CMP,
 	},
 	0xe0: OpCode{
-		name: "CPX",
+		Name: "CPX",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Immediate,
-		oper: CPX,
+		Mode: Immediate,
+		Oper: CPX,
 	},
 	0xe4: OpCode{
-		name: "CPX",
+		Name: "CPX",
 
 		cycles:           3,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: CPX,
+		Mode: ZeroPage,
+		Oper: CPX,
 	},
 	0xec: OpCode{
-		name: "CPX",
+		Name: "CPX",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: CPX,
+		Mode: Absolute,
+		Oper: CPX,
 	},
 	0xc0: OpCode{
-		name: "CPY",
+		Name: "CPY",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Immediate,
-		oper: CPY,
+		Mode: Immediate,
+		Oper: CPY,
 	},
 	0xc4: OpCode{
-		name: "CPY",
+		Name: "CPY",
 
 		cycles:           3,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: CPY,
+		Mode: ZeroPage,
+		Oper: CPY,
 	},
 	0xcc: OpCode{
-		name: "CPY",
+		Name: "CPY",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: CPY,
+		Mode: Absolute,
+		Oper: CPY,
 	},
 	0xc6: OpCode{
-		name: "DEC",
+		Name: "DEC",
 
 		cycles:           5,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: DEC,
+		Mode: ZeroPage,
+		Oper: DEC,
 	},
 	0xd6: OpCode{
-		name: "DEC",
+		Name: "DEC",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: ZeroPageX,
-		oper: DEC,
+		Mode: ZeroPageX,
+		Oper: DEC,
 	},
 	0xce: OpCode{
-		name: "DEC",
+		Name: "DEC",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: DEC,
+		Mode: Absolute,
+		Oper: DEC,
 	},
 	0xde: OpCode{
-		name: "DEC",
+		Name: "DEC",
 
 		cycles:           7,
 		pageBoundryCheck: false,
 
-		mode: AbsoluteX,
-		oper: DEC,
+		Mode: AbsoluteX,
+		Oper: DEC,
 	},
 	0xca: OpCode{
-		name: "DEX",
+		Name: "DEX",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: DEX,
+		Mode: Implied,
+		Oper: DEX,
 	},
 	0x88: OpCode{
-		name: "DEY",
+		Name: "DEY",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: DEY,
+		Mode: Implied,
+		Oper: DEY,
 	},
 	0x49: OpCode{
-		name: "EOR",
+		Name: "EOR",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Immediate,
-		oper: EOR,
+		Mode: Immediate,
+		Oper: EOR,
 	},
-	0x45: OpCode{name: "EOR",
+	0x45: OpCode{Name: "EOR",
 		cycles:           3,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: EOR,
+		Mode: ZeroPage,
+		Oper: EOR,
 	},
 	0x55: OpCode{
-		name: "EOR",
+		Name: "EOR",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: ZeroPageX,
-		oper: EOR,
+		Mode: ZeroPageX,
+		Oper: EOR,
 	},
 	0x4d: OpCode{
-		name: "EOR",
+		Name: "EOR",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: EOR,
+		Mode: Absolute,
+		Oper: EOR,
 	},
 	0x5d: OpCode{
-		name: "EOR",
+		Name: "EOR",
 
 		cycles:           4,
 		pageBoundryCheck: true,
 
-		mode: AbsoluteX,
-		oper: EOR,
+		Mode: AbsoluteX,
+		Oper: EOR,
 	},
 	0x59: OpCode{
-		name: "EOR",
+		Name: "EOR",
 
 		cycles:           4,
 		pageBoundryCheck: true,
 
-		mode: AbsoluteY,
-		oper: EOR,
+		Mode: AbsoluteY,
+		Oper: EOR,
 	},
 	0x41: OpCode{
-		name: "EOR",
+		Name: "EOR",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: IndirectX,
-		oper: EOR,
+		Mode: IndirectX,
+		Oper: EOR,
 	},
 	0x51: OpCode{
-		name: "EOR",
+		Name: "EOR",
 
 		cycles:           5,
 		pageBoundryCheck: true,
 
-		mode: IndirectY,
-		oper: EOR,
+		Mode: IndirectY,
+		Oper: EOR,
 	},
 	0xe6: OpCode{
-		name: "INC",
+		Name: "INC",
 
 		cycles:           5,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: INC,
+		Mode: ZeroPage,
+		Oper: INC,
 	},
 	0xf6: OpCode{
-		name: "INC",
+		Name: "INC",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: ZeroPageX,
-		oper: INC,
+		Mode: ZeroPageX,
+		Oper: INC,
 	},
 	0xee: OpCode{
-		name: "INC",
+		Name: "INC",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: INC,
+		Mode: Absolute,
+		Oper: INC,
 	},
 	0xfe: OpCode{
-		name: "INC",
+		Name: "INC",
 
 		cycles:           7,
 		pageBoundryCheck: false,
 
-		mode: AbsoluteX,
-		oper: INC,
+		Mode: AbsoluteX,
+		Oper: INC,
 	},
 	0xe8: OpCode{
-		name: "INX",
+		Name: "INX",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: INX,
+		Mode: Implied,
+		Oper: INX,
 	},
 	0xc8: OpCode{
-		name: "INY",
+		Name: "INY",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: INY,
+		Mode: Implied,
+		Oper: INY,
 	},
 	0x4c: OpCode{
-		name: "JMP",
+		Name: "JMP",
 
 		cycles:           3,
 		pageBoundryCheck: false,
 
-		mode: AbsoluteJMP,
-		oper: JMP,
+		Mode: AbsoluteJMP,
+		Oper: JMP,
 	},
 	0x6c: OpCode{
-		name: "JMP",
+		Name: "JMP",
 
 		cycles:           5,
 		pageBoundryCheck: false,
 
-		mode: Indirect,
-		oper: JMP,
+		Mode: Indirect,
+		Oper: JMP,
 	},
 	0x20: OpCode{
-		name: "JSR",
+		Name: "JSR",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: JSR,
+		Mode: Absolute,
+		Oper: JSR,
 	},
 	0xa9: OpCode{
-		name: "LDA",
+		Name: "LDA",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Immediate,
-		oper: LDA,
+		Mode: Immediate,
+		Oper: LDA,
 	},
 	0xa5: OpCode{
-		name: "LDA",
+		Name: "LDA",
 
 		cycles:           3,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: LDA,
+		Mode: ZeroPage,
+		Oper: LDA,
 	},
 	0xb5: OpCode{
-		name: "LDA",
+		Name: "LDA",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: ZeroPageX,
-		oper: LDA,
+		Mode: ZeroPageX,
+		Oper: LDA,
 	},
 	0xad: OpCode{
-		name: "LDA",
+		Name: "LDA",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: LDA,
+		Mode: Absolute,
+		Oper: LDA,
 	},
 	0xbd: OpCode{
-		name: "LDA",
+		Name: "LDA",
 
 		cycles:           4,
 		pageBoundryCheck: true,
 
-		mode: AbsoluteX,
-		oper: LDA,
+		Mode: AbsoluteX,
+		Oper: LDA,
 	},
 	0xb9: OpCode{
-		name: "LDA",
+		Name: "LDA",
 
 		cycles:           4,
 		pageBoundryCheck: true,
 
-		mode: AbsoluteY,
-		oper: LDA,
+		Mode: AbsoluteY,
+		Oper: LDA,
 	},
 	0xa1: OpCode{
-		name: "LDA",
+		Name: "LDA",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: IndirectX,
-		oper: LDA,
+		Mode: IndirectX,
+		Oper: LDA,
 	},
 	0xb1: OpCode{
-		name: "LDA",
+		Name: "LDA",
 
 		cycles:           5,
 		pageBoundryCheck: true,
 
-		mode: IndirectY,
-		oper: LDA,
+		Mode: IndirectY,
+		Oper: LDA,
 	},
 	0xa2: OpCode{
-		name: "LDX",
+		Name: "LDX",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Immediate,
-		oper: LDX,
+		Mode: Immediate,
+		Oper: LDX,
 	},
 	0xa6: OpCode{
-		name: "LDX",
+		Name: "LDX",
 
 		cycles:           3,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: LDX,
+		Mode: ZeroPage,
+		Oper: LDX,
 	},
 	0xb6: OpCode{
-		name: "LDX",
+		Name: "LDX",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: ZeroPageY,
-		oper: LDX,
+		Mode: ZeroPageY,
+		Oper: LDX,
 	},
 	0xae: OpCode{
-		name: "LDX",
+		Name: "LDX",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: LDX,
+		Mode: Absolute,
+		Oper: LDX,
 	},
 	0xbe: OpCode{
-		name: "LDX",
+		Name: "LDX",
 
 		cycles:           4,
 		pageBoundryCheck: true,
 
-		mode: AbsoluteY,
-		oper: LDX,
+		Mode: AbsoluteY,
+		Oper: LDX,
 	},
 	0xa0: OpCode{
-		name: "LDY",
+		Name: "LDY",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Immediate,
-		oper: LDY,
+		Mode: Immediate,
+		Oper: LDY,
 	},
 	0xa4: OpCode{
-		name: "LDY",
+		Name: "LDY",
 
 		cycles:           3,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: LDY,
+		Mode: ZeroPage,
+		Oper: LDY,
 	},
 	0xb4: OpCode{
-		name: "LDY",
+		Name: "LDY",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: ZeroPageX,
-		oper: LDY,
+		Mode: ZeroPageX,
+		Oper: LDY,
 	},
 	0xac: OpCode{
-		name: "LDY",
+		Name: "LDY",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: LDY,
+		Mode: Absolute,
+		Oper: LDY,
 	},
 	0xbc: OpCode{
-		name: "LDY",
+		Name: "LDY",
 
 		cycles:           4,
 		pageBoundryCheck: true,
 
-		mode: AbsoluteX,
-		oper: LDY,
+		Mode: AbsoluteX,
+		Oper: LDY,
 	},
 	0x4a: OpCode{
-		name: "LSR",
+		Name: "LSR",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Accumulator,
-		oper: LSR,
+		Mode: Accumulator,
+		Oper: LSR,
 	},
 	0x46: OpCode{
-		name: "LSR",
+		Name: "LSR",
 
 		cycles:           5,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: LSR,
+		Mode: ZeroPage,
+		Oper: LSR,
 	},
 	0x56: OpCode{
-		name: "LSR",
+		Name: "LSR",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: ZeroPageX,
-		oper: LSR,
+		Mode: ZeroPageX,
+		Oper: LSR,
 	},
 	0x4e: OpCode{
-		name: "LSR",
+		Name: "LSR",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: LSR,
+		Mode: Absolute,
+		Oper: LSR,
 	},
 	0x5e: OpCode{
-		name: "LSR",
+		Name: "LSR",
 
 		cycles:           7,
 		pageBoundryCheck: false,
 
-		mode: AbsoluteX,
-		oper: LSR,
+		Mode: AbsoluteX,
+		Oper: LSR,
 	},
 	0xea: OpCode{
-		name: "NOP",
+		Name: "NOP",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: NOP,
+		Mode: Implied,
+		Oper: NOP,
 	},
 	0x09: OpCode{
-		name: "ORA",
+		Name: "ORA",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Immediate,
-		oper: ORA,
+		Mode: Immediate,
+		Oper: ORA,
 	},
 	0x05: OpCode{
-		name: "ORA",
+		Name: "ORA",
 
 		cycles:           3,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: ORA,
+		Mode: ZeroPage,
+		Oper: ORA,
 	},
 	0x15: OpCode{
-		name: "ORA",
+		Name: "ORA",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: ZeroPageX,
-		oper: ORA,
+		Mode: ZeroPageX,
+		Oper: ORA,
 	},
 	0x0d: OpCode{
-		name: "ORA",
+		Name: "ORA",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: ORA,
+		Mode: Absolute,
+		Oper: ORA,
 	},
 	0x1d: OpCode{
-		name: "ORA",
+		Name: "ORA",
 
 		cycles:           4,
 		pageBoundryCheck: true,
 
-		mode: AbsoluteX,
-		oper: ORA,
+		Mode: AbsoluteX,
+		Oper: ORA,
 	},
 	0x19: OpCode{
-		name: "ORA",
+		Name: "ORA",
 
 		cycles:           4,
 		pageBoundryCheck: true,
 
-		mode: AbsoluteY,
-		oper: ORA,
+		Mode: AbsoluteY,
+		Oper: ORA,
 	},
 	0x01: OpCode{
-		name: "ORA",
+		Name: "ORA",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: IndirectX,
-		oper: ORA,
+		Mode: IndirectX,
+		Oper: ORA,
 	},
 	0x11: OpCode{
-		name: "ORA",
+		Name: "ORA",
 
 		cycles:           5,
 		pageBoundryCheck: true,
 
-		mode: IndirectY,
-		oper: ORA,
+		Mode: IndirectY,
+		Oper: ORA,
 	},
 	0x48: OpCode{
-		name: "PHA",
+		Name: "PHA",
 
 		cycles:           3,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: PHA,
+		Mode: Implied,
+		Oper: PHA,
 	},
 	0x08: OpCode{
-		name: "PHP",
+		Name: "PHP",
 
 		cycles:           3,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: PHP,
+		Mode: Implied,
+		Oper: PHP,
 	},
 	0x68: OpCode{
-		name: "PLA",
+		Name: "PLA",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: PLA,
+		Mode: Implied,
+		Oper: PLA,
 	},
 	0x28: OpCode{
-		name: "PLP",
+		Name: "PLP",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: PLP,
+		Mode: Implied,
+		Oper: PLP,
 	},
 	0x2a: OpCode{
-		name: "ROL",
+		Name: "ROL",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Accumulator,
-		oper: ROL,
+		Mode: Accumulator,
+		Oper: ROL,
 	},
 	0x26: OpCode{
-		name: "ROL",
+		Name: "ROL",
 
 		cycles:           5,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: ROL,
+		Mode: ZeroPage,
+		Oper: ROL,
 	},
 	0x36: OpCode{
-		name: "ROL",
+		Name: "ROL",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: ZeroPageX,
-		oper: ROL,
+		Mode: ZeroPageX,
+		Oper: ROL,
 	},
 	0x2e: OpCode{
-		name: "ROL",
+		Name: "ROL",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: ROL,
+		Mode: Absolute,
+		Oper: ROL,
 	},
 	0x3e: OpCode{
-		name: "ROL",
+		Name: "ROL",
 
 		cycles:           7,
 		pageBoundryCheck: false,
 
-		mode: AbsoluteX,
-		oper: ROL,
+		Mode: AbsoluteX,
+		Oper: ROL,
 	},
 	0x6a: OpCode{
-		name: "ROR",
+		Name: "ROR",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Accumulator,
-		oper: ROR,
+		Mode: Accumulator,
+		Oper: ROR,
 	},
 	0x66: OpCode{
-		name: "ROR",
+		Name: "ROR",
 
 		cycles:           5,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: ROR,
+		Mode: ZeroPage,
+		Oper: ROR,
 	},
 	0x76: OpCode{
-		name: "ROR",
+		Name: "ROR",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: ZeroPageX,
-		oper: ROR,
+		Mode: ZeroPageX,
+		Oper: ROR,
 	},
 	0x6e: OpCode{
-		name: "ROR",
+		Name: "ROR",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: ROR,
+		Mode: Absolute,
+		Oper: ROR,
 	},
 	0x7e: OpCode{
-		name: "ROR",
+		Name: "ROR",
 
 		cycles:           7,
 		pageBoundryCheck: false,
 
-		mode: AbsoluteX,
-		oper: ROR,
+		Mode: AbsoluteX,
+		Oper: ROR,
 	},
 	0x40: OpCode{
-		name: "RTI",
+		Name: "RTI",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: RTI,
+		Mode: Implied,
+		Oper: RTI,
 	},
 	0x60: OpCode{
-		name: "RTS",
+		Name: "RTS",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: RTS,
+		Mode: Implied,
+		Oper: RTS,
 	},
 	0xe9: OpCode{
-		name: "SBC",
+		Name: "SBC",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Immediate,
-		oper: SBC,
+		Mode: Immediate,
+		Oper: SBC,
 	},
 	0xe5: OpCode{
-		name: "SBC",
+		Name: "SBC",
 
 		cycles:           3,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: SBC,
+		Mode: ZeroPage,
+		Oper: SBC,
 	},
 	0xf5: OpCode{
-		name: "SBC",
+		Name: "SBC",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: ZeroPageX,
-		oper: SBC,
+		Mode: ZeroPageX,
+		Oper: SBC,
 	},
 	0xed: OpCode{
-		name: "SBC",
+		Name: "SBC",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: SBC,
+		Mode: Absolute,
+		Oper: SBC,
 	},
 	0xfd: OpCode{
-		name: "SBC",
+		Name: "SBC",
 
 		cycles:           4,
 		pageBoundryCheck: true,
 
-		mode: AbsoluteX,
-		oper: SBC,
+		Mode: AbsoluteX,
+		Oper: SBC,
 	},
 	0xf9: OpCode{
-		name: "SBC",
+		Name: "SBC",
 
 		cycles:           4,
 		pageBoundryCheck: true,
 
-		mode: AbsoluteY,
-		oper: SBC,
+		Mode: AbsoluteY,
+		Oper: SBC,
 	},
 	0xe1: OpCode{
-		name: "SBC",
+		Name: "SBC",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: IndirectX,
-		oper: SBC,
+		Mode: IndirectX,
+		Oper: SBC,
 	},
 	0xf1: OpCode{
-		name: "SBC",
+		Name: "SBC",
 
 		cycles:           5,
 		pageBoundryCheck: true,
 
-		mode: IndirectY,
-		oper: SBC,
+		Mode: IndirectY,
+		Oper: SBC,
 	},
 	0x38: OpCode{
-		name: "SEC",
+		Name: "SEC",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: SEC,
+		Mode: Implied,
+		Oper: SEC,
 	},
 	0xf8: OpCode{
-		name: "SED",
+		Name: "SED",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: SED,
+		Mode: Implied,
+		Oper: SED,
 	},
 	0x78: OpCode{
-		name: "SEI",
+		Name: "SEI",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: SEI,
+		Mode: Implied,
+		Oper: SEI,
 	},
 	0x85: OpCode{
-		name: "STA",
+		Name: "STA",
 
 		cycles:           3,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: STA,
+		Mode: ZeroPage,
+		Oper: STA,
 	},
 	0x95: OpCode{
-		name: "STA",
+		Name: "STA",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: ZeroPageX,
-		oper: STA,
+		Mode: ZeroPageX,
+		Oper: STA,
 	},
 	0x8d: OpCode{
-		name: "STA",
+		Name: "STA",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: STA,
+		Mode: Absolute,
+		Oper: STA,
 	},
 	0x9d: OpCode{
-		name: "STA",
+		Name: "STA",
 
 		cycles:           5,
 		pageBoundryCheck: true,
 
-		mode: AbsoluteX,
-		oper: STA,
+		Mode: AbsoluteX,
+		Oper: STA,
 	},
 	0x99: OpCode{
-		name: "STA",
+		Name: "STA",
 
 		cycles:           5,
 		pageBoundryCheck: false,
 
-		mode: AbsoluteY,
-		oper: STA,
+		Mode: AbsoluteY,
+		Oper: STA,
 	},
 	0x81: OpCode{
-		name: "STA",
+		Name: "STA",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: IndirectX,
-		oper: STA,
+		Mode: IndirectX,
+		Oper: STA,
 	},
 	0x91: OpCode{
-		name: "STA",
+		Name: "STA",
 
 		cycles:           6,
 		pageBoundryCheck: false,
 
-		mode: IndirectY,
-		oper: STA,
+		Mode: IndirectY,
+		Oper: STA,
 	},
 	0x86: OpCode{
-		name: "STX",
+		Name: "STX",
 
 		cycles:           3,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: STX,
+		Mode: ZeroPage,
+		Oper: STX,
 	},
 	0x96: OpCode{
-		name: "STX",
+		Name: "STX",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: ZeroPageY,
-		oper: STX,
+		Mode: ZeroPageY,
+		Oper: STX,
 	},
 	0x8e: OpCode{
-		name: "STX",
+		Name: "STX",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: STX,
+		Mode: Absolute,
+		Oper: STX,
 	},
 	0x84: OpCode{
-		name: "STY",
+		Name: "STY",
 
 		cycles:           3,
 		pageBoundryCheck: false,
 
-		mode: ZeroPage,
-		oper: STY,
+		Mode: ZeroPage,
+		Oper: STY,
 	},
 	0x94: OpCode{
-		name: "STY",
+		Name: "STY",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: ZeroPageX,
-		oper: STY,
+		Mode: ZeroPageX,
+		Oper: STY,
 	},
 	0x8c: OpCode{
-		name: "STY",
+		Name: "STY",
 
 		cycles:           4,
 		pageBoundryCheck: false,
 
-		mode: Absolute,
-		oper: STY,
+		Mode: Absolute,
+		Oper: STY,
 	},
 	0xaa: OpCode{
-		name: "TAX",
+		Name: "TAX",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: TAX,
+		Mode: Implied,
+		Oper: TAX,
 	},
 	0xa8: OpCode{
-		name: "TAY",
+		Name: "TAY",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: TAY,
+		Mode: Implied,
+		Oper: TAY,
 	},
 	0xba: OpCode{
-		name: "TSX",
+		Name: "TSX",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: TSX,
+		Mode: Implied,
+		Oper: TSX,
 	},
 	0x8a: OpCode{
-		name: "TXA",
+		Name: "TXA",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: TXA,
+		Mode: Implied,
+		Oper: TXA,
 	},
 	0x9a: OpCode{
-		name: "TXS",
+		Name: "TXS",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: TXS,
+		Mode: Implied,
+		Oper: TXS,
 	},
 	0x98: OpCode{
-		name: "TYA",
+		Name: "TYA",
 
 		cycles:           2,
 		pageBoundryCheck: false,
 
-		mode: Implied,
-		oper: TYA,
+		Mode: Implied,
+		Oper: TYA,
 	},
 }

@@ -9,13 +9,13 @@ package cpu
 // to execute. cycles is the base cycle count, and pageBoundryCheck tells the
 // addressing mode whether a page boundry cross affects it's cycle count
 type OpCode struct {
-	name string
+	Name string
 
 	cycles           int
 	pageBoundryCheck bool
 
-	mode AddressingMode
-	oper Operation
+	Mode AddressingMode
+	Oper Operation
 }
 
 // Exec runs the opcode with the given arguments.
@@ -23,5 +23,5 @@ type OpCode struct {
 // It runs it's addressing mode, which in turn fetches the arguments and calls
 // the operation
 func (op OpCode) Exec(cpu *CPU, args ...*byte) (extraCycles int) {
-	return op.mode.address(cpu, op.oper, op.pageBoundryCheck, args...)
+	return op.Mode.address(cpu, op.Oper, op.pageBoundryCheck, args...)
 }

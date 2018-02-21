@@ -16,9 +16,13 @@ import (
 //
 // The operation also gets a reference to the cpu so it can test and change the
 // registers and RAM.
-type Operation func(*CPU, ...*byte)
+//
+// Similar to addressing modes, opcodes too return whether the operation's
+// execution took extra cycles. This happens on the operation level only in
+// branching operations.
+type Operation func(*CPU, ...*byte) int
 
-func ADC(cpu *CPU, args ...*byte) {
+func ADC(cpu *CPU, args ...*byte) (extraCycles int) {
 	// Calculate result and store in a
 	arg1 := cpu.reg.a
 	arg2 := *args[0]
@@ -48,66 +52,118 @@ func ADC(cpu *CPU, args ...*byte) {
 	} else {
 		cpu.reg.c = CLEAR
 	}
+	return
 }
 
-func AND(cpu *CPU, args ...*byte) {
+func AND(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.a &= *args[0]
 	setN(cpu.reg, cpu.reg.a)
 	setZ(cpu.reg, cpu.reg.z)
+	return
 }
 
-func ASL(cpu *CPU, args ...*byte) {
+func ASL(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.c = *args[0] >> 7
 	*args[0] <<= 1
 	setN(cpu.reg, *args[0])
 	setZ(cpu.reg, *args[0])
+	return
 }
 
-func BCC(cpu *CPU, args ...*byte) {
+func BCC(cpu *CPU, args ...*byte) (extraCycles int) {
+	initPC := cpu.reg.pc
+
 	if cpu.reg.c == CLEAR {
+		extraCycles++
 		cpu.reg.pc += int(int8(*args[0]))
+
+		if initPC/256 != cpu.reg.pc/256 {
+			extraCycles++
+		}
 	}
+	return
 }
 
-func BCS(cpu *CPU, args ...*byte) {
+func BCS(cpu *CPU, args ...*byte) (extraCycles int) {
+	initPC := cpu.reg.pc
+
 	if cpu.reg.c == SET {
+		extraCycles++
 		cpu.reg.pc += int(int8(*args[0]))
+
+		if initPC/256 != cpu.reg.pc/256 {
+			extraCycles++
+		}
 	}
+	return
 }
 
-func BEQ(cpu *CPU, args ...*byte) {
+func BEQ(cpu *CPU, args ...*byte) (extraCycles int) {
+	initPC := cpu.reg.pc
+
 	if cpu.reg.z == SET {
+		extraCycles++
 		cpu.reg.pc += int(int8(*args[0]))
+
+		if initPC/256 != cpu.reg.pc/256 {
+			extraCycles++
+		}
 	}
+	return
 }
 
-func BIT(cpu *CPU, args ...*byte) {
+func BIT(cpu *CPU, args ...*byte) (extraCycles int) {
 	setN(cpu.reg, *args[0])
 	cpu.reg.v = (*args[0] >> 6) & 1
 
 	res := cpu.reg.a & *args[0]
 	setZ(cpu.reg, res)
+	return
 }
 
-func BMI(cpu *CPU, args ...*byte) {
+func BMI(cpu *CPU, args ...*byte) (extraCycles int) {
+	initPC := cpu.reg.pc
+
 	if cpu.reg.n == SET {
+		extraCycles++
 		cpu.reg.pc += int(int8(*args[0]))
+
+		if initPC/256 != cpu.reg.pc/256 {
+			extraCycles++
+		}
 	}
+	return
 }
 
-func BNE(cpu *CPU, args ...*byte) {
+func BNE(cpu *CPU, args ...*byte) (extraCycles int) {
+	initPC := cpu.reg.pc
+
 	if cpu.reg.z == CLEAR {
+		extraCycles++
 		cpu.reg.pc += int(int8(*args[0]))
+
+		if initPC/256 != cpu.reg.pc/256 {
+			extraCycles++
+		}
 	}
+	return
 }
 
-func BPL(cpu *CPU, args ...*byte) {
+func BPL(cpu *CPU, args ...*byte) (extraCycles int) {
+	initPC := cpu.reg.pc
+
 	if cpu.reg.n == CLEAR {
+		extraCycles++
 		cpu.reg.pc += int(int8(*args[0]))
+
+		if initPC/256 != cpu.reg.pc/256 {
+			extraCycles++
+		}
 	}
+	return
 }
 
-func BRK(cpu *CPU, args ...*byte) {
+func BRK(cpu *CPU, args ...*byte) (extraCycles int) {
 	// push PCH
 	cpu.push(byte(cpu.reg.pc >> 8))
 	// push PCL
@@ -117,37 +173,58 @@ func BRK(cpu *CPU, args ...*byte) {
 
 	// fetch PCL from $fffe and PCH from $ffff
 	cpu.reg.pc = int(*cpu.ram.Fetch(0xfffe)) | int(*cpu.ram.Fetch(0xffff))<<8
+	return
 }
 
-func BVC(cpu *CPU, args ...*byte) {
+func BVC(cpu *CPU, args ...*byte) (extraCycles int) {
+	initPC := cpu.reg.pc
+
 	if cpu.reg.v == CLEAR {
+		extraCycles++
 		cpu.reg.pc += int(int8(*args[0]))
+
+		if initPC/256 != cpu.reg.pc/256 {
+			extraCycles++
+		}
 	}
+	return
 }
 
-func BVS(cpu *CPU, args ...*byte) {
+func BVS(cpu *CPU, args ...*byte) (extraCycles int) {
+	initPC := cpu.reg.pc
+
 	if cpu.reg.v == SET {
+		extraCycles++
 		cpu.reg.pc += int(int8(*args[0]))
+
+		if initPC/256 != cpu.reg.pc/256 {
+			extraCycles++
+		}
 	}
+	return
 }
 
-func CLC(cpu *CPU, args ...*byte) {
+func CLC(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.c = CLEAR
+	return
 }
 
-func CLD(cpu *CPU, args ...*byte) {
+func CLD(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.d = CLEAR
+	return
 }
 
-func CLI(cpu *CPU, args ...*byte) {
+func CLI(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.i = CLEAR
+	return
 }
 
-func CLV(cpu *CPU, args ...*byte) {
+func CLV(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.v = CLEAR
+	return
 }
 
-func CMP(cpu *CPU, args ...*byte) {
+func CMP(cpu *CPU, args ...*byte) (extraCycles int) {
 	res := cpu.reg.a - *args[0]
 
 	setN(cpu.reg, res)
@@ -157,9 +234,10 @@ func CMP(cpu *CPU, args ...*byte) {
 	} else {
 		cpu.reg.c = CLEAR
 	}
+	return
 }
 
-func CPX(cpu *CPU, args ...*byte) {
+func CPX(cpu *CPU, args ...*byte) (extraCycles int) {
 	res := cpu.reg.x - *args[0]
 
 	setN(cpu.reg, res)
@@ -169,9 +247,10 @@ func CPX(cpu *CPU, args ...*byte) {
 	} else {
 		cpu.reg.c = CLEAR
 	}
+	return
 }
 
-func CPY(cpu *CPU, args ...*byte) {
+func CPY(cpu *CPU, args ...*byte) (extraCycles int) {
 	res := cpu.reg.y - *args[0]
 
 	setN(cpu.reg, res)
@@ -181,56 +260,65 @@ func CPY(cpu *CPU, args ...*byte) {
 	} else {
 		cpu.reg.c = CLEAR
 	}
+	return
 }
 
-func DEC(cpu *CPU, args ...*byte) {
+func DEC(cpu *CPU, args ...*byte) (extraCycles int) {
 	*args[0]--
 	setN(cpu.reg, *args[0])
 	setZ(cpu.reg, *args[0])
+	return
 }
 
-func DEX(cpu *CPU, args ...*byte) {
+func DEX(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.x--
 	setN(cpu.reg, cpu.reg.x)
 	setZ(cpu.reg, cpu.reg.x)
+	return
 }
 
-func DEY(cpu *CPU, args ...*byte) {
+func DEY(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.y--
 	setN(cpu.reg, cpu.reg.y)
 	setZ(cpu.reg, cpu.reg.y)
+	return
 }
 
-func EOR(cpu *CPU, args ...*byte) {
+func EOR(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.a ^= *args[0]
 	setN(cpu.reg, cpu.reg.a)
 	setZ(cpu.reg, cpu.reg.a)
+	return
 }
 
-func INC(cpu *CPU, args ...*byte) {
+func INC(cpu *CPU, args ...*byte) (extraCycles int) {
 	*args[0]++
 	setN(cpu.reg, *args[0])
 	setZ(cpu.reg, *args[0])
+	return
 }
 
-func INX(cpu *CPU, args ...*byte) {
+func INX(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.x++
 	setN(cpu.reg, cpu.reg.x)
 	setZ(cpu.reg, cpu.reg.x)
+	return
 }
 
-func INY(cpu *CPU, args ...*byte) {
+func INY(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.y++
 	setN(cpu.reg, cpu.reg.y)
 	setZ(cpu.reg, cpu.reg.y)
+	return
 }
 
-func JMP(cpu *CPU, args ...*byte) {
+func JMP(cpu *CPU, args ...*byte) (extraCycles int) {
 	jmpPC := int(*args[0]) | int(*args[1])<<8
 	cpu.reg.pc = jmpPC
+	return
 }
 
-func JSR(cpu *CPU, args ...*byte) {
+func JSR(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.pc += 2
 	// push PCH
 	cpu.push(byte(cpu.reg.pc >> 8))
@@ -239,61 +327,72 @@ func JSR(cpu *CPU, args ...*byte) {
 
 	jmpPC := int(*args[0]) | int(*args[1])<<8
 	cpu.reg.pc = jmpPC
+	return
 }
 
-func LDA(cpu *CPU, args ...*byte) {
+func LDA(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.a = *args[0]
 	setN(cpu.reg, cpu.reg.a)
 	setZ(cpu.reg, cpu.reg.a)
+	return
 }
 
-func LDX(cpu *CPU, args ...*byte) {
+func LDX(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.x = *args[0]
 	setN(cpu.reg, cpu.reg.x)
 	setZ(cpu.reg, cpu.reg.x)
+	return
 }
 
-func LDY(cpu *CPU, args ...*byte) {
+func LDY(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.y = *args[0]
 	setN(cpu.reg, cpu.reg.y)
 	setZ(cpu.reg, cpu.reg.y)
+	return
 }
 
-func LSR(cpu *CPU, args ...*byte) {
+func LSR(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.c = *args[0] & 1
 	*args[0] >>= 1
 	cpu.reg.n = CLEAR
 	setZ(cpu.reg, *args[0])
+	return
 }
 
-func NOP(cpu *CPU, args ...*byte) {
+func NOP(cpu *CPU, args ...*byte) (extraCycles int) {
+	return
 }
 
-func ORA(cpu *CPU, args ...*byte) {
+func ORA(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.a |= *args[0]
 	setN(cpu.reg, cpu.reg.a)
 	setZ(cpu.reg, cpu.reg.a)
+	return
 }
 
-func PHA(cpu *CPU, args ...*byte) {
+func PHA(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.push(cpu.reg.a)
+	return
 }
 
-func PHP(cpu *CPU, args ...*byte) {
+func PHP(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.push(cpu.reg.getP())
+	return
 }
 
-func PLA(cpu *CPU, args ...*byte) {
+func PLA(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.a = cpu.pull()
 	setN(cpu.reg, cpu.reg.a)
 	setZ(cpu.reg, cpu.reg.a)
+	return
 }
 
-func PLP(cpu *CPU, args ...*byte) {
+func PLP(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.setP(cpu.pull())
+	return
 }
 
-func ROL(cpu *CPU, args ...*byte) {
+func ROL(cpu *CPU, args ...*byte) (extraCycles int) {
 	carry := cpu.reg.c
 	cpu.reg.c = *args[0] >> 7
 
@@ -302,9 +401,10 @@ func ROL(cpu *CPU, args ...*byte) {
 
 	setN(cpu.reg, *args[0])
 	setZ(cpu.reg, *args[0])
+	return
 }
 
-func ROR(cpu *CPU, args ...*byte) {
+func ROR(cpu *CPU, args ...*byte) (extraCycles int) {
 	carry := cpu.reg.c
 	cpu.reg.c = *args[0] & 1
 
@@ -313,21 +413,24 @@ func ROR(cpu *CPU, args ...*byte) {
 
 	setN(cpu.reg, *args[0])
 	setZ(cpu.reg, *args[0])
+	return
 }
 
-func RTI(cpu *CPU, args ...*byte) {
+func RTI(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.setP(cpu.pull())
 	// pull PCL and then PHC
 	cpu.reg.pc = int(cpu.pull()) | int(cpu.pull())<<8
+	return
 }
 
-func RTS(cpu *CPU, args ...*byte) {
+func RTS(cpu *CPU, args ...*byte) (extraCycles int) {
 	// pull PCL and then PHC
 	cpu.reg.pc = int(cpu.pull()) | int(cpu.pull())<<8
 	cpu.reg.pc++
+	return
 }
 
-func SBC(cpu *CPU, args ...*byte) {
+func SBC(cpu *CPU, args ...*byte) (extraCycles int) {
 	// Calculate result and store in a
 	arg1 := int8(cpu.reg.a)
 	arg2 := int8(*args[0])
@@ -347,66 +450,79 @@ func SBC(cpu *CPU, args ...*byte) {
 	} else {
 		cpu.reg.v = CLEAR
 	}
+	return
 }
 
-func SEC(cpu *CPU, args ...*byte) {
+func SEC(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.c = SET
+	return
 }
 
-func SED(cpu *CPU, args ...*byte) {
+func SED(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.d = SET
+	return
 }
 
-func SEI(cpu *CPU, args ...*byte) {
+func SEI(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.i = SET
+	return
 }
 
-func STA(cpu *CPU, args ...*byte) {
+func STA(cpu *CPU, args ...*byte) (extraCycles int) {
 	*args[0] = cpu.reg.a
+	return
 }
 
-func STX(cpu *CPU, args ...*byte) {
+func STX(cpu *CPU, args ...*byte) (extraCycles int) {
 	*args[0] = cpu.reg.x
+	return
 }
 
-func STY(cpu *CPU, args ...*byte) {
+func STY(cpu *CPU, args ...*byte) (extraCycles int) {
 	*args[0] = cpu.reg.y
+	return
 }
 
-func TAX(cpu *CPU, args ...*byte) {
+func TAX(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.x = cpu.reg.a
 	setN(cpu.reg, cpu.reg.x)
 	setZ(cpu.reg, cpu.reg.x)
+	return
 }
 
-func TAY(cpu *CPU, args ...*byte) {
+func TAY(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.y = cpu.reg.a
 	setN(cpu.reg, cpu.reg.y)
 	setZ(cpu.reg, cpu.reg.y)
+	return
 }
 
-func TSX(cpu *CPU, args ...*byte) {
+func TSX(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.x = cpu.reg.sp
 	setN(cpu.reg, cpu.reg.x)
 	setZ(cpu.reg, cpu.reg.x)
+	return
 }
 
-func TXA(cpu *CPU, args ...*byte) {
+func TXA(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.a = cpu.reg.x
 	setN(cpu.reg, cpu.reg.a)
 	setZ(cpu.reg, cpu.reg.a)
+	return
 }
 
-func TYA(cpu *CPU, args ...*byte) {
+func TYA(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.a = cpu.reg.y
 	setN(cpu.reg, cpu.reg.a)
 	setZ(cpu.reg, cpu.reg.a)
+	return
 }
 
-func TXS(cpu *CPU, args ...*byte) {
+func TXS(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.reg.sp = cpu.reg.x
 	setN(cpu.reg, cpu.reg.sp)
 	setZ(cpu.reg, cpu.reg.sp)
+	return
 }
 
 func setZ(reg *Registers, val byte) {

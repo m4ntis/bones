@@ -1,21 +1,21 @@
 package cpu
 
 type CPU struct {
-	ram *RAM
+	RAM *RAM
 
-	reg *Registers
+	Reg *Registers
 }
 
 func (cpu *CPU) push(b byte) {
-	*cpu.ram.Fetch(cpu.getStackAddr()) = b
-	cpu.reg.SP--
+	*cpu.RAM.Fetch(cpu.getStackAddr()) = b
+	cpu.Reg.SP--
 }
 
 func (cpu *CPU) pull() byte {
-	cpu.reg.SP++
-	return *cpu.ram.Fetch(cpu.getStackAddr())
+	cpu.Reg.SP++
+	return *cpu.RAM.Fetch(cpu.getStackAddr())
 }
 
 func (cpu *CPU) getStackAddr() int {
-	return int(cpu.reg.SP) | (1 << 8)
+	return int(cpu.Reg.SP) | (1 << 8)
 }

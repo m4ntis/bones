@@ -24,7 +24,7 @@ var (
 		ArgsLen: 1,
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
 			op(cpu, cpu.ram.Fetch(int(*args[0])))
-			cpu.reg.pc += 2
+			cpu.reg.PC += 2
 			return
 		},
 	}
@@ -34,8 +34,8 @@ var (
 
 		ArgsLen: 1,
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
-			op(cpu, cpu.ram.Fetch(int(*args[0]+cpu.reg.x)))
-			cpu.reg.pc += 2
+			op(cpu, cpu.ram.Fetch(int(*args[0]+cpu.reg.X)))
+			cpu.reg.PC += 2
 			return
 		},
 	}
@@ -45,8 +45,8 @@ var (
 
 		ArgsLen: 1,
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
-			op(cpu, cpu.ram.Fetch(int(*args[0]+cpu.reg.y)))
-			cpu.reg.pc += 2
+			op(cpu, cpu.ram.Fetch(int(*args[0]+cpu.reg.Y)))
+			cpu.reg.PC += 2
 			return
 		},
 	}
@@ -58,7 +58,7 @@ var (
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
 			// ADL stored at *args[0], ADH at *args[1]
 			op(cpu, cpu.ram.Fetch(int(*args[0])|int(*args[1])<<8))
-			cpu.reg.pc += 3
+			cpu.reg.PC += 3
 			return
 		},
 	}
@@ -69,12 +69,12 @@ var (
 		ArgsLen: 2,
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
 			addr := int(*args[0]) | int(*args[1])<<8
-			if addr/256 != (addr+int(cpu.reg.x))/256 && pageBoundryCheck {
+			if addr/256 != (addr+int(cpu.reg.X))/256 && pageBoundryCheck {
 				extraCycles++
 			}
 
-			op(cpu, cpu.ram.Fetch(addr+int(cpu.reg.x)))
-			cpu.reg.pc += 3
+			op(cpu, cpu.ram.Fetch(addr+int(cpu.reg.X)))
+			cpu.reg.PC += 3
 			return
 		},
 	}
@@ -85,12 +85,12 @@ var (
 		ArgsLen: 2,
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
 			addr := int(*args[0]) | int(*args[1])<<8
-			if addr/256 != (addr+int(cpu.reg.y))/256 && pageBoundryCheck {
+			if addr/256 != (addr+int(cpu.reg.Y))/256 && pageBoundryCheck {
 				extraCycles++
 			}
 
-			op(cpu, cpu.ram.Fetch(addr+int(cpu.reg.y)))
-			cpu.reg.pc += 3
+			op(cpu, cpu.ram.Fetch(addr+int(cpu.reg.Y)))
+			cpu.reg.PC += 3
 			return
 		},
 	}
@@ -125,11 +125,11 @@ var (
 
 		ArgsLen: 1,
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
-			adl := cpu.ram.Fetch(int(*args[0] + cpu.reg.x))
-			adh := cpu.ram.Fetch(int(*args[0] + cpu.reg.x + 1))
+			adl := cpu.ram.Fetch(int(*args[0] + cpu.reg.X))
+			adh := cpu.ram.Fetch(int(*args[0] + cpu.reg.X + 1))
 
 			op(cpu, cpu.ram.Fetch(int(*adl)|int(*adh)<<8))
-			cpu.reg.pc += 2
+			cpu.reg.PC += 2
 			return
 		},
 	}
@@ -143,12 +143,12 @@ var (
 			adh := cpu.ram.Fetch(int(*args[0] + 1))
 
 			addr := int(*adl) | int(*adh)<<8
-			if addr/256 != (addr+int(cpu.reg.y))/256 && pageBoundryCheck {
+			if addr/256 != (addr+int(cpu.reg.Y))/256 && pageBoundryCheck {
 				extraCycles++
 			}
 
-			op(cpu, cpu.ram.Fetch(addr+int(cpu.reg.y)))
-			cpu.reg.pc += 2
+			op(cpu, cpu.ram.Fetch(addr+int(cpu.reg.Y)))
+			cpu.reg.PC += 2
 			return
 		},
 	}
@@ -159,7 +159,7 @@ var (
 		ArgsLen: 0,
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
 			op(cpu)
-			cpu.reg.pc++
+			cpu.reg.PC++
 			return
 		},
 	}
@@ -169,8 +169,8 @@ var (
 
 		ArgsLen: 0,
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
-			op(cpu, &cpu.reg.a)
-			cpu.reg.pc++
+			op(cpu, &cpu.reg.A)
+			cpu.reg.PC++
 			return
 		},
 	}
@@ -181,7 +181,7 @@ var (
 		ArgsLen: 1,
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
 			op(cpu, args[0])
-			cpu.reg.pc += 2
+			cpu.reg.PC += 2
 			return
 		},
 	}
@@ -192,7 +192,7 @@ var (
 		ArgsLen: 1,
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, args ...*byte) (extraCycles int) {
 			extraCycles = op(cpu, args[0])
-			cpu.reg.pc += 2
+			cpu.reg.PC += 2
 			return
 		},
 	}

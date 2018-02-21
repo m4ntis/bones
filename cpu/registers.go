@@ -6,33 +6,33 @@ const (
 )
 
 type Registers struct {
-	pc int
-	sp byte
+	PC int
+	SP byte
 
-	a byte
-	x byte
-	y byte
+	A byte
+	X byte
+	Y byte
 
-	c byte
-	z byte
-	i byte
-	d byte
-	b byte
-	v byte
-	n byte
+	C byte
+	Z byte
+	I byte
+	D byte
+	B byte
+	V byte
+	N byte
 }
 
-func (reg *Registers) getP() byte {
-	return reg.c | reg.z<<1 | reg.i<<2 | reg.d<<3 | reg.b<<4 | reg.v<<6 |
-		reg.n<<7
+func (reg *Registers) GetP() byte {
+	return reg.C | reg.Z<<1 | reg.I<<2 | reg.D<<3 | reg.B<<4 | reg.V<<6 |
+		reg.N<<7
 }
 
-func (reg *Registers) setP(p byte) {
-	reg.c = p & 1
-	reg.z = p & 2
-	reg.i = p & 4
-	reg.d = p & 8
-	reg.b = p & 16
-	reg.v = p & 64
-	reg.n = p & 128
+func (reg *Registers) SetP(p byte) {
+	reg.C = p & 1
+	reg.Z = p & 2
+	reg.I = p & 4
+	reg.D = p & 8
+	reg.B = p & 16
+	reg.V = p & 64
+	reg.N = p & 128
 }

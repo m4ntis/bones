@@ -9,7 +9,7 @@ import (
 
 type Instruction struct {
 	Addr int
-	Data []byte
+	Code []byte
 	Text string
 }
 
@@ -38,22 +38,20 @@ func Disassemble(prgROM []models.PrgROMPage) Disassembly {
 	// Extract code - a list of parsed instructions from the assembly
 	code := Code(make([]Instruction, 0))
 	for i := 0; i < len(assembly); i++ {
-		//fmt.Println(i)
-
 		op, ok := cpu.OpCodes[assembly[i]]
 
 		var inst Instruction
 		if !ok {
 			inst = Instruction{
 				Addr: i,
-				Data: assembly[i : i+1],
+				Code: assembly[i : i+1],
 				Text: fmt.Sprintf(".byte %02x", assembly[i]),
 			}
 		} else {
 
 			inst = Instruction{
 				Addr: i,
-				Data: assembly[i : i+1+op.Mode.ArgsLen],
+				Code: assembly[i : i+1+op.Mode.ArgsLen],
 				Text: fmt.Sprintf("%s %s", op.Name,
 					op.Mode.Format(assembly[i+1:i+1+op.Mode.ArgsLen])),
 			}

@@ -62,7 +62,6 @@ func disassemble(asm []byte) Code {
 				Text: fmt.Sprintf(".byte %02x", asm[i]),
 			}
 		} else {
-
 			inst = Instruction{
 				Addr: i,
 				Code: asm[i : i+1+op.Mode.ArgsLen],

@@ -17,7 +17,7 @@ type BreakData struct {
 	d disass.Disassembly
 }
 
-type DbgWorker struct {
+type Worker struct {
 	c *cpu.CPU
 	d disass.Disassembly
 
@@ -29,16 +29,16 @@ type DbgWorker struct {
 	vals      chan<- BreakData
 }
 
-// NewDbgWorker creates a dbg worker that will start a cpu that will run on the
+// NewWorker creates a dbg worker that will start a cpu that will run on the
 // given ROM.
 //
 // The vals channel is the channel containing the data returned each time the
 // cpu breaks, describing the current cpu state.
-func NewDbgWorker(rom *models.ROM, vals chan<- BreakData) *DbgWorker {
+func NewWorker(rom *models.ROM, vals chan<- BreakData) *Worker {
 	c := cpu.NewCPU()
 	c.LoadROM(rom)
 
-	return &DbgWorker{
+	return &Worker{
 		c: c,
 		d: disass.Disassemble(rom.PrgROM),
 
@@ -56,67 +56,67 @@ func NewDbgWorker(rom *models.ROM, vals chan<- BreakData) *DbgWorker {
 // Start starts the debug worker.
 //
 // Runs in a loop, should be run in a goroutine
-func (dw *DbgWorker) Start() {
+func (w *Worker) Start() {
 	for {
-		dw.handleBps()
-		dw.c.ExecNext()
-		dw.c.HandleInterupts()
+		w.handleBps()
+		w.c.ExecNext()
+		w.c.HandleInterupts()
 	}
 }
 
-func (dw *DbgWorker) Continue() {
-	dw.continuec <- true
+func (w *Worker) Continue() {
+	w.continuec <- true
 }
 
-func (dw *DbgWorker) Next() {
-	dw.nextc <- true
+func (w *Worker) Next() {
+	w.nextc <- true
 }
 
-func (dw *DbgWorker) Break(addr int) {
-	dw.bpsMux.Lock()
-	defer dw.bpsMux.Unlock()
+func (w *Worker) Break(addr int) {
+	w.bpsMux.Lock()
+	defer w.bpsMux.Unlock()
 
-	dw.bps[addr] = true
+	w.bps[addr] = true
 }
 
-func (dw *DbgWorker) Clear(addr int) {
-	dw.bpsMux.Lock()
-	defer dw.bpsMux.Unlock()
+func (w *Worker) Clear(addr int) {
+	w.bpsMux.Lock()
+	defer w.bpsMux.Unlock()
 
-	delete(dw.bps, addr)
+	delete(w.bps, addr)
 }
 
-func (dw *DbgWorker) ClearAll() {
-	dw.bpsMux.Lock()
-	defer dw.bpsMux.Unlock()
+func (w *Worker) ClearAll() {
+	w.bpsMux.Lock()
+	defer w.bpsMux.Unlock()
 
-	for addr, _ := range dw.bps {
-		delete(dw.bps, addr)
+	for addr, _ := range w.bps {
+		delete(w.bps, addr)
 	}
 }
 
-func (dw *DbgWorker) handleBps() {
-	dw.bpsMux.Lock()
-	_, ok := dw.bps[dw.c.Reg.PC-0x8000]
-	dw.bpsMux.Unlock()
+func (w *Worker) handleBps() {
+	w.bpsMux.Lock()
+	_, ok := w.bps[w.c.Reg.PC-0x8000]
+	w.bpsMux.Unlock()
 
 	if ok {
-		dw.breakOper()
+		w.breakOper()
 	}
 }
 
-func (dw *DbgWorker) breakOper() {
+func (w *Worker) breakOper() {
 	for {
-		dw.vals <- BreakData{
-			d:   dw.d,
-			ram: dw.c.RAM,
-			reg: dw.c.Reg,
+		w.vals <- BreakData{
+			d:   w.d,
+			ram: w.c.RAM,
+			reg: w.c.Reg,
 		}
 
 		select {
-		case <-dw.continuec:
+		case <-w.continuec:
 			return
-		case <-dw.nextc:
+		case <-w.nextc:
 			continue
 		}
 	}

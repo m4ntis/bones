@@ -24,7 +24,7 @@ type Disassembly struct {
 	addrTable addrTable
 }
 
-func (d *Disassembly) IndexOf(addr int) int {
+func (d Disassembly) IndexOf(addr int) int {
 	return d.addrTable[addr]
 }
 

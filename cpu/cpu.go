@@ -18,10 +18,11 @@ type CPU struct {
 }
 
 func NewCPU() *CPU {
+	var ram RAM
 	return &CPU{
+		RAM: &ram,
 		Reg: &Registers{
 			PC: 0x8000,
-			SP: 0xFF,
 		},
 
 		irq:   false,
@@ -34,9 +35,9 @@ func NewCPU() *CPU {
 
 func (cpu *CPU) LoadROM(rom *models.ROM) {
 	// Load first 2 pages of PrgROM (not supporting mappers as of yet)
-	copy(rom.PrgROM[0][:], cpu.RAM.data[:models.PRG_ROM_PAGE_SIZE])
-	copy(rom.PrgROM[1][:],
-		cpu.RAM.data[models.PRG_ROM_PAGE_SIZE:2*models.PRG_ROM_PAGE_SIZE])
+	copy(cpu.RAM.data[0x8000:0x8000+models.PRG_ROM_PAGE_SIZE], rom.PrgROM[0][:])
+	copy(cpu.RAM.data[0x8000+models.PRG_ROM_PAGE_SIZE:0x8000+2*models.PRG_ROM_PAGE_SIZE],
+		rom.PrgROM[1][:])
 }
 
 func (cpu *CPU) ExecNext() (cycles int) {

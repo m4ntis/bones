@@ -4,9 +4,14 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/m4ntis/bones/disass"
+	"github.com/m4ntis/bones/dbg"
 	"github.com/m4ntis/bones/ines"
 	"github.com/spf13/cobra"
+)
+
+var (
+	breakVals chan dbg.BreakData
+	dw        *dbg.Worker
 )
 
 // dbgCmd represents the dbg command
@@ -33,9 +38,30 @@ var dbgCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		d := disass.Disassemble(rom.PrgROM)
-		for _, inst := range d.Code {
+		breakVals = make(chan dbg.BreakData)
+		dw = dbg.NewWorker(rom, breakVals)
+		go dw.Start()
+
+		fmt.Println("Type 'help' for list of commands.")
+		for data := range breakVals {
+			instIdx := data.Disass.IndexOf(data.Reg.PC - 0x8000)
+			inst := data.Disass.Code[instIdx]
+			fmt.Printf("%+v\n", data.Reg)
 			fmt.Printf("0x%04x: %s\n", inst.Addr, inst.Text)
+
+			var input string
+			fmt.Print("(dbg) ")
+			fmt.Scanln(&input)
+
+			switch input {
+			case "n":
+				dw.Next()
+			case "next":
+				dw.Next()
+			case "q":
+				os.Exit(0)
+			default:
+			}
 		}
 	},
 }

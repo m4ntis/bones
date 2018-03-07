@@ -6,6 +6,7 @@ import (
 
 	"github.com/m4ntis/bones/dbg"
 	"github.com/m4ntis/bones/ines"
+	"github.com/m4ntis/bones/models"
 	"github.com/spf13/cobra"
 )
 
@@ -20,49 +21,12 @@ var dbgCmd = &cobra.Command{
 	Short: "Debug an iNES program",
 	Long:  "The bones dbg command is used to debug NES roms, in iNES format.\n",
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 1 {
-			fmt.Println("Usage:\n  bones dbg <romname>.nes")
-			os.Exit(1)
-		}
-
-		filename := args[0]
-		f, err := os.Open(filename)
-		if err != nil {
-			fmt.Printf("Error opening file %s:\n%s\n", filename, err.Error())
-			os.Exit(1)
-		}
-
-		rom, err := ines.Parse(f)
-		if err != nil {
-			fmt.Printf("Error parsing iNES file %s:\n%s\n", filename, err.Error())
-			os.Exit(1)
-		}
-
+		rom := openRom(args)
 		breakVals = make(chan dbg.BreakData)
 		dw = dbg.NewWorker(rom, breakVals)
+
 		go dw.Start()
-
-		fmt.Println("Type 'help' for list of commands.")
-		for data := range breakVals {
-			instIdx := data.Disass.IndexOf(data.Reg.PC - 0x8000)
-			inst := data.Disass.Code[instIdx]
-			fmt.Printf("%+v\n", data.Reg)
-			fmt.Printf("0x%04x: %s\n", inst.Addr, inst.Text)
-
-			var input string
-			fmt.Print("(dbg) ")
-			fmt.Scanln(&input)
-
-			switch input {
-			case "n":
-				dw.Next()
-			case "next":
-				dw.Next()
-			case "q":
-				os.Exit(0)
-			default:
-			}
-		}
+		startInteractiveDbg()
 	},
 }
 
@@ -92,4 +56,50 @@ Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
   {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
 
 Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}`)
+}
+
+func openRom(args []string) *models.ROM {
+	if len(args) != 1 {
+		fmt.Println("Usage:\n  bones dbg <romname>.nes")
+		os.Exit(1)
+	}
+
+	filename := args[0]
+	f, err := os.Open(filename)
+	if err != nil {
+		fmt.Printf("Error opening file %s:\n%s\n", filename, err.Error())
+		os.Exit(1)
+	}
+
+	rom, err := ines.Parse(f)
+	if err != nil {
+		fmt.Printf("Error parsing iNES file %s:\n%s\n", filename, err.Error())
+		os.Exit(1)
+	}
+
+	return rom
+}
+
+func startInteractiveDbg() {
+	fmt.Println("Type 'help' for list of commands.")
+	for data := range breakVals {
+		instIdx := data.Disass.IndexOf(data.Reg.PC - 0x8000)
+		inst := data.Disass.Code[instIdx]
+		fmt.Printf("%+v\n", data.Reg)
+		fmt.Printf("0x%04x: %s\n", inst.Addr, inst.Text)
+
+		var input string
+		fmt.Print("(dbg) ")
+		fmt.Scanln(&input)
+
+		switch input {
+		case "n":
+			dw.Next()
+		case "next":
+			dw.Next()
+		case "q":
+			os.Exit(0)
+		default:
+		}
+	}
 }

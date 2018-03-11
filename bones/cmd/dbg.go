@@ -16,7 +16,15 @@ import (
 //
 // The return value of the function is set if the user interaction has ended,
 // and the debugger should return to waiting for the next breakpoint to be hit.
-type dbgCommand func(args []string) bool
+type dbgCommand struct {
+	name    string
+	aliases []string
+
+	cmd func(args []string) bool
+
+	description string
+	hString     string
+}
 
 var (
 	dw *dbg.Worker
@@ -24,6 +32,7 @@ var (
 	breakVals chan dbg.BreakData
 
 	dbgCommands map[string]*dbgCommand
+	cmdsHelp    string
 
 	// dbgCmd represents the dbg cli command
 	dbgCmd = &cobra.Command{
@@ -96,49 +105,103 @@ func handleUserInput() (finished bool) {
 
 	cmd, ok := dbgCommands[args[0]]
 	if !ok {
-		fmt.Printf("%s isn't a valid command, type 'help' for a list", input)
+		fmt.Printf("%s isn't a valid command, type 'help' for a list\n", input)
 		return false
 	}
 
-	return (*cmd)(args[1:])
+	return cmd.cmd(args[1:])
 }
 
 func initCommands() {
-	next := dbgCommand(func(args []string) bool {
-		dw.Next()
-		return true
-	})
-	exit := dbgCommand(func(args []string) bool {
-		os.Exit(0)
-		return true
-	})
-	help := dbgCommand(func(args []string) bool {
-		fmt.Println("helps")
-		fmt.Println(args)
-		return false
-	})
-	clear := dbgCommand(func(args []string) bool {
-		// TODO: support windows :(
-		cmd := exec.Command("clear")
-		cmd.Stdout = os.Stdout
-		cmd.Run()
-		return false
-	})
+	cmds := []dbgCommand{
+		dbgCommand{
+			name:    "next",
+			aliases: []string{"n"},
 
-	dbgCommands = map[string]*dbgCommand{
-		"next": &next,
-		"n":    &next,
+			cmd: func(args []string) bool {
+				dw.Next()
+				return true
+			},
 
-		"exit": &exit,
-		"quit": &exit,
-		"q":    &exit,
+			description: "Step over to next opcode",
+			hString:     "",
+		},
+		dbgCommand{
+			name:    "exit",
+			aliases: []string{"quit", "q"},
 
-		"help": &help,
-		"h":    &help,
-		"?":    &help,
+			cmd: func(args []string) bool {
+				os.Exit(0)
+				return true
+			},
 
-		"clear": &clear,
+			description: "Exit the debugger",
+			hString:     "",
+		},
+		dbgCommand{
+			name:    "help",
+			aliases: []string{"h", "?"},
+
+			cmd: func(args []string) bool {
+				printHelp(args)
+				return false
+			},
+
+			description: "Get list of commands or help on each",
+			hString:     "",
+		},
+		dbgCommand{
+			name:    "clear",
+			aliases: []string{},
+
+			cmd: func(args []string) bool {
+				// TODO: support windows :(
+				cmd := exec.Command("clear")
+				cmd.Stdout = os.Stdout
+				cmd.Run()
+				return false
+			},
+
+			description: "Get list of commands or help on each",
+			hString:     "",
+		},
 	}
+
+	dbgCommands = initCmdsMap(cmds)
+}
+
+func initCmdsMap(cmds []dbgCommand) map[string]*dbgCommand {
+	cmdsMap := map[string]*dbgCommand{}
+
+	for i := range cmds {
+		cmdsMap[cmds[i].name] = &cmds[i]
+
+		for _, a := range cmds[i].aliases {
+			cmdsMap[a] = &cmds[i]
+		}
+	}
+
+	return cmdsMap
+}
+
+func printHelp(args []string) {
+	if len(args) == 0 {
+		fmt.Println(cmdsHelp)
+		return
+	}
+
+	if len(args) > 1 {
+		fmt.Println("'help' only takes up to 1 arguments")
+		return
+	}
+
+	cmd, ok := dbgCommands[args[0]]
+	if !ok {
+		fmt.Printf("%s isn't a valid command, type 'help' for a list\n", args[0])
+		return
+	}
+
+	fmt.Println(cmd.hString)
 }
 
 func init() {

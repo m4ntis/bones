@@ -164,15 +164,7 @@ func BPL(cpu *CPU, args ...*byte) (extraCycles int) {
 }
 
 func BRK(cpu *CPU, args ...*byte) (extraCycles int) {
-	// push PCH
-	cpu.push(byte(cpu.Reg.PC >> 8))
-	// push PCL
-	cpu.push(byte(cpu.Reg.PC & 0xff))
-	// push P
-	cpu.push(cpu.Reg.GetP())
-
-	// fetch PCL from $fffe and PCH from $ffff
-	cpu.Reg.PC = int(*cpu.RAM.Fetch(0xfffe)) | int(*cpu.RAM.Fetch(0xffff))<<8
+	cpu.IRQ()
 	return
 }
 

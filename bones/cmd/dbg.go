@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"strings"
@@ -22,6 +23,7 @@ type dbgCommand struct {
 	cmd func(args []string) bool
 
 	description string
+	usage       string
 	hString     string
 }
 
@@ -31,7 +33,9 @@ var (
 	breakVals chan dbg.BreakData
 
 	dbgCommands map[string]*dbgCommand
-	cmdsHelp    string
+	help        string
+
+	reader *bufio.Reader
 
 	// dbgCmd represents the dbg cli command
 	dbgCmd = &cobra.Command{
@@ -97,7 +101,8 @@ func handleUserInput() (finished bool) {
 	var input string
 	for input == "" {
 		fmt.Print("(dbg) ")
-		fmt.Scanln(&input)
+		input, _ = reader.ReadString('\n')
+		input = strings.Replace(input, "\n", "", -1)
 	}
 
 	args := strings.Fields(input)
@@ -114,7 +119,9 @@ func handleUserInput() (finished bool) {
 func init() {
 	rootCmd.AddCommand(dbgCmd)
 
+	reader = bufio.NewReader(os.Stdin)
 	dbgCommands = createCommands()
+	help = generateHelp()
 
 	// Make bones dbg's usage be 'bones dbg <romname>.nes'
 	dbgCmd.SetUsageTemplate(`Usage:

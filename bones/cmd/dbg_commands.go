@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sort"
+	"strings"
 )
 
 func createCommands() map[string]*dbgCommand {
@@ -18,6 +20,7 @@ func createCommands() map[string]*dbgCommand {
 			},
 
 			description: "Step over to next opcode",
+			usage:       "",
 			hString:     "",
 		},
 		dbgCommand{
@@ -30,6 +33,7 @@ func createCommands() map[string]*dbgCommand {
 			},
 
 			description: "Exit the debugger",
+			usage:       "",
 			hString:     "",
 		},
 		dbgCommand{
@@ -42,7 +46,8 @@ func createCommands() map[string]*dbgCommand {
 			},
 
 			description: "Get list of commands or help on each",
-			hString:     "",
+			usage:       "help [command]",
+			hString:     "Type 'help' to get a list of commands, or help about a specific command by appending it's name",
 		},
 		dbgCommand{
 			name:    "clear",
@@ -56,7 +61,8 @@ func createCommands() map[string]*dbgCommand {
 				return false
 			},
 
-			description: "Get list of commands or help on each",
+			description: "Clear the screen",
+			usage:       "",
 			hString:     "",
 		},
 	}
@@ -80,7 +86,7 @@ func initCmdsMap(cmds []dbgCommand) map[string]*dbgCommand {
 
 func printHelp(args []string) {
 	if len(args) == 0 {
-		fmt.Println(cmdsHelp)
+		fmt.Println(help)
 		return
 	}
 
@@ -95,5 +101,52 @@ func printHelp(args []string) {
 		return
 	}
 
-	fmt.Println(cmd.hString)
+	fmt.Println(cmd.description)
+	if cmd.usage != "" {
+		fmt.Println()
+		fmt.Println("    " + cmd.usage)
+	}
+	if cmd.hString != "" {
+		fmt.Println()
+		fmt.Println(cmd.hString)
+	}
+}
+
+func generateHelp() string {
+	cmdDescriptions := map[string]string{}
+	var sortedDescriptions []string
+	var longestTitle int
+
+	for _, cmd := range dbgCommands {
+		title := generateCmdHelpTitle(cmd)
+		if len(title) > longestTitle {
+			longestTitle = len(title)
+		}
+
+		cmdDescriptions[title] = cmd.description
+	}
+
+	sortedDescriptions = make([]string, len(cmdDescriptions))
+	i := 0
+	for title, _ := range cmdDescriptions {
+		sortedDescriptions[i] = title
+		i++
+	}
+	sort.Strings(sortedDescriptions)
+
+	help := "The following commands are available:\n"
+	for _, title := range sortedDescriptions {
+		help += fmt.Sprintf("    %s %s %s\n", title,
+			strings.Repeat("-", longestTitle-len(title)+1), cmdDescriptions[title])
+	}
+
+	help += "Type 'help' followed by a command for full documentation"
+	return help
+}
+
+func generateCmdHelpTitle(cmd *dbgCommand) string {
+	if len(cmd.aliases) == 0 {
+		return cmd.name
+	}
+	return fmt.Sprintf("%s (alias: %s)", cmd.name, strings.Join(cmd.aliases, " | "))
 }

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"strings"
@@ -9,6 +8,7 @@ import (
 	"github.com/m4ntis/bones/dbg"
 	"github.com/m4ntis/bones/ines"
 	"github.com/m4ntis/bones/models"
+	"github.com/peterh/liner"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +35,7 @@ var (
 	dbgCommands map[string]*dbgCommand
 	help        string
 
-	reader *bufio.Reader
+	line = liner.NewLiner()
 
 	// dbgCmd represents the dbg cli command
 	dbgCmd = &cobra.Command{
@@ -100,9 +100,8 @@ func interact() {
 func handleUserInput() (finished bool) {
 	var input string
 	for input == "" {
-		fmt.Print("(dbg) ")
-		input, _ = reader.ReadString('\n')
-		input = strings.Replace(input, "\n", "", -1)
+		input, _ = line.Prompt("(dbg) ")
+		line.AppendHistory(input)
 	}
 
 	args := strings.Fields(input)
@@ -119,7 +118,6 @@ func handleUserInput() (finished bool) {
 func init() {
 	rootCmd.AddCommand(dbgCmd)
 
-	reader = bufio.NewReader(os.Stdin)
 	dbgCommands = createCommands()
 	help = generateHelp()
 

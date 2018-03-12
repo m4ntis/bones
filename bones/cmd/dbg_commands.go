@@ -5,11 +5,55 @@ import (
 	"os"
 	"os/exec"
 	"sort"
+	"strconv"
 	"strings"
 )
 
 func createCommands() map[string]*dbgCommand {
 	cmds := []dbgCommand{
+		dbgCommand{
+			name:    "break",
+			aliases: []string{"b"},
+
+			cmd: func(args []string) bool {
+				if len(args) != 1 {
+					fmt.Println("break commands takes exactly one argument")
+					return false
+				}
+
+				addr, err := strconv.ParseInt(args[0], 16, 16)
+				if err != nil {
+					fmt.Println("break command only takes a numeric value")
+					return false
+				}
+
+				ok := dw.Break(int(addr))
+				if !ok {
+					fmt.Printf("$%04x isn't a valid break address\n", addr)
+					return false
+				}
+
+				fmt.Printf("Breakpoint set at $%04x\n", addr)
+				return false
+			},
+
+			description: "Set a breakpoint",
+			usage:       "break <address>",
+			hString:     "Sets a breakpoint at the specified address in base 16",
+		},
+		dbgCommand{
+			name:    "continue",
+			aliases: []string{"c"},
+
+			cmd: func(args []string) bool {
+				dw.Continue()
+				return true
+			},
+
+			description: "Let the CPU continue till the next break",
+			usage:       "",
+			hString:     "",
+		},
 		dbgCommand{
 			name:    "next",
 			aliases: []string{"n"},

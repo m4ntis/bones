@@ -227,7 +227,7 @@ func generateHelp() string {
 
 	sortedDescriptions = make([]string, len(cmdDescriptions))
 	i := 0
-	for title, _ := range cmdDescriptions {
+	for title := range cmdDescriptions {
 		sortedDescriptions[i] = title
 		i++
 	}

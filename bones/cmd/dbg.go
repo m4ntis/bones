@@ -12,21 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// dbgCommand represents a command of the interactive debugger
-//
-// The return value of the function is set if the user interaction has ended,
-// and the debugger should return to waiting for the next breakpoint to be hit.
-type dbgCommand struct {
-	name    string
-	aliases []string
-
-	cmd func(args []string) bool
-
-	description string
-	usage       string
-	hString     string
-}
-
 var (
 	dw *dbg.Worker
 
@@ -79,25 +64,43 @@ func startInteractiveDbg() {
 	fmt.Println("Type 'help' for list of commands.")
 	for data := range breakVals {
 		displayBreak(data)
-		interact()
+		interact(data)
 	}
 }
 
 func displayBreak(data dbg.BreakData) {
-	instIdx := data.Disass.IndexOf(data.Reg.PC - 0x8000)
-	inst := data.Disass.Code[instIdx]
-	fmt.Printf("%+v\n", data.Reg)
-	fmt.Printf("0x%04x: %s\n", inst.Addr, inst.Text)
-}
+	var startIdx int
+	var endIdx int
 
-func interact() {
-	finished := false
-	for !finished {
-		finished = handleUserInput()
+	instIdx := data.Disass.IndexOf(data.Reg.PC - 0x8000)
+
+	if instIdx > 5 {
+		startIdx = instIdx - 5
+	}
+
+	if instIdx+5 < len(data.Disass.Code) {
+		endIdx = instIdx + 5
+	}
+
+	for i := startIdx; i <= endIdx; i++ {
+		inst := data.Disass.Code[i]
+
+		if i == instIdx {
+			fmt.Printf("=> 0x%04x: %s\n", inst.Addr, inst.Text)
+			continue
+		}
+		fmt.Printf("   0x%04x: %s\n", inst.Addr, inst.Text)
 	}
 }
 
-func handleUserInput() (finished bool) {
+func interact(data dbg.BreakData) {
+	finished := false
+	for !finished {
+		finished = handleUserInput(data)
+	}
+}
+
+func handleUserInput(data dbg.BreakData) (finished bool) {
 	var input string
 	for input == "" {
 		input, _ = line.Prompt("(dbg) ")
@@ -112,7 +115,7 @@ func handleUserInput() (finished bool) {
 		return false
 	}
 
-	return cmd.cmd(args[1:])
+	return cmd.cmd(data, args[1:])
 }
 
 func init() {

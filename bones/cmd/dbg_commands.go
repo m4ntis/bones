@@ -164,6 +164,19 @@ func createCommands() map[string]*dbgCommand {
 			usage:       "",
 			hString:     "",
 		},
+		dbgCommand{
+			name:    "list",
+			aliases: []string{"ls"},
+
+			cmd: func(data dbg.BreakData, args []string) bool {
+				displayBreak(data)
+				return false
+			},
+
+			description: "Display the source code and current location",
+			usage:       "",
+			hString:     "",
+		},
 	}
 
 	return initCmdsMap(cmds)

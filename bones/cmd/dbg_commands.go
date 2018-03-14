@@ -5,16 +5,78 @@ import (
 	"os"
 	"os/exec"
 	"sort"
+	"strconv"
 	"strings"
+
+	"github.com/m4ntis/bones/cpu"
+	"github.com/m4ntis/bones/dbg"
 )
+
+// dbgCommand represents a command of the interactive debugger
+//
+// The return value of the function is set if the user interaction has ended,
+// and the debugger should return to waiting for the next breakpoint to be hit.
+type dbgCommand struct {
+	name    string
+	aliases []string
+
+	cmd func(data dbg.BreakData, args []string) bool
+
+	description string
+	usage       string
+	hString     string
+}
 
 func createCommands() map[string]*dbgCommand {
 	cmds := []dbgCommand{
 		dbgCommand{
+			name:    "break",
+			aliases: []string{"b"},
+
+			cmd: func(data dbg.BreakData, args []string) bool {
+				if len(args) != 1 {
+					fmt.Println("break command takes exactly one argument")
+					return false
+				}
+
+				addr, err := strconv.ParseInt(args[0], 16, 16)
+				if err != nil {
+					fmt.Println("break command only takes a numeric value")
+					return false
+				}
+
+				ok := dw.Break(int(addr))
+				if !ok {
+					fmt.Printf("$%04x isn't a valid break address\n", addr)
+					return false
+				}
+
+				fmt.Printf("Breakpoint set at $%04x\n", addr)
+				return false
+			},
+
+			description: "Set a breakpoint",
+			usage:       "break <address>",
+			hString:     "Sets a breakpoint at the specified address in base 16",
+		},
+		dbgCommand{
+			name:    "continue",
+			aliases: []string{"c"},
+
+			cmd: func(data dbg.BreakData, args []string) bool {
+				dw.Continue()
+				return true
+			},
+
+			description: "Let the CPU continue till the next break",
+			usage:       "",
+			hString:     "",
+		},
+		dbgCommand{
 			name:    "next",
 			aliases: []string{"n"},
 
-			cmd: func(args []string) bool {
+			cmd: func(data dbg.BreakData, args []string) bool {
 				dw.Next()
 				return true
 			},
@@ -27,7 +89,7 @@ func createCommands() map[string]*dbgCommand {
 			name:    "exit",
 			aliases: []string{"quit", "q"},
 
-			cmd: func(args []string) bool {
+			cmd: func(data dbg.BreakData, args []string) bool {
 				os.Exit(0)
 				return true
 			},
@@ -40,7 +102,7 @@ func createCommands() map[string]*dbgCommand {
 			name:    "help",
 			aliases: []string{"h", "?"},
 
-			cmd: func(args []string) bool {
+			cmd: func(data dbg.BreakData, args []string) bool {
 				printHelp(args)
 				return false
 			},
@@ -53,7 +115,7 @@ func createCommands() map[string]*dbgCommand {
 			name:    "clear",
 			aliases: []string{},
 
-			cmd: func(args []string) bool {
+			cmd: func(data dbg.BreakData, args []string) bool {
 				// TODO: support windows :(
 				cmd := exec.Command("clear")
 				cmd.Stdout = os.Stdout
@@ -62,6 +124,56 @@ func createCommands() map[string]*dbgCommand {
 			},
 
 			description: "Clear the screen",
+			usage:       "",
+			hString:     "",
+		},
+		dbgCommand{
+			name:    "print",
+			aliases: []string{"p"},
+
+			cmd: func(data dbg.BreakData, args []string) bool {
+				if len(args) != 1 {
+					fmt.Println("print command takes exactly one argument")
+					return false
+				}
+
+				addr, err := strconv.ParseInt(args[0], 16, 16)
+				if err != nil || addr > cpu.RAM_SIZE {
+					fmt.Printf("print command only takes a numeric value between 0 and 0x%x\n", cpu.RAM_SIZE)
+					return false
+				}
+
+				fmt.Printf("$%04x: 0x%02x\n", int(addr), *data.RAM.Fetch(int(addr)))
+				return false
+			},
+
+			description: "Print a value from RAM",
+			usage:       "print <address>",
+			hString:     "Prints the hex value from RAM at a given address in hex",
+		},
+		dbgCommand{
+			name:    "regs",
+			aliases: []string{},
+
+			cmd: func(data dbg.BreakData, args []string) bool {
+				fmt.Println(strings.Trim(fmt.Sprintf("%+v", data.Reg), "&{}"))
+				return false
+			},
+
+			description: "Prints the cpu's registers' status",
+			usage:       "",
+			hString:     "",
+		},
+		dbgCommand{
+			name:    "list",
+			aliases: []string{"ls"},
+
+			cmd: func(data dbg.BreakData, args []string) bool {
+				displayBreak(data)
+				return false
+			},
+
+			description: "Display the source code and current location",
 			usage:       "",
 			hString:     "",
 		},
@@ -128,7 +240,7 @@ func generateHelp() string {
 
 	sortedDescriptions = make([]string, len(cmdDescriptions))
 	i := 0
-	for title, _ := range cmdDescriptions {
+	for title := range cmdDescriptions {
 		sortedDescriptions[i] = title
 		i++
 	}

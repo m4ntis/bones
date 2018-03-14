@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"strings"
@@ -9,23 +8,9 @@ import (
 	"github.com/m4ntis/bones/dbg"
 	"github.com/m4ntis/bones/ines"
 	"github.com/m4ntis/bones/models"
+	"github.com/peterh/liner"
 	"github.com/spf13/cobra"
 )
-
-// dbgCommand represents a command of the interactive debugger
-//
-// The return value of the function is set if the user interaction has ended,
-// and the debugger should return to waiting for the next breakpoint to be hit.
-type dbgCommand struct {
-	name    string
-	aliases []string
-
-	cmd func(args []string) bool
-
-	description string
-	usage       string
-	hString     string
-}
 
 var (
 	dw *dbg.Worker
@@ -35,7 +20,7 @@ var (
 	dbgCommands map[string]*dbgCommand
 	help        string
 
-	reader *bufio.Reader
+	line = liner.NewLiner()
 
 	// dbgCmd represents the dbg cli command
 	dbgCmd = &cobra.Command{
@@ -79,30 +64,47 @@ func startInteractiveDbg() {
 	fmt.Println("Type 'help' for list of commands.")
 	for data := range breakVals {
 		displayBreak(data)
-		interact()
+		interact(data)
 	}
 }
 
 func displayBreak(data dbg.BreakData) {
-	instIdx := data.Disass.IndexOf(data.Reg.PC - 0x8000)
-	inst := data.Disass.Code[instIdx]
-	fmt.Printf("%+v\n", data.Reg)
-	fmt.Printf("0x%04x: %s\n", inst.Addr, inst.Text)
-}
+	var startIdx int
+	var endIdx int
 
-func interact() {
-	finished := false
-	for !finished {
-		finished = handleUserInput()
+	instIdx := data.Disass.IndexOf(data.Reg.PC - 0x8000)
+
+	if instIdx > 5 {
+		startIdx = instIdx - 5
+	}
+
+	if instIdx+5 < len(data.Disass.Code) {
+		endIdx = instIdx + 5
+	}
+
+	for i := startIdx; i <= endIdx; i++ {
+		inst := data.Disass.Code[i]
+
+		if i == instIdx {
+			fmt.Printf("=> 0x%04x: %s\n", inst.Addr, inst.Text)
+			continue
+		}
+		fmt.Printf("   0x%04x: %s\n", inst.Addr, inst.Text)
 	}
 }
 
-func handleUserInput() (finished bool) {
+func interact(data dbg.BreakData) {
+	finished := false
+	for !finished {
+		finished = handleUserInput(data)
+	}
+}
+
+func handleUserInput(data dbg.BreakData) (finished bool) {
 	var input string
 	for input == "" {
-		fmt.Print("(dbg) ")
-		input, _ = reader.ReadString('\n')
-		input = strings.Replace(input, "\n", "", -1)
+		input, _ = line.Prompt("(dbg) ")
+		line.AppendHistory(input)
 	}
 
 	args := strings.Fields(input)
@@ -113,13 +115,12 @@ func handleUserInput() (finished bool) {
 		return false
 	}
 
-	return cmd.cmd(args[1:])
+	return cmd.cmd(data, args[1:])
 }
 
 func init() {
 	rootCmd.AddCommand(dbgCmd)
 
-	reader = bufio.NewReader(os.Stdin)
 	dbgCommands = createCommands()
 	help = generateHelp()
 

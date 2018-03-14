@@ -25,7 +25,12 @@ type Disassembly struct {
 }
 
 func (d Disassembly) IndexOf(addr int) int {
-	return d.addrTable[addr]
+	i, ok := d.addrTable[addr]
+
+	if ok {
+		return i
+	}
+	return -1
 }
 
 func Disassemble(prgROM []models.PrgROMPage) Disassembly {

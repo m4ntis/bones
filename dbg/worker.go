@@ -72,11 +72,16 @@ func (w *Worker) Next() {
 	w.nextc <- true
 }
 
-func (w *Worker) Break(addr int) {
+func (w *Worker) Break(addr int) (success bool) {
+	if w.d.IndexOf(addr) == -1 {
+		return false
+	}
+
 	w.bpsMux.Lock()
 	defer w.bpsMux.Unlock()
 
 	w.bps[addr] = true
+	return true
 }
 
 func (w *Worker) Clear(addr int) {

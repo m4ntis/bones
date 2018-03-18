@@ -4,12 +4,16 @@ import "github.com/m4ntis/bones/models"
 
 type PPU struct {
 	RAM *RAM
+	OAM *OAM
 }
 
 func New() *PPU {
 	var ram RAM
+	var oam OAM
+
 	return &PPU{
 		RAM: &ram,
+		OAM: &oam,
 	}
 }
 

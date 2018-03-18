@@ -5,15 +5,29 @@ import "github.com/m4ntis/bones/models"
 type PPU struct {
 	RAM *RAM
 	OAM *OAM
+	Reg Regs
 }
 
-func New() *PPU {
+func New(ppuctrl *byte, ppumask *byte, ppustatus *byte, oamaddr *byte,
+	oamdata *byte, ppuscroll *byte, ppuaddr *byte, ppudata *byte,
+	oamdma *byte) *PPU {
 	var ram RAM
 	var oam OAM
 
 	return &PPU{
 		RAM: &ram,
 		OAM: &oam,
+		Reg: Regs{
+			PPUCTRL:   ppuctrl,
+			PPUMASK:   ppumask,
+			PPUSTATUS: ppustatus,
+			OAMADDR:   oamaddr,
+			OAMDATA:   oamdata,
+			PPUSCROLL: ppuscroll,
+			PPUADDR:   ppuaddr,
+			PPUDATA:   ppudata,
+			OAMDMA:    oamdma,
+		},
 	}
 }
 

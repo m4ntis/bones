@@ -27,10 +27,8 @@ func getIndex(index int) int {
 	if index >= RAM_MIRROR_IDX && index < LOWER_IO_REG_IDX {
 		return index % 0x800
 	}
-	if index >= LOWER_IO_REG_MIRROR_IDX &&
-		index < UPPER_IO_REG_IDX {
-		return (index-LOWER_IO_REG_IDX)%0x8 +
-			LOWER_IO_REG_IDX
+	if index >= LOWER_IO_REG_MIRROR_IDX && index < UPPER_IO_REG_IDX {
+		return (index-LOWER_IO_REG_IDX)%0x8 + LOWER_IO_REG_IDX
 	}
 	return index
 }

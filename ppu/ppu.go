@@ -6,7 +6,7 @@ type PPU struct {
 	RAM *RAM
 }
 
-func NewPPU() *PPU {
+func New() *PPU {
 	var ram RAM
 	return &PPU{
 		RAM: &ram,
@@ -15,6 +15,5 @@ func NewPPU() *PPU {
 
 func (ppu *PPU) LoadROM(rom *models.ROM) {
 	// Load first 2 pages of PrgROM (not supporting mappers as of yet)
-	copy(ppu.RAM.data[0x0:0x1000], rom.ChrROM[0][:])
-	copy(ppu.RAM.data[0x1000:0x2000], rom.ChrROM[1][:])
+	copy(ppu.RAM.data[0x0:models.CHR_ROM_PAGE_SIZE], rom.ChrROM[0][:])
 }

@@ -17,7 +17,7 @@ type CPU struct {
 	interruptMux *sync.Mutex
 }
 
-func NewCPU() *CPU {
+func New() *CPU {
 	var ram RAM
 	return &CPU{
 		RAM: &ram,

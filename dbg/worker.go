@@ -6,6 +6,7 @@ import (
 	"github.com/m4ntis/bones/cpu"
 	"github.com/m4ntis/bones/disass"
 	"github.com/m4ntis/bones/models"
+	"github.com/m4ntis/bones/ppu"
 )
 
 type breakPoints map[int]bool
@@ -19,6 +20,7 @@ type BreakData struct {
 
 type Worker struct {
 	c *cpu.CPU
+	p *ppu.PPU
 	d disass.Disassembly
 
 	bps    breakPoints
@@ -35,11 +37,15 @@ type Worker struct {
 // The vals channel is the channel containing the data returned each time the
 // cpu breaks, describing the current cpu state.
 func NewWorker(rom *models.ROM, vals chan<- BreakData) *Worker {
-	c := cpu.NewCPU()
+	c := cpu.New()
 	c.LoadROM(rom)
+
+	p := ppu.New()
+	p.LoadROM(rom)
 
 	return &Worker{
 		c: c,
+		p: p,
 		d: disass.Disassemble(rom.PrgROM),
 
 		bps: breakPoints{

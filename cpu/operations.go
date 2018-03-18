@@ -22,6 +22,11 @@ import (
 // branching operations.
 type Operation func(*CPU, ...*byte) int
 
+// ADC - Add Carry
+// A + val + C  => A
+//
+// N Z C I D V
+// v v v - - v
 func ADC(cpu *CPU, args ...*byte) (extraCycles int) {
 	// Calculate result and store in a
 	arg1 := cpu.Reg.A
@@ -55,13 +60,24 @@ func ADC(cpu *CPU, args ...*byte) (extraCycles int) {
 	return
 }
 
+// AND - And with A
+// A & val => A
+//
+// N Z C I D V
+// v v - - - -
 func AND(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.Reg.A &= *args[0]
 	setN(cpu.Reg, cpu.Reg.A)
-	setZ(cpu.Reg, cpu.Reg.Z)
+	setZ(cpu.Reg, cpu.Reg.A)
 	return
 }
 
+// ASL - Shift Left One Bit
+// val[7] -> c
+// val << 1 -> val
+//
+// N Z C I D V
+// v v v - - -
 func ASL(cpu *CPU, args ...*byte) (extraCycles int) {
 	cpu.Reg.C = *args[0] >> 7
 	*args[0] <<= 1
@@ -70,6 +86,11 @@ func ASL(cpu *CPU, args ...*byte) (extraCycles int) {
 	return
 }
 
+// BCC - Branch Carry Clear
+// C == 0 -> branch
+//
+// N Z C I D V
+// - - - - - -
 func BCC(cpu *CPU, args ...*byte) (extraCycles int) {
 	initPC := cpu.Reg.PC
 
@@ -84,6 +105,11 @@ func BCC(cpu *CPU, args ...*byte) (extraCycles int) {
 	return
 }
 
+// BCS - Branch Carry Set
+// C == 1 -> branch
+//
+// N Z C I D V
+// - - - - - -
 func BCS(cpu *CPU, args ...*byte) (extraCycles int) {
 	initPC := cpu.Reg.PC
 
@@ -98,6 +124,11 @@ func BCS(cpu *CPU, args ...*byte) (extraCycles int) {
 	return
 }
 
+// BEQ - Branch result zero
+// C == 1 -> branch
+//
+// N Z C I D V
+// - - - - - -
 func BEQ(cpu *CPU, args ...*byte) (extraCycles int) {
 	initPC := cpu.Reg.PC
 
@@ -517,7 +548,7 @@ func TXS(cpu *CPU, args ...*byte) (extraCycles int) {
 	return
 }
 
-func setZ(Reg *Registers, val byte) {
+func setZ(Reg *Regs, val byte) {
 	if val == 0x0 {
 		Reg.Z = SET
 		return
@@ -525,6 +556,6 @@ func setZ(Reg *Registers, val byte) {
 	Reg.Z = CLEAR
 }
 
-func setN(Reg *Registers, val byte) {
+func setN(Reg *Regs, val byte) {
 	Reg.N = val >> 7
 }

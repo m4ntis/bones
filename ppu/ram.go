@@ -12,7 +12,7 @@ const (
 	NT3_IDX            = 0x2c00
 	AT3_IDX            = 0x2fc0
 	TABLES_MIRROR_IDX  = 0x3000
-	IMG_PALETTE_IDX    = 0x3f00
+	BGR_PALETTE_IDX    = 0x3f00
 	SPRITE_PALETTE_IDX = 0x3f10
 	PALETTE_MIRROR_IDX = 0x3f20
 	RAM_MIRROR_IDX     = 0x4000
@@ -28,11 +28,11 @@ func getIndex(index int) int {
 		panic("RAM accessing index out of range")
 	}
 
-	if index >= TABLES_MIRROR_IDX && index < IMG_PALETTE_IDX {
+	if index >= TABLES_MIRROR_IDX && index < BGR_PALETTE_IDX {
 		return index - 0x1000
 	}
 	if index >= PALETTE_MIRROR_IDX && index < RAM_MIRROR_IDX {
-		return (index-IMG_PALETTE_IDX)%0x20 + IMG_PALETTE_IDX
+		return (index-BGR_PALETTE_IDX)%0x20 + BGR_PALETTE_IDX
 	}
 	if index >= RAM_MIRROR_IDX {
 		return index % 0x4000

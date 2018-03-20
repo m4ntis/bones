@@ -9,29 +9,35 @@ import (
 type PPU struct {
 	RAM *RAM
 	OAM *OAM
-	Reg Regs
+
+	ppuctrl   byte
+	ppumask   byte
+	ppustatus byte
+	oamaddr   byte
+	oamdata   byte
+	ppuscroll byte
+	ppuaddr   byte
+	ppudata   byte
+	oamdma    byte
+
+	scrollSecondWrite bool
+	xScroll           byte
+	yScroll           byte
+
+	vblank bool
+	nmi    chan bool
 }
 
-func New(ppuctrl *byte, ppumask *byte, ppustatus *byte, oamaddr *byte,
-	oamdata *byte, ppuscroll *byte, ppuaddr *byte, ppudata *byte,
-	oamdma *byte) *PPU {
+func New(nmi chan bool) *PPU {
 	var ram RAM
 	var oam OAM
 
 	return &PPU{
 		RAM: &ram,
 		OAM: &oam,
-		Reg: Regs{
-			PPUCTRL:   ppuctrl,
-			PPUMASK:   ppumask,
-			PPUSTATUS: ppustatus,
-			OAMADDR:   oamaddr,
-			OAMDATA:   oamdata,
-			PPUSCROLL: ppuscroll,
-			PPUADDR:   ppuaddr,
-			PPUDATA:   ppudata,
-			OAMDMA:    oamdma,
-		},
+
+		vblank: false,
+		nmi:    nmi,
 	}
 }
 
@@ -46,7 +52,7 @@ func (ppu *PPU) DMA(oamData [256]byte) {
 
 func (ppu *PPU) Cycle(scanline int, x int) color.RGBA {
 	if scanline >= 0 && scanline < 240 {
-		pt := int(*ppu.Reg.PPUCTRL >> 4 & 1)
+		pt := int(*ppu.PPUCTRL >> 4 & 1)
 		nt := (scanline/8)*32 + x/8
 		at := (scanline/32)*8 + x/32
 
@@ -79,4 +85,64 @@ func (ppu *PPU) Cycle(scanline int, x int) color.RGBA {
 		return Palette[pIdx]
 	}
 	return color.RGBA{}
+}
+
+func (ppu *PPU) PPUCtrlWrite(data byte) {
+	// If V Flag set while in vblank
+	if ppu.ppuctrl>>7 == 0 && data>>7 == 1 && ppu.vblank {
+		ppu.nmi <- true
+	}
+
+	ppu.ppuctrl = data
+}
+
+func (ppu *PPU) PPUMaskWrite(data byte) {
+	ppu.ppumask = data
+}
+
+func (ppu *PPU) PPUStatusRead() byte {
+	defer func() {
+		// Clear bit 7
+		ppu.ppustatus &= 0x7f
+
+		ppu.ppuscroll &= 0
+		ppu.ppuaddr &= 0
+	}()
+
+	return ppu.ppustatus
+}
+
+func (ppu *PPU) OAMAddrWrite(data byte) {
+	ppu.oamaddr = data
+}
+
+func (ppu *PPU) OAMDataRead(data byte) {
+	ppu.oamaddr++
+}
+
+func (ppu *PPU) OAMDataWrite(data byte) {
+	ppu.oamaddr++
+}
+
+func (ppu *PPU) PpuScrollWrite(data byte) {
+	defer func() { ppu.scrollSecondWrite = !ppu.scrollSecondWrite }()
+
+	if ppu.scrollSecondWrite {
+		ppu.yScroll = data
+		return
+	}
+
+	ppu.xScroll = data
+}
+
+func (ppu *PPU) PPUADDRWrite(data byte) {
+}
+
+func (ppu *PPU) PPUDATARead() {
+}
+
+func (ppu *PPU) PPUDATAWrite(data byte) {
+}
+
+func (ppu *PPU) OAMDMAWrite(data byte) {
 }

@@ -3,12 +3,13 @@ package cpu
 import "fmt"
 
 const (
-	a = iota
+	ARegisterOperand = iota
 )
 
 const (
 	CPURAMOperand = iota
 	CPURegisterOperand
+	ConstOperand
 )
 
 type OperandType int
@@ -34,12 +35,14 @@ func (op Operand) Read() byte {
 	case CPURAMOperand:
 		return op.cpu.RAM.Read(op.Identifier)
 	case CPURegisterOperand:
-		if op.Identifier == a {
+		if op.Identifier == ARegisterOperand {
 			return cpu.Regs.A
 		} else {
 			panic(fmt.Sprintf("Invalid cpu register identifier %d",
 				op.Identifier))
 		}
+	case ConstOperand:
+		return op.Identifier
 	default:
 		panic(fmt.Sprintf("Invalid operand type %d", op.ot))
 	}
@@ -56,6 +59,8 @@ func (op Operand) Write(d byte) {
 			panic(fmt.Sprintf("Invalid cpu register identifier %d",
 				op.Identifier))
 		}
+	case ConstOperand:
+		panic("Can't write to a const operand")
 	default:
 		panic(fmt.Sprintf("Invalid operand type %d", op.ot))
 	}

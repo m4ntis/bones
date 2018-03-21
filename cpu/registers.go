@@ -1,8 +1,8 @@
 package cpu
 
 const (
-	SET   = 1
-	CLEAR = 0
+	Set   = 1
+	Clear = 0
 )
 
 type Registers struct {

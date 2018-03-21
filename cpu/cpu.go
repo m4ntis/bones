@@ -35,9 +35,11 @@ func New() *CPU {
 
 func (cpu *CPU) LoadROM(rom *models.ROM) {
 	// Load first 2 pages of PrgROM (not supporting mappers as of yet)
-	copy(cpu.RAM.data[0x8000:0x8000+models.PRG_ROM_PAGE_SIZE], rom.PrgROM[0][:])
-	copy(cpu.RAM.data[0x8000+models.PRG_ROM_PAGE_SIZE:0x8000+2*models.PRG_ROM_PAGE_SIZE],
-		rom.PrgROM[1][:])
+	copy(cpu.RAM.data[0x8000:0x8000+models.PrgROMPageSize], rom.PrgROM[0][:])
+	if len(rom.PrgROM) > 1 {
+		copy(cpu.RAM.data[0x8000+models.PrgROMPageSize:0x8000+2*models.PrgROMPageSize],
+			rom.PrgROM[1][:])
+	}
 }
 
 func (cpu *CPU) ExecNext() (cycles int) {
@@ -75,7 +77,7 @@ func (cpu *CPU) HandleInterupts() {
 }
 
 func (cpu *CPU) IRQ() {
-	if cpu.Reg.I == CLEAR {
+	if cpu.Reg.I == Clear {
 		cpu.interruptMux.Lock()
 		cpu.irq = true
 		cpu.interruptMux.Unlock()
@@ -83,7 +85,7 @@ func (cpu *CPU) IRQ() {
 }
 
 func (cpu *CPU) NMI() {
-	if int(*cpu.RAM.Fetch(0x2000)&1<<7) == CLEAR {
+	if int(*cpu.RAM.Fetch(0x2000)&1<<7) == Clear {
 		cpu.interruptMux.Lock()
 		cpu.nmi = true
 		cpu.interruptMux.Unlock()

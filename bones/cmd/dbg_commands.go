@@ -138,8 +138,8 @@ func createCommands() map[string]*dbgCommand {
 				}
 
 				addr, err := strconv.ParseInt(args[0], 16, 16)
-				if err != nil || addr > cpu.RAM_SIZE {
-					fmt.Printf("print command only takes a numeric value between 0 and 0x%x\n", cpu.RAM_SIZE)
+				if err != nil || addr > cpu.RamSize {
+					fmt.Printf("print command only takes a numeric value between 0 and 0x%x\n", cpu.RamSize)
 					return false
 				}
 

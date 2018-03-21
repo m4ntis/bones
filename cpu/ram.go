@@ -1,36 +1,34 @@
 package cpu
 
 const (
-	ZERO_PAGE_BEGIN_IDX           = 0x0
-	STACK_BEGIN_IDX               = 0x100
-	RAM_BEGIN_IDX                 = 0x200
-	RAM_MIRROR_BEGIN_IDX          = 0x800
-	LOWER_IO_REG_BEGIN_IDX        = 0x2000
-	LOWER_IO_REG_MIRROR_BEGIN_IDX = 0x2008
-	UPPER_IO_REG_BEGIN_IDX        = 0x4000
-	EXPANSION_ROM_BEGIN_IDX       = 0x4020
-	SRAM_BEGIN_IDX                = 0x4000
-	PRG_ROM_LOWER_BEGIN_IDX       = 0x8000
-	PRG_ROM_UPPER_BEGIN_IDX       = 0xc000
-	RAM_SIZE                      = 0x10000
+	ZeroPageBeginIdx         = 0x0
+	StackBeginIdx            = 0x100
+	RamBeginIdx              = 0x200
+	RamMirrorBeginIdx        = 0x800
+	LowerIORegBeginIdx       = 0x2000
+	LowerIORegMirrorBeginIdx = 0x2008
+	UpperIORegBeginIdx       = 0x4000
+	ExpansionRomBeginIdx     = 0x4020
+	SramBeginIdx             = 0x4000
+	PrgRomLowerBeginIdx      = 0x8000
+	PrgRomUpperBeginIdx      = 0xc000
+	RamSize                  = 0x10000
 )
 
 type RAM struct {
-	data [RAM_SIZE]byte
+	data [RamSize]byte
 }
 
 func getIndex(index int) int {
-	if index < 0 || index > RAM_SIZE {
+	if index < 0 || index > RamSize {
 		panic("RAM accessing index out of range")
 	}
 
-	if index >= RAM_MIRROR_BEGIN_IDX && index < LOWER_IO_REG_BEGIN_IDX {
+	if index >= RamMirrorBeginIdx && index < LowerIORegBeginIdx {
 		return index % 0x800
 	}
-	if index >= LOWER_IO_REG_MIRROR_BEGIN_IDX &&
-		index < UPPER_IO_REG_BEGIN_IDX {
-		return (index-LOWER_IO_REG_BEGIN_IDX)%0x8 +
-			LOWER_IO_REG_BEGIN_IDX
+	if index >= LowerIORegMirrorBeginIdx && index < UpperIORegBeginIdx {
+		return (index-LowerIORegBeginIdx)%0x8 + LowerIORegBeginIdx
 	}
 	return index
 }

@@ -10,10 +10,10 @@ import (
 )
 
 const (
-	INES_HEADER_SIZE = 16
+	InesHeaderSize = 16
 
-	HORIZONTAL_MIRRORING = 0
-	VERTICAL_MIRRORING   = 1
+	HorizontalMirroring = 0
+	VerticalMirroring   = 1
 )
 
 type inesHeader struct {
@@ -28,11 +28,11 @@ type inesHeader struct {
 }
 
 func readHeader(r io.Reader) (header []byte, err error) {
-	header = make([]byte, INES_HEADER_SIZE)
+	header = make([]byte, InesHeaderSize)
 	n, err := r.Read(header)
-	if n < INES_HEADER_SIZE && err == nil {
+	if n < InesHeaderSize && err == nil {
 		return nil, errors.Errorf("Couldn't read enough bytes, read %d/%d", n,
-			INES_HEADER_SIZE)
+			InesHeaderSize)
 	} else if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -94,9 +94,9 @@ func Parse(r io.Reader) (rom *models.ROM, err error) {
 	}
 
 	// Calculate ROM size and read it
-	trainerSize := header.Trainer * models.TRAINER_SIZE
-	prgROMSize := header.PrgROMSize * models.PRG_ROM_PAGE_SIZE
-	chrROMSize := header.ChrROMSize * models.CHR_ROM_PAGE_SIZE
+	trainerSize := header.Trainer * models.TrainerSize
+	prgROMSize := header.PrgROMSize * models.PrgROMPageSize
+	chrROMSize := header.ChrROMSize * models.ChrROMPageSize
 	romSize := trainerSize + prgROMSize + chrROMSize
 
 	romBuff := make([]byte, romSize)

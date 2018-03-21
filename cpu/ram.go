@@ -54,6 +54,12 @@ type RAM struct {
 	iom IOMapper
 }
 
+func NewRAM(iom IOMapper) *RAM {
+	return &RAM{
+		iom: iom,
+	}
+}
+
 // getAddr returns the underlying address after mapping.
 func getAddr(addr int) int {
 	if addr < 0 || addr > RamSize {

@@ -102,6 +102,12 @@ type IOMapper struct {
 	ppu *ppu.PPU
 }
 
+func NewIOMapper(ppu *ppu.PPU) IOMapper {
+	return IOMapper{
+		ppu: ppu,
+	}
+}
+
 func (iom IOMapper) OnRead(addr int) {
 
 }

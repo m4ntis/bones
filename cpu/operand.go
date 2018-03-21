@@ -42,7 +42,7 @@ func (op Operand) Read() byte {
 				op.Identifier))
 		}
 	case ConstOperand:
-		return op.Identifier
+		return byte(op.Identifier)
 	default:
 		panic(fmt.Sprintf("Invalid operand type %d", op.ot))
 	}

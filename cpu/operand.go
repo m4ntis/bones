@@ -17,32 +17,32 @@ type OperandType int
 type Operand struct {
 	cpu *CPU
 
-	ot    OperandType
-	ident int
+	Type  OperandType
+	Ident int
 }
 
 func NewOperand(cpu *CPU, ot OperandType, identifier int) Operand {
 	return Operand{
 		cpu: cpu,
 
-		ot:    ot,
-		ident: identifier,
+		Type:  ot,
+		Ident: identifier,
 	}
 }
 
 func (op Operand) Read() byte {
 	switch op.Type {
 	case CPURAMOperand:
-		return op.cpu.RAM.Read(op.Identifier)
+		return op.cpu.RAM.Read(op.Ident)
 	case CPURegisterOperand:
-		if op.Identifier == ARegisterOperand {
+		if op.Ident == ARegisterOperand {
 			return cpu.Regs.A
 		} else {
 			panic(fmt.Sprintf("Invalid cpu register identifier %d",
-				op.Identifier))
+				op.Ident))
 		}
 	case ConstOperand:
-		return byte(op.Identifier)
+		return byte(op.Ident)
 	default:
 		panic(fmt.Sprintf("Invalid operand type %d", op.ot))
 	}
@@ -51,13 +51,13 @@ func (op Operand) Read() byte {
 func (op Operand) Write(d byte) {
 	switch op.Type {
 	case CPURAMOperand:
-		return op.cpu.RAM.Write(op.Identifier, d)
+		return op.cpu.RAM.Write(op.Ident, d)
 	case CPURegisterOperand:
-		if op.Identifier == a {
+		if op.Ident == a {
 			cpu.Regs.A = d
 		} else {
 			panic(fmt.Sprintf("Invalid cpu register identifier %d",
-				op.Identifier))
+				op.Ident))
 		}
 	case ConstOperand:
 		panic("Can't write to a const operand")

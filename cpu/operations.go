@@ -20,19 +20,19 @@ import (
 // Similar to addressing modes, opcodes too return whether the operation's
 // execution took extra cycles. This happens on the operation level only in
 // branching operations.
-type Operation func(*Registers, Operand) int
+type Operation func(*CPU, Operand) int
 
-func ADC(reg *Registers, op Operand) (extraCycles int) {
+func ADC(cpu *CPU, op Operand) (extraCycles int) {
 	// Calculate result and store in a
-	arg1 := reg.A
+	arg1 := cpu.Reg.A
 	arg2 := op.Read()
-	arg3 := reg.C
+	arg3 := cpu.Reg.C
 
 	res := arg1 + arg2 + arg3
-	reg.A = res
+	cpu.Reg.A = res
 
 	// Set flags
-	setNZ(reg, res)
+	setNZ(cpu, res)
 
 	// Overflow
 	signed_arg1 := int8(arg1)
@@ -40,494 +40,494 @@ func ADC(reg *Registers, op Operand) (extraCycles int) {
 	signed_arg3 := int8(arg3)
 	if int(signed_arg1+signed_arg2+signed_arg3) != int(signed_arg1)+
 		int(signed_arg2)+int(signed_arg3) {
-		reg.V = Set
+		cpu.Reg.V = Set
 	} else {
-		reg.V = Clear
+		cpu.Reg.V = Clear
 	}
 
 	// Carry
 	if int(arg1)+int(arg2)+int(arg3) > 255 {
-		reg.C = Set
+		cpu.Reg.C = Set
 	} else {
-		reg.C = Clear
+		cpu.Reg.C = Clear
 	}
 	return
 }
 
-func AND(reg *Registers, op Operand) (extraCycles int) {
-	reg.A &= op.Read()
-	setNZ(reg, reg.A)
+func AND(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.A &= op.Read()
+	setNZ(cpu, cpu.Reg.A)
 	return
 }
 
-func ASL(reg *Registers, op Operand) (extraCycles int) {
+func ASL(cpu *CPU, op Operand) (extraCycles int) {
 	d := op.Read()
 
-	reg.C = d >> 7
+	cpu.Reg.C = d >> 7
 	d <<= 1
 
-	setNZ(reg, d)
+	setNZ(cpu, d)
 
 	op.Write(d)
 	return
 }
 
-func BCC(reg *Registers, op Operand) (extraCycles int) {
-	initPC := reg.PC
+func BCC(cpu *CPU, op Operand) (extraCycles int) {
+	initPC := cpu.Reg.PC
 
-	if reg.C == Clear {
+	if cpu.Reg.C == Clear {
 		extraCycles++
-		reg.PC += int(int8(op.Read()))
+		cpu.Reg.PC += int(int8(op.Read()))
 
-		if initPC/256 != reg.PC/256 {
+		if initPC/256 != cpu.Reg.PC/256 {
 			extraCycles++
 		}
 	}
 	return
 }
 
-func BCS(reg *Registers, op Operand) (extraCycles int) {
-	initPC := reg.PC
+func BCS(cpu *CPU, op Operand) (extraCycles int) {
+	initPC := cpu.Reg.PC
 
-	if reg.C == Set {
+	if cpu.Reg.C == Set {
 		extraCycles++
-		reg.PC += int(int8(op.Read()))
+		cpu.Reg.PC += int(int8(op.Read()))
 
-		if initPC/256 != reg.PC/256 {
+		if initPC/256 != cpu.Reg.PC/256 {
 			extraCycles++
 		}
 	}
 	return
 }
 
-func BEQ(reg *Registers, op Operand) (extraCycles int) {
-	initPC := reg.PC
+func BEQ(cpu *CPU, op Operand) (extraCycles int) {
+	initPC := cpu.Reg.PC
 
-	if reg.Z == Set {
+	if cpu.Reg.Z == Set {
 		extraCycles++
-		reg.PC += int(int8(op.Read()))
+		cpu.Reg.PC += int(int8(op.Read()))
 
-		if initPC/256 != reg.PC/256 {
+		if initPC/256 != cpu.Reg.PC/256 {
 			extraCycles++
 		}
 	}
 	return
 }
 
-func BIT(reg *Registers, op Operand) (extraCycles int) {
+func BIT(cpu *CPU, op Operand) (extraCycles int) {
 	d := op.Read()
 
-	reg.N = d >> 7
-	reg.V = (d >> 6) & 1
+	cpu.Reg.N = d >> 7
+	cpu.Reg.V = (d >> 6) & 1
 
-	res := reg.A & d
+	res := cpu.Reg.A & d
 	if res == 0x0 {
-		reg.Z = Set
+		cpu.Reg.Z = Set
 		return
 	}
-	reg.Z = Clear
+	cpu.Reg.Z = Clear
 	return
 }
 
-func BMI(reg *Registers, op Operand) (extraCycles int) {
-	initPC := reg.PC
+func BMI(cpu *CPU, op Operand) (extraCycles int) {
+	initPC := cpu.Reg.PC
 
-	if reg.N == Set {
+	if cpu.Reg.N == Set {
 		extraCycles++
-		reg.PC += int(int8(op.Read()))
+		cpu.Reg.PC += int(int8(op.Read()))
 
-		if initPC/256 != reg.PC/256 {
+		if initPC/256 != cpu.Reg.PC/256 {
 			extraCycles++
 		}
 	}
 	return
 }
 
-func BNE(reg *Registers, op Operand) (extraCycles int) {
-	initPC := reg.PC
+func BNE(cpu *CPU, op Operand) (extraCycles int) {
+	initPC := cpu.Reg.PC
 
-	if reg.Z == Clear {
+	if cpu.Reg.Z == Clear {
 		extraCycles++
-		reg.PC += int(int8(op.Read()))
+		cpu.Reg.PC += int(int8(op.Read()))
 
-		if initPC/256 != reg.PC/256 {
+		if initPC/256 != cpu.Reg.PC/256 {
 			extraCycles++
 		}
 	}
 	return
 }
 
-func BPL(reg *Registers, op Operand) (extraCycles int) {
-	initPC := reg.PC
+func BPL(cpu *CPU, op Operand) (extraCycles int) {
+	initPC := cpu.Reg.PC
 
-	if reg.N == Clear {
+	if cpu.Reg.N == Clear {
 		extraCycles++
-		reg.PC += int(int8(op.Read()))
+		cpu.Reg.PC += int(int8(op.Read()))
 
-		if initPC/256 != reg.PC/256 {
+		if initPC/256 != cpu.Reg.PC/256 {
 			extraCycles++
 		}
 	}
 	return
 }
 
-func BRK(reg *Registers, op Operand) (extraCycles int) {
+func BRK(cpu *CPU, op Operand) (extraCycles int) {
 	cpu.IRQ()
 	return
 }
 
-func BVC(reg *Registers, op Operand) (extraCycles int) {
-	initPC := reg.PC
+func BVC(cpu *CPU, op Operand) (extraCycles int) {
+	initPC := cpu.Reg.PC
 
-	if reg.V == Clear {
+	if cpu.Reg.V == Clear {
 		extraCycles++
-		reg.PC += int(int8(op.Read()))
+		cpu.Reg.PC += int(int8(op.Read()))
 
-		if initPC/256 != reg.PC/256 {
+		if initPC/256 != cpu.Reg.PC/256 {
 			extraCycles++
 		}
 	}
 	return
 }
 
-func BVS(reg *Registers, op Operand) (extraCycles int) {
-	initPC := reg.PC
+func BVS(cpu *CPU, op Operand) (extraCycles int) {
+	initPC := cpu.Reg.PC
 
-	if reg.V == Set {
+	if cpu.Reg.V == Set {
 		extraCycles++
-		reg.PC += int(int8(op.Read()))
+		cpu.Reg.PC += int(int8(op.Read()))
 
-		if initPC/256 != reg.PC/256 {
+		if initPC/256 != cpu.Reg.PC/256 {
 			extraCycles++
 		}
 	}
 	return
 }
 
-func CLC(reg *Registers, op Operand) (extraCycles int) {
-	reg.C = Clear
+func CLC(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.C = Clear
 	return
 }
 
-func CLD(reg *Registers, op Operand) (extraCycles int) {
-	reg.D = Clear
+func CLD(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.D = Clear
 	return
 }
 
-func CLI(reg *Registers, op Operand) (extraCycles int) {
-	reg.I = Clear
+func CLI(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.I = Clear
 	return
 }
 
-func CLV(reg *Registers, op Operand) (extraCycles int) {
-	reg.V = Clear
+func CLV(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.V = Clear
 	return
 }
 
-func CMP(reg *Registers, op Operand) (extraCycles int) {
+func CMP(cpu *CPU, op Operand) (extraCycles int) {
 	d := op.Read()
 
-	res := reg.A - d
+	res := cpu.Reg.A - d
 
-	setNZ(reg, res)
-	if d > reg.A {
-		reg.C = Set
+	setNZ(cpu, res)
+	if d > cpu.Reg.A {
+		cpu.Reg.C = Set
 	} else {
-		reg.C = Clear
+		cpu.Reg.C = Clear
 	}
 	return
 }
 
-func CPX(reg *Registers, op Operand) (extraCycles int) {
+func CPX(cpu *CPU, op Operand) (extraCycles int) {
 	d := op.Read()
 
-	res := reg.X - d
+	res := cpu.Reg.X - d
 
-	setNZ(reg, res)
-	if d > reg.A {
-		reg.C = Set
+	setNZ(cpu, res)
+	if d > cpu.Reg.A {
+		cpu.Reg.C = Set
 	} else {
-		reg.C = Clear
+		cpu.Reg.C = Clear
 	}
 	return
 }
 
-func CPY(reg *Registers, op Operand) (extraCycles int) {
+func CPY(cpu *CPU, op Operand) (extraCycles int) {
 	d := op.Read()
 
-	res := reg.Y - d
+	res := cpu.Reg.Y - d
 
-	setNZ(reg, res)
-	if d > reg.A {
-		reg.C = Set
+	setNZ(cpu, res)
+	if d > cpu.Reg.A {
+		cpu.Reg.C = Set
 	} else {
-		reg.C = Clear
+		cpu.Reg.C = Clear
 	}
 	return
 }
 
-func DEC(reg *Registers, op Operand) (extraCycles int) {
+func DEC(cpu *CPU, op Operand) (extraCycles int) {
 	d := op.Read() - 1
 
-	setNZ(reg, d)
+	setNZ(cpu, d)
 
 	op.Write(d)
 	return
 }
 
-func DEX(reg *Registers, op Operand) (extraCycles int) {
-	reg.X--
-	setNZ(reg, reg.X)
+func DEX(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.X--
+	setNZ(cpu, cpu.Reg.X)
 	return
 }
 
-func DEY(reg *Registers, op Operand) (extraCycles int) {
-	reg.Y--
-	setNZ(reg, reg.Y)
+func DEY(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.Y--
+	setNZ(cpu, cpu.Reg.Y)
 	return
 }
 
-func EOR(reg *Registers, op Operand) (extraCycles int) {
-	reg.A ^= op.Read()
-	setNZ(reg, reg.A)
+func EOR(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.A ^= op.Read()
+	setNZ(cpu, cpu.Reg.A)
 	return
 }
 
-func INC(reg *Registers, op Operand) (extraCycles int) {
+func INC(cpu *CPU, op Operand) (extraCycles int) {
 	d := op.Read() + 1
-	setNZ(reg, d)
+	setNZ(cpu, d)
 	op.Write(d)
 	return
 }
 
-func INX(reg *Registers, op Operand) (extraCycles int) {
-	reg.X++
-	setNZ(reg, reg.X)
+func INX(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.X++
+	setNZ(cpu, cpu.Reg.X)
 	return
 }
 
-func INY(reg *Registers, op Operand) (extraCycles int) {
-	reg.Y++
-	setNZ(reg, reg.Y)
+func INY(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.Y++
+	setNZ(cpu, cpu.Reg.Y)
 	return
 }
 
-func JMP(reg *Registers, op Operand) (extraCycles int) {
-	jmpPC := op.Ident
-	reg.PC = jmpPC
+func JMP(cpu *CPU, op Operand) (extraCycles int) {
+	jmpPC := op.(RAMOperand).Addr
+	cpu.Reg.PC = jmpPC
 	return
 }
 
-func JSR(reg *Registers, op Operand) (extraCycles int) {
-	reg.PC += 2
+func JSR(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.PC += 2
 	// push PCH
-	cpu.push(byte(reg.PC >> 8))
+	cpu.push(byte(cpu.Reg.PC >> 8))
 	// push PCL
-	cpu.push(byte(reg.PC & 0xff))
+	cpu.push(byte(cpu.Reg.PC & 0xff))
 
-	jmpPC := op.Ident
-	reg.PC = jmpPC
+	jmpPC := op.(RAMOperand).Addr
+	cpu.Reg.PC = jmpPC
 	return
 }
 
-func LDA(reg *Registers, op Operand) (extraCycles int) {
-	reg.A = op.Read()
-	setNZ(reg, reg.A)
+func LDA(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.A = op.Read()
+	setNZ(cpu, cpu.Reg.A)
 	return
 }
 
-func LDX(reg *Registers, op Operand) (extraCycles int) {
-	reg.X = op.Read()
-	setNZ(reg, reg.X)
+func LDX(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.X = op.Read()
+	setNZ(cpu, cpu.Reg.X)
 	return
 }
 
-func LDY(reg *Registers, op Operand) (extraCycles int) {
-	reg.Y = op.Read()
-	setNZ(reg, reg.Y)
+func LDY(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.Y = op.Read()
+	setNZ(cpu, cpu.Reg.Y)
 	return
 }
 
-func LSR(reg *Registers, op Operand) (extraCycles int) {
+func LSR(cpu *CPU, op Operand) (extraCycles int) {
 	d := op.Read()
 
-	reg.C = d & 1
+	cpu.Reg.C = d & 1
 	d >>= 1
 
-	setNZ(reg, d)
+	setNZ(cpu, d)
 
 	op.Write(d)
 	return
 }
 
-func NOP(reg *Registers, op Operand) (extraCycles int) {
+func NOP(cpu *CPU, op Operand) (extraCycles int) {
 	return
 }
 
-func ORA(reg *Registers, op Operand) (extraCycles int) {
-	reg.A |= op.Read()
-	setNZ(reg, reg.A)
+func ORA(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.A |= op.Read()
+	setNZ(cpu, cpu.Reg.A)
 	return
 }
 
-func PHA(reg *Registers, op Operand) (extraCycles int) {
-	cpu.push(reg.A)
+func PHA(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.push(cpu.Reg.A)
 	return
 }
 
-func PHP(reg *Registers, op Operand) (extraCycles int) {
-	cpu.push(reg.GetP())
+func PHP(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.push(cpu.Reg.GetP())
 	return
 }
 
-func PLA(reg *Registers, op Operand) (extraCycles int) {
-	reg.A = cpu.pull()
-	setNZ(reg, reg.A)
+func PLA(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.A = cpu.pull()
+	setNZ(cpu, cpu.Reg.A)
 	return
 }
 
-func PLP(reg *Registers, op Operand) (extraCycles int) {
-	reg.SetP(cpu.pull())
+func PLP(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.SetP(cpu.pull())
 	return
 }
 
-func ROL(reg *Registers, op Operand) (extraCycles int) {
+func ROL(cpu *CPU, op Operand) (extraCycles int) {
 	d := op.Read()
 
-	carry := reg.C
-	reg.C = d >> 7
+	carry := cpu.Reg.C
+	cpu.Reg.C = d >> 7
 
 	d <<= 1
 	d |= carry
 
-	setNZ(reg, d)
+	setNZ(cpu, d)
 
 	op.Write(d)
 	return
 }
 
-func ROR(reg *Registers, op Operand) (extraCycles int) {
+func ROR(cpu *CPU, op Operand) (extraCycles int) {
 	d := op.Read()
 
-	carry := reg.C
-	reg.C = d & 1
+	carry := cpu.Reg.C
+	cpu.Reg.C = d & 1
 
 	d >>= 1
 	d |= (carry << 7)
 
-	setNZ(reg, d)
+	setNZ(cpu, d)
 
 	op.Write(d)
 	return
 }
 
-func RTI(reg *Registers, op Operand) (extraCycles int) {
-	reg.SetP(cpu.pull())
+func RTI(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.SetP(cpu.pull())
 	// pull PCL and then PHC
-	reg.PC = int(cpu.pull()) | int(cpu.pull())<<8
+	cpu.Reg.PC = int(cpu.pull()) | int(cpu.pull())<<8
 	return
 }
 
-func RTS(reg *Registers, op Operand) (extraCycles int) {
+func RTS(cpu *CPU, op Operand) (extraCycles int) {
 	// pull PCL and then PHC
-	reg.PC = int(cpu.pull()) | int(cpu.pull())<<8
-	reg.PC++
+	cpu.Reg.PC = int(cpu.pull()) | int(cpu.pull())<<8
+	cpu.Reg.PC++
 	return
 }
 
-func SBC(reg *Registers, op Operand) (extraCycles int) {
+func SBC(cpu *CPU, op Operand) (extraCycles int) {
 	// Calculate result and store in a
-	arg1 := int8(reg.A)
+	arg1 := int8(cpu.Reg.A)
 	arg2 := int8(op.Read())
 
 	res := byte(arg1 - arg2)
-	reg.A = res
+	cpu.Reg.A = res
 
 	// Set flags
-	setNZ(reg, res)
+	setNZ(cpu, res)
 
-	reg.C = (res >> 7) ^ 1
+	cpu.Reg.C = (res >> 7) ^ 1
 
 	// Overflow
 	if math.Abs(float64(arg1)-float64(arg2)) > 127 {
-		reg.V = Set
+		cpu.Reg.V = Set
 	} else {
-		reg.V = Clear
+		cpu.Reg.V = Clear
 	}
 	return
 }
 
-func SEC(reg *Registers, op Operand) (extraCycles int) {
-	reg.C = Set
+func SEC(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.C = Set
 	return
 }
 
-func SED(reg *Registers, op Operand) (extraCycles int) {
-	reg.D = Set
+func SED(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.D = Set
 	return
 }
 
-func SEI(reg *Registers, op Operand) (extraCycles int) {
-	reg.I = Set
+func SEI(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.I = Set
 	return
 }
 
-func STA(reg *Registers, op Operand) (extraCycles int) {
-	op.Write(reg.A)
+func STA(cpu *CPU, op Operand) (extraCycles int) {
+	op.Write(cpu.Reg.A)
 	return
 }
 
-func STX(reg *Registers, op Operand) (extraCycles int) {
-	op.Write(reg.X)
+func STX(cpu *CPU, op Operand) (extraCycles int) {
+	op.Write(cpu.Reg.X)
 	return
 }
 
-func STY(reg *Registers, op Operand) (extraCycles int) {
-	op.Write(reg.Y)
+func STY(cpu *CPU, op Operand) (extraCycles int) {
+	op.Write(cpu.Reg.Y)
 	return
 }
 
-func TAX(reg *Registers, op Operand) (extraCycles int) {
-	reg.X = reg.A
-	setNZ(reg, reg.X)
+func TAX(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.X = cpu.Reg.A
+	setNZ(cpu, cpu.Reg.X)
 	return
 }
 
-func TAY(reg *Registers, op Operand) (extraCycles int) {
-	reg.Y = reg.A
-	setNZ(reg, reg.Y)
+func TAY(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.Y = cpu.Reg.A
+	setNZ(cpu, cpu.Reg.Y)
 	return
 }
 
-func TSX(reg *Registers, op Operand) (extraCycles int) {
-	reg.X = reg.SP
-	setNZ(reg, reg.X)
+func TSX(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.X = cpu.Reg.SP
+	setNZ(cpu, cpu.Reg.X)
 	return
 }
 
-func TXA(reg *Registers, op Operand) (extraCycles int) {
-	reg.A = reg.X
-	setNZ(reg, reg.A)
+func TXA(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.A = cpu.Reg.X
+	setNZ(cpu, cpu.Reg.A)
 	return
 }
 
-func TYA(reg *Registers, op Operand) (extraCycles int) {
-	reg.A = reg.Y
-	setNZ(reg, reg.A)
+func TYA(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.A = cpu.Reg.Y
+	setNZ(cpu, cpu.Reg.A)
 	return
 }
 
-func TXS(reg *Registers, op Operand) (extraCycles int) {
-	reg.SP = reg.X
-	setNZ(reg, reg.SP)
+func TXS(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.SP = cpu.Reg.X
+	setNZ(cpu, cpu.Reg.SP)
 	return
 }
 
-func setNZ(reg *Registers, d byte) {
+func setNZ(cpu *CPU, d byte) {
 	if d == 0x0 {
-		reg.Z = Set
+		cpu.Reg.Z = Set
 		return
 	}
-	reg.Z = Clear
-	reg.N = d >> 7
+	cpu.Reg.Z = Clear
+	cpu.Reg.N = d >> 7
 }

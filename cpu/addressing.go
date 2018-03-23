@@ -14,7 +14,7 @@ import "fmt"
 // crossing, if any.
 type AddressingMode struct {
 	Name   string
-	opsLen int
+	OpsLen int
 	Format func([]byte) string
 
 	address func(*CPU, Operation, bool, ...byte) int
@@ -23,11 +23,11 @@ type AddressingMode struct {
 var (
 	Implied = AddressingMode{
 		Name:   "Implied",
-		opsLen: 0,
+		OpsLen: 0,
 		Format: func(ops []byte) string { return "" },
 
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
-			op(cpu)
+			op(cpu, NilOperand{})
 			cpu.Reg.PC++
 			return
 		},
@@ -35,11 +35,11 @@ var (
 
 	Accumulator = AddressingMode{
 		Name:   "Accumulator",
-		opsLen: 0,
+		OpsLen: 0,
 		Format: func(ops []byte) string { return "A" },
 
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
-			op(cpu, NewOperand(cpu, CPURegisterOperand, ARegisterOperand))
+			op(cpu, RegOperand{Reg: *cpu.Reg.A})
 			cpu.Reg.PC++
 			return
 		},
@@ -47,11 +47,11 @@ var (
 
 	Immediate = AddressingMode{
 		Name:   "Immediate",
-		opsLen: 1,
+		OpsLen: 1,
 		Format: func(ops []byte) string { return fmt.Sprintf("#$%02x", ops[0]) },
 
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
-			op(cpu, NewOperand(cpu, ConstOperand, int(ops[0])))
+			op(cpu, ConstOperand{D: ops[0]})
 			cpu.Reg.PC += 2
 			return
 		},
@@ -59,11 +59,11 @@ var (
 
 	ZeroPage = AddressingMode{
 		Name:   "ZeroPage",
-		opsLen: 1,
+		OpsLen: 1,
 		Format: func(ops []byte) string { return fmt.Sprintf("$%02x", ops[0]) },
 
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
-			op(cpu, NewOperand(cpu, CPURAMOperand, int(ops[0])))
+			op(cpu, RAMOperand{RAM: cpu.RAM, Addr: int(ops[0])})
 			cpu.Reg.PC += 2
 			return
 		},
@@ -71,11 +71,11 @@ var (
 
 	ZeroPageX = AddressingMode{
 		Name:   "ZeroPageX",
-		opsLen: 1,
+		OpsLen: 1,
 		Format: func(ops []byte) string { return fmt.Sprintf("$%02x, X", ops[0]) },
 
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
-			op(cpu, NewOperand(cpu, CPURAMOperand, int(ops[0]+cpu.Reg.X)))
+			op(cpu, RAMOperand{RAM: cpu.RAM, Addr: int(ops[0] + cpu.Reg.X)})
 			cpu.Reg.PC += 2
 			return
 		},
@@ -83,11 +83,11 @@ var (
 
 	ZeroPageY = AddressingMode{
 		Name:   "ZeroPageY",
-		opsLen: 1,
+		OpsLen: 1,
 		Format: func(ops []byte) string { return fmt.Sprintf("$%02x, Y", ops[0]) },
 
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
-			op(cpu, NewOperand(cpu, CPURAMOperand, int(ops[0]+cpu.Reg.Y)))
+			op(cpu, RAMOperand{RAM: cpu.RAM, Addr: int(ops[0] + cpu.Reg.Y)})
 			cpu.Reg.PC += 2
 			return
 		},
@@ -95,11 +95,11 @@ var (
 
 	Relative = AddressingMode{
 		Name:   "Relative",
-		opsLen: 1,
+		OpsLen: 1,
 		Format: func(ops []byte) string { return fmt.Sprintf("$%02x", ops[0]) },
 
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
-			extraCycles = op(cpu, NewOperand(cpu, CPUConstOperand, ops[0]))
+			extraCycles = op(cpu, ConstOperand{D: ops[0]})
 			cpu.Reg.PC += 2
 			return
 		},
@@ -107,12 +107,12 @@ var (
 
 	Absolute = AddressingMode{
 		Name:   "Absolute",
-		opsLen: 2,
+		OpsLen: 2,
 		Format: func(ops []byte) string { return fmt.Sprintf("$%02x%02x", ops[1], ops[0]) },
 
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
 			addr := int(ops[0]) | int(ops[1])<<8
-			op(cpu, NewOperand(cpu, CPURAMOperand, addr))
+			op(cpu, RAMOperand{RAM: cpu.RAM, Addr: addr})
 			cpu.Reg.PC += 3
 			return
 		},
@@ -120,7 +120,7 @@ var (
 
 	AbsoluteX = AddressingMode{
 		Name:   "AbsoluteX",
-		opsLen: 2,
+		OpsLen: 2,
 		Format: func(ops []byte) string { return fmt.Sprintf("$%02x%02x, X", ops[1], ops[0]) },
 
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
@@ -131,7 +131,7 @@ var (
 				extraCycles++
 			}
 
-			op(cpu, NewOperand(cpu, CPURAMOperand, xAddr))
+			op(cpu, RAMOperand{RAM: cpu.RAM, Addr: xAddr})
 			cpu.Reg.PC += 3
 			return
 		},
@@ -139,7 +139,7 @@ var (
 
 	AbsoluteY = AddressingMode{
 		Name:   "AbsoluteY",
-		opsLen: 2,
+		OpsLen: 2,
 		Format: func(ops []byte) string { return fmt.Sprintf("$%02x%02x, Y", ops[1], ops[0]) },
 
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
@@ -150,7 +150,7 @@ var (
 				extraCycles++
 			}
 
-			op(cpu, NewOperand(cpu, CPURAMOperand, yAddr))
+			op(cpu, RAMOperand{RAM: cpu.RAM, Addr: yAddr})
 			cpu.Reg.PC += 3
 			return
 		},
@@ -158,7 +158,7 @@ var (
 
 	Indirect = AddressingMode{
 		Name:   "Indirect",
-		opsLen: 2,
+		OpsLen: 2,
 		Format: func(ops []byte) string { return fmt.Sprintf("($%02x%02x)", ops[1], ops[0]) },
 
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
@@ -167,14 +167,14 @@ var (
 			adl := cpu.RAM.Read(addr)
 			adh := cpu.RAM.Read(addr + 1)
 
-			op(cpu, NewOperand(cpu, CPURAMOperand, int(adl)|int(adh)<<8))
+			op(cpu, RAMOperand{RAM: cpu.RAM, Addr: int(adl) | int(adh)<<8})
 			return
 		},
 	}
 
 	IndirectX = AddressingMode{
 		Name:   "IndirectX",
-		opsLen: 1,
+		OpsLen: 1,
 		Format: func(ops []byte) string { return fmt.Sprintf("($%02x, X)", ops[0]) },
 
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
@@ -183,7 +183,7 @@ var (
 			adl := cpu.RAM.Read(addr)
 			adh := cpu.RAM.Read((addr + 1) % 0x100)
 
-			op(cpu, NewOperand(cpu, CPURAMOperand, int(adl)|int(adh)<<8))
+			op(cpu, RAMOperand{RAM: cpu.RAM, Addr: int(adl) | int(adh)<<8})
 			cpu.Reg.PC += 2
 			return
 		},
@@ -191,7 +191,7 @@ var (
 
 	IndirectY = AddressingMode{
 		Name:   "IndirectY",
-		opsLen: 1,
+		OpsLen: 1,
 		Format: func(ops []byte) string { return fmt.Sprintf("($%02x), Y", ops[0]) },
 
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
@@ -206,7 +206,7 @@ var (
 			}
 			fetched += cpu.Reg.Y
 
-			op(cpu, NewOperand(cpu, CPURAMOperand, fetched))
+			op(cpu, RAMOperand{RAM: cpu.RAM, Addr: fetched})
 			cpu.Reg.PC += 2
 			return
 		},

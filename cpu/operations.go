@@ -61,14 +61,14 @@ func AND(reg *Registers, op Operand) (extraCycles int) {
 }
 
 func ASL(reg *Registers, op Operand) (extraCycles int) {
-	op := op.Read()
+	d := op.Read()
 
-	reg.C = op >> 7
-	op <<= 1
+	reg.C = d >> 7
+	d <<= 1
 
-	setNZ(reg, op)
+	setNZ(reg, d)
 
-	op.Write(op)
+	op.Write(d)
 	return
 }
 
@@ -225,12 +225,12 @@ func CLV(reg *Registers, op Operand) (extraCycles int) {
 }
 
 func CMP(reg *Registers, op Operand) (extraCycles int) {
-	op := op.Read()
+	d := op.Read()
 
-	res := reg.A - op
+	res := reg.A - d
 
 	setNZ(reg, res)
-	if op > reg.A {
+	if d > reg.A {
 		reg.C = Set
 	} else {
 		reg.C = Clear
@@ -239,12 +239,12 @@ func CMP(reg *Registers, op Operand) (extraCycles int) {
 }
 
 func CPX(reg *Registers, op Operand) (extraCycles int) {
-	op := op.Read()
+	d := op.Read()
 
-	res := reg.X - op
+	res := reg.X - d
 
 	setNZ(reg, res)
-	if op > reg.A {
+	if d > reg.A {
 		reg.C = Set
 	} else {
 		reg.C = Clear
@@ -253,12 +253,12 @@ func CPX(reg *Registers, op Operand) (extraCycles int) {
 }
 
 func CPY(reg *Registers, op Operand) (extraCycles int) {
-	op := op.Read()
+	d := op.Read()
 
-	res := reg.Y - op
+	res := reg.Y - d
 
 	setNZ(reg, res)
-	if op > reg.A {
+	if d > reg.A {
 		reg.C = Set
 	} else {
 		reg.C = Clear
@@ -267,11 +267,11 @@ func CPY(reg *Registers, op Operand) (extraCycles int) {
 }
 
 func DEC(reg *Registers, op Operand) (extraCycles int) {
-	op = op.Read() - 1
+	d := op.Read() - 1
 
-	setNZ(reg, op)
+	setNZ(reg, d)
 
-	op.Write(op)
+	op.Write(d)
 	return
 }
 
@@ -294,9 +294,9 @@ func EOR(reg *Registers, op Operand) (extraCycles int) {
 }
 
 func INC(reg *Registers, op Operand) (extraCycles int) {
-	op = op.Read() + 1
-	setNZ(reg, op)
-	op.Write(op)
+	d := op.Read() + 1
+	setNZ(reg, d)
+	op.Write(d)
 	return
 }
 
@@ -349,14 +349,14 @@ func LDY(reg *Registers, op Operand) (extraCycles int) {
 }
 
 func LSR(reg *Registers, op Operand) (extraCycles int) {
-	op := op.Read()
+	d := op.Read()
 
-	reg.C = op & 1
-	op >>= 1
+	reg.C = d & 1
+	d >>= 1
 
-	setNZ(reg, op)
+	setNZ(reg, d)
 
-	op.Write(op)
+	op.Write(d)
 	return
 }
 
@@ -392,32 +392,32 @@ func PLP(reg *Registers, op Operand) (extraCycles int) {
 }
 
 func ROL(reg *Registers, op Operand) (extraCycles int) {
-	op := op.Read()
+	d := op.Read()
 
 	carry := reg.C
-	reg.C = op >> 7
+	reg.C = d >> 7
 
-	op <<= 1
-	op |= carry
+	d <<= 1
+	d |= carry
 
-	setNZ(reg, op)
+	setNZ(reg, d)
 
-	op.Read()
+	op.Write(d)
 	return
 }
 
 func ROR(reg *Registers, op Operand) (extraCycles int) {
-	op := op.Read()
+	d := op.Read()
 
 	carry := reg.C
-	reg.C = op & 1
+	reg.C = d & 1
 
-	op >>= 1
-	op |= (carry << 7)
+	d >>= 1
+	d |= (carry << 7)
 
-	setNZ(reg, op)
+	setNZ(reg, d)
 
-	op.Read()
+	op.Write(d)
 	return
 }
 

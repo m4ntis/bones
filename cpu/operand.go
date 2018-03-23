@@ -39,5 +39,15 @@ func (op ConstOperand) Read() byte {
 }
 
 func (op ConstOperand) Write(d byte) {
-	panic("Can't write to a const operand")
+	panic("Can't write const operand")
+}
+
+type NilOperand struct{}
+
+func (op NilOperand) Read() byte {
+	panic("Can't read nil operand")
+}
+
+func (op NilOperand) Write(d byte) {
+	panic("Can't write nil operand")
 }

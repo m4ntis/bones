@@ -11,11 +11,11 @@ type RAMOperand struct {
 }
 
 func (op RAMOperand) Read() byte {
-	return op.ram.Read(op.addr)
+	return op.RAM.Read(op.Addr)
 }
 
 func (op RAMOperand) Write(d byte) {
-	op.ram.Write(d)
+	op.RAM.Write(op.Addr, d)
 }
 
 type RegOperand struct {
@@ -23,11 +23,11 @@ type RegOperand struct {
 }
 
 func (op RegOperand) Read() byte {
-	return *op.reg
+	return *op.Reg
 }
 
 func (op RegOperand) Write(d byte) {
-	*op.reg = d
+	*op.Reg = d
 }
 
 type ConstOperand struct {
@@ -35,7 +35,7 @@ type ConstOperand struct {
 }
 
 func (op ConstOperand) Read() byte {
-	return op.d
+	return op.D
 }
 
 func (op ConstOperand) Write(d byte) {

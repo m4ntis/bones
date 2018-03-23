@@ -39,7 +39,7 @@ var (
 		Format: func(ops []byte) string { return "A" },
 
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
-			op(cpu, RegOperand{Reg: *cpu.Reg.A})
+			op(cpu, RegOperand{Reg: &cpu.Reg.A})
 			cpu.Reg.PC++
 			return
 		},
@@ -200,11 +200,11 @@ var (
 			adl := cpu.RAM.Read(addr)
 			adh := cpu.RAM.Read((addr + 1) % 0x100)
 
-			fetched := int(*adl) | int(*adh)<<8
+			fetched := int(adl) | int(adh)<<8
 			if fetched/256 != (fetched+int(cpu.Reg.Y))/256 && pageBoundryCheck {
 				extraCycles++
 			}
-			fetched += cpu.Reg.Y
+			fetched += int(cpu.Reg.Y)
 
 			op(cpu, RAMOperand{RAM: cpu.RAM, Addr: fetched})
 			cpu.Reg.PC += 2

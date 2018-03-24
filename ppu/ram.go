@@ -23,27 +23,27 @@ type RAM struct {
 	data [RamSize]byte
 }
 
-func getIndex(index int) int {
-	if index < 0 || index > RamSize {
-		panic("RAM accessing index out of range")
+func getAddr(addr int) int {
+	if addr < 0 || addr > RamSize {
+		panic("RAM accessing addr out of range")
 	}
 
-	if index >= TablesMirrorIdx && index < BgrPaletteIdx {
-		return index - 0x1000
+	if addr >= TablesMirrorIdx && addr < BgrPaletteIdx {
+		return addr - 0x1000
 	}
-	if index >= PaletteMirrorIdx && index < RamMirrorIdx {
-		return (index-BgrPaletteIdx)%0x20 + BgrPaletteIdx
+	if addr >= PaletteMirrorIdx && addr < RamMirrorIdx {
+		return (addr-BgrPaletteIdx)%0x20 + BgrPaletteIdx
 	}
-	if index >= RamMirrorIdx {
-		return index % 0x4000
+	if addr >= RamMirrorIdx {
+		return addr % 0x4000
 	}
-	return index
+	return addr
 }
 
-func (r *RAM) Read(index int) byte {
-	return r.data[getIndex(index)]
+func (r *RAM) Read(addr int) byte {
+	return r.data[getAddr(addr)]
 }
 
-func (r *RAM) Write(index int, data byte) {
-	r.data[getIndex(index)] = data
+func (r *RAM) Write(addr int, data byte) {
+	r.data[getAddr(addr)] = data
 }

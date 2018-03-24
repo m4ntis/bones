@@ -32,6 +32,7 @@ const (
 type RAM struct {
 	data [RamSize]byte
 
+	cpu *CPU
 	ppu *ppu.PPU
 }
 
@@ -77,7 +78,7 @@ func (r *RAM) Read(addr int) byte {
 	}
 }
 
-func (r *RAM) Write(addr int, d byte) {
+func (r *RAM) Write(addr int, d byte) (cycles int) {
 	addr = getAddr(addr)
 
 	switch addr {
@@ -98,8 +99,18 @@ func (r *RAM) Write(addr int, d byte) {
 	case PPUData:
 		r.ppu.PPUDataWrite(d)
 	case OAMDMA:
-		r.ppu.OAMDMAWrite(d)
+		var oamData [256]byte
+		copy(oamData, r.data[int(d)<<8:int(d+1)<<8])
+		r.ppu.DMA(oamData)
+
+		cycles += 513
+		// extra cycle on odd cycles
+		if cpu.cycles%2 == 1 {
+			cycles++
+		}
 	default:
 		r.data[addr] = d
 	}
+
+	return
 }

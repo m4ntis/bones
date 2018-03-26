@@ -58,6 +58,8 @@ func (cpu *CPU) ExecNext() (cycles int) {
 		cycles += op.Exec(cpu)
 	}
 
+	// TODO: decrement cycles after 1786830 cycles
+	cpu.cycles += cycles
 	return cycles
 }
 

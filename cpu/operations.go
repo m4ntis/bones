@@ -68,7 +68,7 @@ func ASL(cpu *CPU, op Operand) (extraCycles int) {
 
 	setNZ(cpu, d)
 
-	op.Write(d)
+	extraCycles += op.Write(d)
 	return
 }
 
@@ -271,7 +271,7 @@ func DEC(cpu *CPU, op Operand) (extraCycles int) {
 
 	setNZ(cpu, d)
 
-	op.Write(d)
+	extraCycles += op.Write(d)
 	return
 }
 
@@ -296,7 +296,7 @@ func EOR(cpu *CPU, op Operand) (extraCycles int) {
 func INC(cpu *CPU, op Operand) (extraCycles int) {
 	d := op.Read() + 1
 	setNZ(cpu, d)
-	op.Write(d)
+	extraCycles += op.Write(d)
 	return
 }
 
@@ -356,7 +356,7 @@ func LSR(cpu *CPU, op Operand) (extraCycles int) {
 
 	setNZ(cpu, d)
 
-	op.Write(d)
+	extraCycles += op.Write(d)
 	return
 }
 
@@ -402,7 +402,7 @@ func ROL(cpu *CPU, op Operand) (extraCycles int) {
 
 	setNZ(cpu, d)
 
-	op.Write(d)
+	extraCycles += op.Write(d)
 	return
 }
 
@@ -417,7 +417,7 @@ func ROR(cpu *CPU, op Operand) (extraCycles int) {
 
 	setNZ(cpu, d)
 
-	op.Write(d)
+	extraCycles += op.Write(d)
 	return
 }
 
@@ -473,17 +473,17 @@ func SEI(cpu *CPU, op Operand) (extraCycles int) {
 }
 
 func STA(cpu *CPU, op Operand) (extraCycles int) {
-	op.Write(cpu.Reg.A)
+	extraCycles += op.Write(cpu.Reg.A)
 	return
 }
 
 func STX(cpu *CPU, op Operand) (extraCycles int) {
-	op.Write(cpu.Reg.X)
+	extraCycles += op.Write(cpu.Reg.X)
 	return
 }
 
 func STY(cpu *CPU, op Operand) (extraCycles int) {
-	op.Write(cpu.Reg.Y)
+	extraCycles += op.Write(cpu.Reg.Y)
 	return
 }
 

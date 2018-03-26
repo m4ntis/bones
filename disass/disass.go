@@ -55,6 +55,14 @@ func genContiguousAsm(prgROM []models.PrgROMPage) []byte {
 }
 
 func disassemble(asm []byte) Code {
+	loadAddr := 0x8000
+
+	// If only single page of prg rom, it is loaded to $c000 instead of the
+	// usual $8000
+	if len(asm) == models.PrgROMPageSize {
+		loadAddr = 0xc000
+	}
+
 	code := Code(make([]Instruction, 0))
 	for i := 0; i < len(asm); i++ {
 		op, ok := cpu.OpCodes[asm[i]]
@@ -62,13 +70,13 @@ func disassemble(asm []byte) Code {
 		var inst Instruction
 		if !ok {
 			inst = Instruction{
-				Addr: i,
+				Addr: i + loadAddr,
 				Code: asm[i : i+1],
 				Text: fmt.Sprintf(".byte %02x", asm[i]),
 			}
 		} else {
 			inst = Instruction{
-				Addr: i,
+				Addr: i + loadAddr,
 				Code: asm[i : i+1+op.Mode.OpsLen],
 				Text: fmt.Sprintf("%s %s", op.Name,
 					op.Mode.Format(asm[i+1:i+1+op.Mode.OpsLen])),

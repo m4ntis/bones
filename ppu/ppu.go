@@ -10,6 +10,9 @@ type PPU struct {
 	RAM *RAM
 	OAM *OAM
 
+	scanline int
+	x        int
+
 	ppuCtrl   byte
 	ppuMask   byte
 	ppuStatus byte
@@ -49,59 +52,22 @@ func (ppu *PPU) LoadROM(rom *models.ROM) {
 	copy(ppu.RAM.data[0x0:models.ChrROMPageSize], rom.ChrROM[0][:])
 }
 
-//TODO: Take note of oamaddr
-func (ppu *PPU) DMA(oamData [256]byte) {
-	oam := OAM(oamData)
-	ppu.OAM = &oam
-}
+func (ppu *PPU) Cycle() color.RGBA {
+	defer ppu.incCoords()
 
-func (ppu *PPU) Cycle(scanline int, x int) color.RGBA {
-	if scanline >= 0 && scanline < 240 {
-		return ppu.visibleFrameCycle(scanline, x)
-	} else if scanline == 241 && x == 1 {
+	if ppu.scanline >= 0 && ppu.scanline < 240 {
+		return ppu.visibleFrameCycle()
+	} else if ppu.scanline == 241 && ppu.x == 1 {
 		ppu.vblank = true
 		if ppu.ppuCtrl>>7 == 1 {
 			ppu.nmi <- true
 		}
-	} else if scanline == 261 && x == 1 {
+	} else if ppu.scanline == 261 && ppu.x == 1 {
 		ppu.ppuStatus = 0
 		ppu.vblank = false
 	}
 
 	return color.RGBA{}
-}
-
-func (ppu *PPU) visibleFrameCycle(scanline int, x int) color.RGBA {
-	pt := int(ppu.ppuCtrl >> 4 & 1)
-	nt := (scanline/8)*32 + x/8
-	at := (scanline/32)*8 + x/32
-
-	// For now we assume nametable 0
-	ntByte := ppu.RAM.Read(NT0Idx + nt)
-
-	patternAddr := 0x1000*pt + int(ntByte)*16
-
-	ptx := x % 8
-	pty := scanline % 8
-	ptLowByte := ppu.RAM.Read(patternAddr + pty)
-	ptLowBit := ptLowByte >> uint(ptx) & 1
-	ptHighByte := ppu.RAM.Read(patternAddr + pty + 8)
-	ptHighBit := ptHighByte >> uint(ptx) & 1
-
-	peAddrLow := ptLowBit + ptHighBit<<1
-
-	atQuarter := x%32/16 + scanline%32/16<<1
-
-	// Assuming nametable 0, as mentioned above
-	atByte := ppu.RAM.Read(AT0Idx + at)
-
-	peAddrHigh := atByte >> uint(2*atQuarter) & 3
-
-	peAddr := peAddrLow + peAddrHigh<<2
-
-	pIdx := ppu.RAM.Read(BgrPaletteIdx + int(peAddr))
-
-	return Palette[pIdx]
 }
 
 func (ppu *PPU) PPUCtrlWrite(data byte) {
@@ -190,6 +156,58 @@ func (ppu *PPU) PPUDataWrite(d byte) {
 	ppu.RAM.Write(ppu.ppuAddr, d)
 }
 
+//TODO: Take note of oamaddr
+func (ppu *PPU) DMA(oamData [256]byte) {
+	oam := OAM(oamData)
+	ppu.OAM = &oam
+}
+
 func (ppu *PPU) incAddr() {
 	ppu.ppuAddr += int(1 + (ppu.ppuCtrl>>2&1)*31)
+}
+
+// TODO: skip cycle (0, 0) on odd frames
+func (ppu *PPU) incCoords() {
+	ppu.x++
+	if ppu.x > 340 {
+		ppu.x = 0
+
+		ppu.scanline++
+		if ppu.scanline > 261 {
+			ppu.scanline = 0
+		}
+	}
+}
+
+func (ppu *PPU) visibleFrameCycle() color.RGBA {
+	pt := int(ppu.ppuCtrl >> 4 & 1)
+	nt := (ppu.scanline/8)*32 + ppu.x/8
+	at := (ppu.scanline/32)*8 + ppu.x/32
+
+	// For now we assume nametable 0
+	ntByte := ppu.RAM.Read(NT0Idx + nt)
+
+	patternAddr := 0x1000*pt + int(ntByte)*16
+
+	ptx := ppu.x % 8
+	pty := ppu.scanline % 8
+	ptLowByte := ppu.RAM.Read(patternAddr + pty)
+	ptLowBit := ptLowByte >> uint(ptx) & 1
+	ptHighByte := ppu.RAM.Read(patternAddr + pty + 8)
+	ptHighBit := ptHighByte >> uint(ptx) & 1
+
+	peAddrLow := ptLowBit + ptHighBit<<1
+
+	atQuarter := ppu.x%32/16 + ppu.scanline%32/16<<1
+
+	// Assuming nametable 0, as mentioned above
+	atByte := ppu.RAM.Read(AT0Idx + at)
+
+	peAddrHigh := atByte >> uint(2*atQuarter) & 3
+
+	peAddr := peAddrLow + peAddrHigh<<2
+
+	pIdx := ppu.RAM.Read(BgrPaletteIdx + int(peAddr))
+
+	return Palette[pIdx]
 }

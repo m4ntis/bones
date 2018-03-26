@@ -39,7 +39,7 @@ func createCommands() map[string]*dbgCommand {
 					return false
 				}
 
-				addr, err := strconv.ParseInt(args[0], 16, 16)
+				addr, err := strconv.ParseInt(args[0], 16, 32)
 				if err != nil {
 					fmt.Println("break command only takes a numeric value")
 					return false

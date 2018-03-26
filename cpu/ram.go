@@ -79,6 +79,8 @@ func (r *RAM) Read(addr int) byte {
 		d = r.data[addr]
 	}
 
+	// We keep the read at the ram location for observe to be able to see the
+	// last i/o operation
 	r.data[addr] = d
 	return d
 }

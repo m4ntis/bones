@@ -56,7 +56,7 @@ func NewWorker(rom *models.ROM, vals chan<- BreakData) *Worker {
 		d: disass.Disassemble(rom.PrgROM),
 
 		bps: breakPoints{
-			0x0000: true,
+			c.Reg.PC: true,
 		},
 		bpsMux: &sync.Mutex{},
 
@@ -76,8 +76,12 @@ func (w *Worker) Start() {
 
 	for {
 		w.handleBps()
-		w.c.ExecNext()
 		w.c.HandleInterupts()
+		w.c.ExecNext()
+		cycles := w.c.ExecNext()
+		for i := 0; i < cycles; i++ {
+			w.p.Cycle()
+		}
 	}
 }
 
@@ -119,7 +123,7 @@ func (w *Worker) ClearAll() {
 
 func (w *Worker) handleBps() {
 	w.bpsMux.Lock()
-	_, ok := w.bps[w.c.Reg.PC-0x8000]
+	_, ok := w.bps[w.c.Reg.PC]
 	w.bpsMux.Unlock()
 
 	if ok {
@@ -139,7 +143,11 @@ func (w *Worker) breakOper() {
 		case <-w.continuec:
 			return
 		case <-w.nextc:
-			w.c.ExecNext()
+			w.c.HandleInterupts()
+			cycles := w.c.ExecNext()
+			for i := 0; i < cycles; i++ {
+				w.p.Cycle()
+			}
 			continue
 		}
 	}

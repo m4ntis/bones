@@ -113,16 +113,16 @@ func Parse(r io.Reader) (rom *models.ROM, err error) {
 
 	prgROM := make([]models.PrgROMPage, header.PrgROMSize)
 	for i := range prgROM {
-		startIndex := trainerSize + i*models.PRG_ROM_PAGE_SIZE
+		startIndex := trainerSize + i*models.PrgROMPageSize
 		copy(prgROM[i][:],
-			romBuff[startIndex:startIndex+models.PRG_ROM_PAGE_SIZE])
+			romBuff[startIndex:startIndex+models.PrgROMPageSize])
 	}
 
 	chrROM := make([]models.ChrROMPage, header.ChrROMSize)
 	for i := range chrROM {
-		startIndex := trainerSize + prgROMSize + i*models.CHR_ROM_PAGE_SIZE
+		startIndex := trainerSize + prgROMSize + i*models.ChrROMPageSize
 		copy(chrROM[i][:],
-			romBuff[startIndex:startIndex+models.CHR_ROM_PAGE_SIZE])
+			romBuff[startIndex:startIndex+models.ChrROMPageSize])
 	}
 
 	return models.NewROM(trainer, prgROM, chrROM), nil

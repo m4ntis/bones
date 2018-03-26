@@ -57,42 +57,55 @@ func (ppu *PPU) DMA(oamData [256]byte) {
 
 func (ppu *PPU) Cycle(scanline int, x int) color.RGBA {
 	if scanline >= 0 && scanline < 240 {
-		pt := int(ppu.ppuCtrl >> 4 & 1)
-		nt := (scanline/8)*32 + x/8
-		at := (scanline/32)*8 + x/32
-
-		// For now we assume nametable 0
-		ntByte := ppu.RAM.Read(NT0Idx + nt)
-
-		patternAddr := 0x1000*pt + int(ntByte)*16
-
-		ptx := x % 8
-		pty := scanline % 8
-		ptLowByte := ppu.RAM.Read(patternAddr + pty)
-		ptLowBit := ptLowByte >> uint(ptx) & 1
-		ptHighByte := ppu.RAM.Read(patternAddr + pty + 8)
-		ptHighBit := ptHighByte >> uint(ptx) & 1
-
-		peAddrLow := ptLowBit + ptHighBit<<1
-
-		atQuarter := x%32/16 + scanline%32/16<<1
-
-		// Assuming nametable 0, as mentioned above
-		atByte := ppu.RAM.Read(AT0Idx + at)
-
-		peAddrHigh := atByte >> uint(2*atQuarter) & 3
-
-		peAddr := peAddrLow + peAddrHigh<<2
-
-		pIdx := ppu.RAM.Read(BgrPaletteIdx + int(peAddr))
-
-		return Palette[pIdx]
+		return ppu.visibleFrameCycle(scanline, x)
+	} else if scanline == 241 && x == 1 {
+		ppu.vblank = true
+		if ppu.ppuCtrl>>7 == 1 {
+			ppu.nmi <- true
+		}
+	} else if scanline == 261 && x == 1 {
+		ppu.ppuStatus = 0
+		ppu.vblank = false
 	}
+
 	return color.RGBA{}
 }
 
+func (ppu *PPU) visibleFrameCycle(scanline int, x int) color.RGBA {
+	pt := int(ppu.ppuCtrl >> 4 & 1)
+	nt := (scanline/8)*32 + x/8
+	at := (scanline/32)*8 + x/32
+
+	// For now we assume nametable 0
+	ntByte := ppu.RAM.Read(NT0Idx + nt)
+
+	patternAddr := 0x1000*pt + int(ntByte)*16
+
+	ptx := x % 8
+	pty := scanline % 8
+	ptLowByte := ppu.RAM.Read(patternAddr + pty)
+	ptLowBit := ptLowByte >> uint(ptx) & 1
+	ptHighByte := ppu.RAM.Read(patternAddr + pty + 8)
+	ptHighBit := ptHighByte >> uint(ptx) & 1
+
+	peAddrLow := ptLowBit + ptHighBit<<1
+
+	atQuarter := x%32/16 + scanline%32/16<<1
+
+	// Assuming nametable 0, as mentioned above
+	atByte := ppu.RAM.Read(AT0Idx + at)
+
+	peAddrHigh := atByte >> uint(2*atQuarter) & 3
+
+	peAddr := peAddrLow + peAddrHigh<<2
+
+	pIdx := ppu.RAM.Read(BgrPaletteIdx + int(peAddr))
+
+	return Palette[pIdx]
+}
+
 func (ppu *PPU) PPUCtrlWrite(data byte) {
-	// If V Flag set while in vblank
+	// If V Flag set (and changed) while in vblank
 	if ppu.ppuCtrl>>7 == 0 && data>>7 == 1 && ppu.vblank {
 		ppu.nmi <- true
 	}

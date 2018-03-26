@@ -35,12 +35,19 @@ func New(ram *RAM) *CPU {
 }
 
 func (cpu *CPU) LoadROM(rom *models.ROM) {
-	// Load first 2 pages of PrgROM (not supporting mappers as of yet)
-	copy(cpu.RAM.data[0x8000:0x8000+models.PrgROMPageSize], rom.PrgROM[0][:])
 	if len(rom.PrgROM) > 1 {
+		// Load first 2 pages of PrgROM (not supporting mappers as of yet)
+		copy(cpu.RAM.data[0x8000:0x8000+models.PrgROMPageSize], rom.PrgROM[0][:])
 		copy(cpu.RAM.data[0x8000+models.PrgROMPageSize:0x8000+2*models.PrgROMPageSize],
 			rom.PrgROM[1][:])
+	} else {
+		// If there is only one page of prg rom, load it to $c000 ~ $ffff
+		copy(cpu.RAM.data[0x8000+models.PrgROMPageSize:0x8000+2*models.PrgROMPageSize],
+			rom.PrgROM[0][:])
 	}
+
+	// Init pc to the reset handler addr
+	cpu.Reg.PC = int(cpu.RAM.Read(0xfffc)) | int(cpu.RAM.Read(0xfffd))<<8
 }
 
 func (cpu *CPU) ExecNext() (cycles int) {

@@ -72,7 +72,7 @@ func displayBreak(data dbg.BreakData) {
 	var startIdx int
 	var endIdx int
 
-	instIdx := data.Disass.IndexOf(data.Reg.PC - 0x8000)
+	instIdx := data.Disass.IndexOf(data.Reg.PC)
 
 	if instIdx > 5 {
 		startIdx = instIdx - 5

@@ -59,6 +59,7 @@ func (ppu *PPU) Cycle() color.RGBA {
 		return ppu.visibleFrameCycle()
 	} else if ppu.scanline == 241 && ppu.x == 1 {
 		ppu.vblank = true
+		ppu.ppuStatus |= 1 << 7
 		if ppu.ppuCtrl>>7 == 1 {
 			ppu.nmi <- true
 		}

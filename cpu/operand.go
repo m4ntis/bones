@@ -2,7 +2,7 @@ package cpu
 
 type Operand interface {
 	Read() byte
-	Write(byte)
+	Write(byte) int
 }
 
 type RAMOperand struct {
@@ -14,8 +14,8 @@ func (op RAMOperand) Read() byte {
 	return op.RAM.Read(op.Addr)
 }
 
-func (op RAMOperand) Write(d byte) {
-	op.RAM.Write(op.Addr, d)
+func (op RAMOperand) Write(d byte) (cycles int) {
+	return op.RAM.Write(op.Addr, d)
 }
 
 type RegOperand struct {
@@ -26,8 +26,9 @@ func (op RegOperand) Read() byte {
 	return *op.Reg
 }
 
-func (op RegOperand) Write(d byte) {
+func (op RegOperand) Write(d byte) (cycles int) {
 	*op.Reg = d
+	return
 }
 
 type ConstOperand struct {
@@ -38,7 +39,7 @@ func (op ConstOperand) Read() byte {
 	return op.D
 }
 
-func (op ConstOperand) Write(d byte) {
+func (op ConstOperand) Write(d byte) (cycles int) {
 	panic("Can't write const operand")
 }
 
@@ -48,6 +49,6 @@ func (op NilOperand) Read() byte {
 	panic("Can't read nil operand")
 }
 
-func (op NilOperand) Write(d byte) {
+func (op NilOperand) Write(d byte) (cycles int) {
 	panic("Can't write nil operand")
 }

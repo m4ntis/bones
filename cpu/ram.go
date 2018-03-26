@@ -32,8 +32,8 @@ const (
 type RAM struct {
 	data [RamSize]byte
 
-	cpu *CPU
-	ppu *ppu.PPU
+	CPU *CPU
+	PPU *ppu.PPU
 }
 
 // getAddr returns the underlying address after mapping.
@@ -54,28 +54,33 @@ func getAddr(addr int) int {
 func (r *RAM) Read(addr int) byte {
 	addr = getAddr(addr)
 
+	var d byte
+
 	switch addr {
 	case PPUCtrl:
 		panic("Invalid read from PPUCtrl")
 	case PPUMask:
 		panic("Invalid read from PPUMask")
 	case PPUStatus:
-		return r.ppu.PPUStatusRead()
+		d = r.PPU.PPUStatusRead()
 	case OAMAddr:
 		panic("Invalid read from OAMAddr")
 	case OAMData:
-		return r.ppu.OAMDataRead()
+		d = r.PPU.OAMDataRead()
 	case PPUScroll:
 		panic("Invalid read from PPUScroll")
 	case PPUAddr:
 		panic("Invalid read from PPUAddr")
 	case PPUData:
-		return r.ppu.PPUDataRead()
+		d = r.PPU.PPUDataRead()
 	case OAMDMA:
 		panic("Invalid read from OAMDMA")
 	default:
-		return r.data[addr]
+		d = r.data[addr]
 	}
+
+	r.data[addr] = d
+	return d
 }
 
 func (r *RAM) Write(addr int, d byte) (cycles int) {
@@ -83,34 +88,39 @@ func (r *RAM) Write(addr int, d byte) (cycles int) {
 
 	switch addr {
 	case PPUCtrl:
-		r.ppu.PPUCtrlWrite(d)
+		r.PPU.PPUCtrlWrite(d)
 	case PPUMask:
-		r.ppu.PPUMaskWrite(d)
+		r.PPU.PPUMaskWrite(d)
 	case PPUStatus:
 		panic("Invalid write to PPUStatus")
 	case OAMAddr:
-		r.ppu.OAMAddrWrite(d)
+		r.PPU.OAMAddrWrite(d)
 	case OAMData:
-		r.ppu.OAMDataWrite(d)
+		r.PPU.OAMDataWrite(d)
 	case PPUScroll:
-		r.ppu.PPUScrollWrite(d)
+		r.PPU.PPUScrollWrite(d)
 	case PPUAddr:
-		r.ppu.PPUAddrWrite(d)
+		r.PPU.PPUAddrWrite(d)
 	case PPUData:
-		r.ppu.PPUDataWrite(d)
+		r.PPU.PPUDataWrite(d)
 	case OAMDMA:
 		var oamData [256]byte
-		copy(oamData, r.data[int(d)<<8:int(d+1)<<8])
-		r.ppu.DMA(oamData)
+		copy(oamData[:], r.data[int(d)<<8:int(d+1)<<8])
+		r.PPU.DMA(oamData)
 
 		cycles += 513
 		// extra cycle on odd cycles
-		if cpu.cycles%2 == 1 {
+		if r.CPU.cycles%2 == 1 {
 			cycles++
 		}
-	default:
-		r.data[addr] = d
 	}
 
+	// We write it anyway, even if mapped i/o, so RAM.Observe can see the value
+	r.data[addr] = d
 	return
+}
+
+func (r *RAM) Observe(addr int) byte {
+	addr = getAddr(addr)
+	return r.data[addr]
 }

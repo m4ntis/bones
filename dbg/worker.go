@@ -76,12 +76,7 @@ func (w *Worker) Start() {
 
 	for {
 		w.handleBps()
-		w.c.HandleInterupts()
-		w.c.ExecNext()
-		cycles := w.c.ExecNext()
-		for i := 0; i < cycles; i++ {
-			w.p.Cycle()
-		}
+		w.execNext()
 	}
 }
 
@@ -143,11 +138,7 @@ func (w *Worker) breakOper() {
 		case <-w.continuec:
 			return
 		case <-w.nextc:
-			w.c.HandleInterupts()
-			cycles := w.c.ExecNext()
-			for i := 0; i < cycles; i++ {
-				w.p.Cycle()
-			}
+			w.execNext()
 			continue
 		}
 	}
@@ -156,5 +147,13 @@ func (w *Worker) breakOper() {
 func (w *Worker) handleNmi() {
 	for <-w.nmi {
 		w.c.NMI()
+	}
+}
+
+func (w *Worker) execNext() {
+	w.c.HandleInterupts()
+	cycles := w.c.ExecNext()
+	for i := 0; i < cycles*3; i++ {
+		w.p.Cycle()
 	}
 }

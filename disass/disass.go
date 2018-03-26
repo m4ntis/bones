@@ -69,14 +69,14 @@ func disassemble(asm []byte) Code {
 		} else {
 			inst = Instruction{
 				Addr: i,
-				Code: asm[i : i+1+op.Mode.ArgsLen],
+				Code: asm[i : i+1+op.Mode.OpsLen],
 				Text: fmt.Sprintf("%s %s", op.Name,
-					op.Mode.Format(asm[i+1:i+1+op.Mode.ArgsLen])),
+					op.Mode.Format(asm[i+1:i+1+op.Mode.OpsLen])),
 			}
 		}
 
 		code = append(code, inst)
-		i += op.Mode.ArgsLen
+		i += op.Mode.OpsLen
 	}
 
 	return code

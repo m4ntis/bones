@@ -26,6 +26,8 @@ type Worker struct {
 	bps    breakPoints
 	bpsMux *sync.Mutex
 
+	nmi chan bool
+
 	continuec chan bool
 	nextc     chan bool
 	vals      chan<- BreakData
@@ -37,11 +39,16 @@ type Worker struct {
 // The vals channel is the channel containing the data returned each time the
 // cpu breaks, describing the current cpu state.
 func NewWorker(rom *models.ROM, vals chan<- BreakData) *Worker {
-	c := cpu.New()
+	nmi := make(chan bool)
+	p := ppu.New(nmi)
+	p.LoadROM(rom)
+
+	ram := cpu.RAM{}
+	c := cpu.New(&ram)
 	c.LoadROM(rom)
 
-	p := ppu.New()
-	p.LoadROM(rom)
+	ram.CPU = c
+	ram.PPU = p
 
 	return &Worker{
 		c: c,
@@ -53,6 +60,8 @@ func NewWorker(rom *models.ROM, vals chan<- BreakData) *Worker {
 		},
 		bpsMux: &sync.Mutex{},
 
+		nmi: nmi,
+
 		continuec: make(chan bool),
 		nextc:     make(chan bool),
 		vals:      vals,
@@ -63,6 +72,8 @@ func NewWorker(rom *models.ROM, vals chan<- BreakData) *Worker {
 //
 // Runs in a loop, should be run in a goroutine
 func (w *Worker) Start() {
+	go w.handleNmi()
+
 	for {
 		w.handleBps()
 		w.c.ExecNext()
@@ -131,5 +142,11 @@ func (w *Worker) breakOper() {
 			w.c.ExecNext()
 			continue
 		}
+	}
+}
+
+func (w *Worker) handleNmi() {
+	for <-w.nmi {
+		w.c.NMI()
 	}
 }

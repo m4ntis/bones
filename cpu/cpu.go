@@ -10,6 +10,8 @@ type CPU struct {
 	RAM *RAM
 	Reg *Registers
 
+	cycles int
+
 	irq   bool
 	nmi   bool
 	reset bool
@@ -17,10 +19,9 @@ type CPU struct {
 	interruptMux *sync.Mutex
 }
 
-func New() *CPU {
-	var ram RAM
+func New(ram *RAM) *CPU {
 	return &CPU{
-		RAM: &ram,
+		RAM: ram,
 		Reg: &Registers{
 			PC: 0x8000,
 		},

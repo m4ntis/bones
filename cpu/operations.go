@@ -524,10 +524,11 @@ func TXS(cpu *CPU, op Operand) (extraCycles int) {
 }
 
 func setNZ(cpu *CPU, d byte) {
+	cpu.Reg.N = d >> 7
+
 	if d == 0x0 {
 		cpu.Reg.Z = Set
 		return
 	}
 	cpu.Reg.Z = Clear
-	cpu.Reg.N = d >> 7
 }

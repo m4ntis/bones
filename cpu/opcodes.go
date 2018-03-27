@@ -635,7 +635,7 @@ var OpCodes = map[byte]OpCode{
 		cycles:           3,
 		pageBoundryCheck: false,
 
-		Mode: AbsoluteJMP,
+		Mode: Absolute,
 		Oper: JMP,
 	},
 	0x6c: OpCode{

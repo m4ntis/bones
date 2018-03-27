@@ -5,24 +5,32 @@ import (
 
 	"github.com/m4ntis/bones/cpu"
 	"github.com/m4ntis/bones/disass"
+	"github.com/m4ntis/bones/drawer"
 	"github.com/m4ntis/bones/models"
+	"github.com/m4ntis/bones/ppu"
 )
 
 type breakPoints map[int]bool
 
 type BreakData struct {
 	RAM *cpu.RAM
-	Reg *cpu.Registers
+	Reg *cpu.Regs
 
 	Disass disass.Disassembly
 }
 
 type Worker struct {
 	c *cpu.CPU
-	d disass.Disassembly
+	p *ppu.PPU
 
+	drawer *drawer.Drawer
+	frame  *models.Frame
+
+	d      disass.Disassembly
 	bps    breakPoints
 	bpsMux *sync.Mutex
+
+	nmi chan bool
 
 	continuec chan bool
 	nextc     chan bool
@@ -34,18 +42,32 @@ type Worker struct {
 //
 // The vals channel is the channel containing the data returned each time the
 // cpu breaks, describing the current cpu state.
-func NewWorker(rom *models.ROM, vals chan<- BreakData) *Worker {
-	c := cpu.NewCPU()
+func NewWorker(rom *models.ROM, vals chan<- BreakData, d *drawer.Drawer) *Worker {
+	nmi := make(chan bool)
+	p := ppu.New(nmi)
+	p.LoadROM(rom)
+
+	ram := cpu.RAM{}
+	c := cpu.New(&ram)
 	c.LoadROM(rom)
+
+	ram.CPU = c
+	ram.PPU = p
 
 	return &Worker{
 		c: c,
-		d: disass.Disassemble(rom.PrgROM),
+		p: p,
 
+		drawer: d,
+		frame:  &models.Frame{},
+
+		d: disass.Disassemble(rom.PrgROM),
 		bps: breakPoints{
-			0x0000: true,
+			c.Reg.PC: true,
 		},
 		bpsMux: &sync.Mutex{},
+
+		nmi: nmi,
 
 		continuec: make(chan bool),
 		nextc:     make(chan bool),
@@ -57,10 +79,11 @@ func NewWorker(rom *models.ROM, vals chan<- BreakData) *Worker {
 //
 // Runs in a loop, should be run in a goroutine
 func (w *Worker) Start() {
+	go w.handleNmi()
+
 	for {
 		w.handleBps()
-		w.c.ExecNext()
-		w.c.HandleInterupts()
+		w.execNext()
 	}
 }
 
@@ -84,14 +107,18 @@ func (w *Worker) Break(addr int) (success bool) {
 	return true
 }
 
-func (w *Worker) Clear(addr int) {
+func (w *Worker) Delete(addr int) (success bool) {
 	w.bpsMux.Lock()
 	defer w.bpsMux.Unlock()
 
-	delete(w.bps, addr)
+	_, success = w.bps[addr]
+	if success {
+		delete(w.bps, addr)
+	}
+	return success
 }
 
-func (w *Worker) ClearAll() {
+func (w *Worker) DeleteAll() {
 	w.bpsMux.Lock()
 	defer w.bpsMux.Unlock()
 
@@ -100,9 +127,19 @@ func (w *Worker) ClearAll() {
 	}
 }
 
+func (w *Worker) List() (breaks []int) {
+	w.bpsMux.Lock()
+	defer w.bpsMux.Unlock()
+
+	for addr, _ := range w.bps {
+		breaks = append(breaks, addr)
+	}
+	return breaks
+}
+
 func (w *Worker) handleBps() {
 	w.bpsMux.Lock()
-	_, ok := w.bps[w.c.Reg.PC-0x8000]
+	_, ok := w.bps[w.c.Reg.PC]
 	w.bpsMux.Unlock()
 
 	if ok {
@@ -122,8 +159,24 @@ func (w *Worker) breakOper() {
 		case <-w.continuec:
 			return
 		case <-w.nextc:
-			w.c.ExecNext()
+			w.execNext()
 			continue
 		}
+	}
+}
+
+func (w *Worker) handleNmi() {
+	for <-w.nmi {
+		w.c.NMI()
+		// This isn't the correct place for this
+		w.drawer.Draw(w.frame.Create())
+	}
+}
+
+func (w *Worker) execNext() {
+	w.c.HandleInterupts()
+	cycles := w.c.ExecNext()
+	for i := 0; i < cycles*3; i++ {
+		w.frame.Push(w.p.Cycle())
 	}
 }

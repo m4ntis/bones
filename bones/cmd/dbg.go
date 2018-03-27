@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/m4ntis/bones/dbg"
+	"github.com/m4ntis/bones/drawer"
 	"github.com/m4ntis/bones/ines"
 	"github.com/m4ntis/bones/models"
 	"github.com/peterh/liner"
@@ -13,6 +14,8 @@ import (
 )
 
 var (
+	d = drawer.New()
+
 	dw *dbg.Worker
 
 	breakVals chan dbg.BreakData
@@ -30,10 +33,11 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			rom := openRom(args)
 			breakVals = make(chan dbg.BreakData)
-			dw = dbg.NewWorker(rom, breakVals)
+			dw = dbg.NewWorker(rom, breakVals, d)
 
 			go dw.Start()
-			startInteractiveDbg()
+			go startInteractiveDbg()
+			d.Run()
 		},
 	}
 )
@@ -72,7 +76,7 @@ func displayBreak(data dbg.BreakData) {
 	var startIdx int
 	var endIdx int
 
-	instIdx := data.Disass.IndexOf(data.Reg.PC - 0x8000)
+	instIdx := data.Disass.IndexOf(data.Reg.PC)
 
 	if instIdx > 5 {
 		startIdx = instIdx - 5

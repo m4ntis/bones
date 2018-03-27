@@ -39,9 +39,9 @@ func createCommands() map[string]*dbgCommand {
 					return false
 				}
 
-				addr, err := strconv.ParseInt(args[0], 16, 16)
+				addr, err := strconv.ParseInt(args[0], 16, 32)
 				if err != nil {
-					fmt.Println("break command only takes a numeric value")
+					fmt.Println("break command only takes a numeric value in base 16")
 					return false
 				}
 
@@ -58,6 +58,64 @@ func createCommands() map[string]*dbgCommand {
 			description: "Set a breakpoint",
 			usage:       "break <address>",
 			hString:     "Sets a breakpoint at the specified address in base 16",
+		},
+		dbgCommand{
+			name:    "breakpoints",
+			aliases: []string{"bps"},
+
+			cmd: func(data dbg.BreakData, args []string) bool {
+				for _, addr := range dw.List() {
+					fmt.Printf("%04x\n", addr)
+				}
+				return false
+			},
+
+			description: "List breakpoints",
+			usage:       "",
+			hString:     "",
+		},
+		dbgCommand{
+			name:    "delete",
+			aliases: []string{"del", "d"},
+
+			cmd: func(data dbg.BreakData, args []string) bool {
+				if len(args) != 1 {
+					fmt.Println("delete command takes exactly one argument")
+					return false
+				}
+
+				addr, err := strconv.ParseInt(args[0], 16, 32)
+				if err != nil {
+					fmt.Println("delete command only takes a numeric value in base 16")
+					return false
+				}
+
+				ok := dw.Delete(int(addr))
+				if !ok {
+					fmt.Printf("There is no breakpoint set at $%04x\n", addr)
+					return false
+				}
+
+				fmt.Printf("Deleted breakpoint at $%04x\n", addr)
+				return false
+			},
+
+			description: "Delete a breakpoint",
+			usage:       "delete <address>",
+			hString:     "Delete a set breakpoint at the specified address in base 16",
+		},
+		dbgCommand{
+			name:    "deleteall",
+			aliases: []string{"da"},
+
+			cmd: func(data dbg.BreakData, args []string) bool {
+				dw.DeleteAll()
+				return false
+			},
+
+			description: "Delete all breakpoints",
+			usage:       "",
+			hString:     "",
 		},
 		dbgCommand{
 			name:    "continue",
@@ -137,13 +195,13 @@ func createCommands() map[string]*dbgCommand {
 					return false
 				}
 
-				addr, err := strconv.ParseInt(args[0], 16, 16)
-				if err != nil || addr > cpu.RAM_SIZE {
-					fmt.Printf("print command only takes a numeric value between 0 and 0x%x\n", cpu.RAM_SIZE)
+				addr, err := strconv.ParseInt(args[0], 16, 32)
+				if err != nil || addr > cpu.RamSize {
+					fmt.Printf("print command only takes a numeric value between 0 and 0x%x\n", cpu.RamSize)
 					return false
 				}
 
-				fmt.Printf("$%04x: 0x%02x\n", int(addr), *data.RAM.Fetch(int(addr)))
+				fmt.Printf("$%04x: 0x%02x\n", int(addr), data.RAM.Observe(int(addr)))
 				return false
 			},
 

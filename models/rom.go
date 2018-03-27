@@ -1,14 +1,14 @@
 package models
 
 const (
-	TRAINER_SIZE      = 512
-	PRG_ROM_PAGE_SIZE = 16384
-	CHR_ROM_PAGE_SIZE = 8192
+	TrainerSize    = 512
+	PrgROMPageSize = 16384
+	ChrROMPageSize = 8192
 )
 
-type Trainer [TRAINER_SIZE]byte
-type PrgROMPage [PRG_ROM_PAGE_SIZE]byte
-type ChrROMPage [CHR_ROM_PAGE_SIZE]byte
+type Trainer [TrainerSize]byte
+type PrgROMPage [PrgROMPageSize]byte
+type ChrROMPage [ChrROMPageSize]byte
 
 type ROM struct {
 	Trainer Trainer

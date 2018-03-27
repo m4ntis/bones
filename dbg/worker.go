@@ -5,6 +5,7 @@ import (
 
 	"github.com/m4ntis/bones/cpu"
 	"github.com/m4ntis/bones/disass"
+	"github.com/m4ntis/bones/drawer"
 	"github.com/m4ntis/bones/models"
 	"github.com/m4ntis/bones/ppu"
 )
@@ -21,8 +22,11 @@ type BreakData struct {
 type Worker struct {
 	c *cpu.CPU
 	p *ppu.PPU
-	d disass.Disassembly
 
+	drawer *drawer.Drawer
+	frame  *models.Frame
+
+	d      disass.Disassembly
 	bps    breakPoints
 	bpsMux *sync.Mutex
 
@@ -38,7 +42,7 @@ type Worker struct {
 //
 // The vals channel is the channel containing the data returned each time the
 // cpu breaks, describing the current cpu state.
-func NewWorker(rom *models.ROM, vals chan<- BreakData) *Worker {
+func NewWorker(rom *models.ROM, vals chan<- BreakData, d *drawer.Drawer) *Worker {
 	nmi := make(chan bool)
 	p := ppu.New(nmi)
 	p.LoadROM(rom)
@@ -53,8 +57,11 @@ func NewWorker(rom *models.ROM, vals chan<- BreakData) *Worker {
 	return &Worker{
 		c: c,
 		p: p,
-		d: disass.Disassemble(rom.PrgROM),
 
+		drawer: d,
+		frame:  &models.Frame{},
+
+		d: disass.Disassemble(rom.PrgROM),
 		bps: breakPoints{
 			c.Reg.PC: true,
 		},
@@ -161,6 +168,8 @@ func (w *Worker) breakOper() {
 func (w *Worker) handleNmi() {
 	for <-w.nmi {
 		w.c.NMI()
+		// This isn't the correct place for this
+		w.drawer.Draw(w.frame.Create())
 	}
 }
 
@@ -168,6 +177,6 @@ func (w *Worker) execNext() {
 	w.c.HandleInterupts()
 	cycles := w.c.ExecNext()
 	for i := 0; i < cycles*3; i++ {
-		w.p.Cycle()
+		w.frame.Push(w.p.Cycle())
 	}
 }

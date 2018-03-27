@@ -19,7 +19,7 @@ type Drawer struct {
 	imgc chan image.Image
 }
 
-func NewDrawer() *Drawer {
+func New() *Drawer {
 	return &Drawer{
 		imgc: make(chan image.Image),
 	}

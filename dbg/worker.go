@@ -100,20 +100,34 @@ func (w *Worker) Break(addr int) (success bool) {
 	return true
 }
 
-func (w *Worker) Clear(addr int) {
+func (w *Worker) Delete(addr int) (success bool) {
 	w.bpsMux.Lock()
 	defer w.bpsMux.Unlock()
 
-	delete(w.bps, addr)
+	_, success = w.bps[addr]
+	if success {
+		delete(w.bps, addr)
+	}
+	return success
 }
 
-func (w *Worker) ClearAll() {
+func (w *Worker) DeleteAll() {
 	w.bpsMux.Lock()
 	defer w.bpsMux.Unlock()
 
 	for addr, _ := range w.bps {
 		delete(w.bps, addr)
 	}
+}
+
+func (w *Worker) List() (breaks []int) {
+	w.bpsMux.Lock()
+	defer w.bpsMux.Unlock()
+
+	for addr, _ := range w.bps {
+		breaks = append(breaks, addr)
+	}
+	return breaks
 }
 
 func (w *Worker) handleBps() {

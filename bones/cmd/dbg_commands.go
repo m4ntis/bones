@@ -195,7 +195,7 @@ func createCommands() map[string]*dbgCommand {
 					return false
 				}
 
-				addr, err := strconv.ParseInt(args[0], 16, 16)
+				addr, err := strconv.ParseInt(args[0], 16, 32)
 				if err != nil || addr > cpu.RamSize {
 					fmt.Printf("print command only takes a numeric value between 0 and 0x%x\n", cpu.RamSize)
 					return false

@@ -27,8 +27,8 @@ var (
 		Format: func(ops []byte) string { return "" },
 
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
-			op(cpu, NilOperand{})
 			cpu.Reg.PC++
+			op(cpu, NilOperand{})
 			return
 		},
 	}
@@ -111,9 +111,12 @@ var (
 		Format: func(ops []byte) string { return fmt.Sprintf("$%02x%02x", ops[1], ops[0]) },
 
 		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
+			// We inc this beforehand so that JSR wont be incremented after
+			// execution
+			cpu.Reg.PC += 3
+
 			addr := int(ops[0]) | int(ops[1])<<8
 			op(cpu, RAMOperand{RAM: cpu.RAM, Addr: addr})
-			cpu.Reg.PC += 3
 			return
 		},
 	}

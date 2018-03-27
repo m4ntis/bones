@@ -319,7 +319,7 @@ func JMP(cpu *CPU, op Operand) (extraCycles int) {
 }
 
 func JSR(cpu *CPU, op Operand) (extraCycles int) {
-	cpu.Reg.PC += 2
+	cpu.Reg.PC -= 1
 	// push PCH
 	cpu.push(byte(cpu.Reg.PC >> 8))
 	// push PCL

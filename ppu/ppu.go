@@ -52,11 +52,16 @@ func (ppu *PPU) LoadROM(rom *models.ROM) {
 	copy(ppu.RAM.data[0x0:models.ChrROMPageSize], rom.ChrROM[0][:])
 }
 
-func (ppu *PPU) Cycle() color.RGBA {
+func (ppu *PPU) Cycle() models.Pixel {
 	defer ppu.incCoords()
 
 	if ppu.scanline >= 0 && ppu.scanline < 240 {
-		return ppu.visibleFrameCycle()
+		return models.Pixel{
+			X: ppu.x,
+			Y: ppu.scanline,
+
+			Color: ppu.visibleFrameCycle(),
+		}
 	} else if ppu.scanline == 241 && ppu.x == 1 {
 		ppu.vblank = true
 		ppu.ppuStatus |= 1 << 7
@@ -68,7 +73,11 @@ func (ppu *PPU) Cycle() color.RGBA {
 		ppu.vblank = false
 	}
 
-	return color.RGBA{}
+	return models.Pixel{
+		X:     ppu.x,
+		Y:     ppu.scanline,
+		Color: color.RGBA{},
+	}
 }
 
 func (ppu *PPU) PPUCtrlWrite(data byte) {

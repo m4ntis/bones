@@ -14,7 +14,7 @@ type breakPoints map[int]bool
 
 type BreakData struct {
 	RAM *cpu.RAM
-	Reg *cpu.Registers
+	Reg *cpu.Regs
 
 	Disass disass.Disassembly
 }

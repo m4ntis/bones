@@ -22,6 +22,11 @@ import (
 // branching operations.
 type Operation func(*CPU, Operand) int
 
+// ADC - Add Carry
+// A + val + C  => A
+//
+// N Z C I D V
+// v v v - - v
 func ADC(cpu *CPU, op Operand) (extraCycles int) {
 	// Calculate result and store in a
 	arg1 := cpu.Reg.A
@@ -54,12 +59,23 @@ func ADC(cpu *CPU, op Operand) (extraCycles int) {
 	return
 }
 
+// AND - And with A
+// A & val => A
+//
+// N Z C I D V
+// v v - - - -
 func AND(cpu *CPU, op Operand) (extraCycles int) {
 	cpu.Reg.A &= op.Read()
 	setNZ(cpu, cpu.Reg.A)
 	return
 }
 
+// ASL - Shift Left One Bit
+// val[7] -> c
+// val << 1 -> val
+//
+// N Z C I D V
+// v v v - - -
 func ASL(cpu *CPU, op Operand) (extraCycles int) {
 	d := op.Read()
 
@@ -72,6 +88,11 @@ func ASL(cpu *CPU, op Operand) (extraCycles int) {
 	return
 }
 
+// BCC - Branch Carry Clear
+// C == 0 -> branch
+//
+// N Z C I D V
+// - - - - - -
 func BCC(cpu *CPU, op Operand) (extraCycles int) {
 	initPC := cpu.Reg.PC
 
@@ -86,6 +107,11 @@ func BCC(cpu *CPU, op Operand) (extraCycles int) {
 	return
 }
 
+// BCS - Branch Carry Set
+// C == 1 -> branch
+//
+// N Z C I D V
+// - - - - - -
 func BCS(cpu *CPU, op Operand) (extraCycles int) {
 	initPC := cpu.Reg.PC
 
@@ -100,6 +126,11 @@ func BCS(cpu *CPU, op Operand) (extraCycles int) {
 	return
 }
 
+// BEQ - Branch result zero
+// C == 1 -> branch
+//
+// N Z C I D V
+// - - - - - -
 func BEQ(cpu *CPU, op Operand) (extraCycles int) {
 	initPC := cpu.Reg.PC
 

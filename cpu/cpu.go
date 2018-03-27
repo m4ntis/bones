@@ -8,7 +8,7 @@ import (
 
 type CPU struct {
 	RAM *RAM
-	Reg *Registers
+	Reg *Regs
 
 	cycles int
 
@@ -22,7 +22,7 @@ type CPU struct {
 func New(ram *RAM) *CPU {
 	return &CPU{
 		RAM: ram,
-		Reg: &Registers{
+		Reg: &Regs{
 			PC: 0x8000,
 		},
 

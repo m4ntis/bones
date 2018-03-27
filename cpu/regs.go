@@ -5,7 +5,7 @@ const (
 	Clear = 0
 )
 
-type Registers struct {
+type Regs struct {
 	PC int
 	SP byte
 
@@ -22,12 +22,12 @@ type Registers struct {
 	N byte
 }
 
-func (reg *Registers) GetP() byte {
+func (reg *Regs) GetP() byte {
 	return reg.C | reg.Z<<1 | reg.I<<2 | reg.D<<3 | reg.B<<4 | reg.V<<6 |
 		reg.N<<7
 }
 
-func (reg *Registers) SetP(p byte) {
+func (reg *Regs) SetP(p byte) {
 	reg.C = p & 1
 	reg.Z = p & 2
 	reg.I = p & 4

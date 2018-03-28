@@ -116,7 +116,6 @@ func (cpu *CPU) interrupt(handlerAddr int) {
 
 	cpu.Reg.I = 1
 
-	// fetch PCL from $fffe and PCH from $ffff
 	cpu.Reg.PC = int(cpu.RAM.Read(handlerAddr)) |
 		int(cpu.RAM.Read(handlerAddr+1))<<8
 	return

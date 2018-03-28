@@ -7,7 +7,7 @@ import (
 )
 
 type PPU struct {
-	RAM *RAM
+	RAM *VRAM
 	OAM *OAM
 
 	scanline int
@@ -33,7 +33,7 @@ type PPU struct {
 }
 
 func New(nmi chan bool) *PPU {
-	var ram RAM
+	var ram VRAM
 	var oam OAM
 
 	return &PPU{
@@ -48,7 +48,7 @@ func New(nmi chan bool) *PPU {
 }
 
 func (ppu *PPU) LoadROM(rom *models.ROM) {
-	// Load first 2 pages of PrgROM (not supporting mappers as of yet)
+	// Load first 2 pages of ChrROM (not supporting mappers as of yet)
 	copy(ppu.RAM.data[0x0:models.ChrROMPageSize], rom.ChrROM[0][:])
 }
 

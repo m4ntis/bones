@@ -19,7 +19,7 @@ const (
 	RamSize          = 0x10000
 )
 
-type RAM struct {
+type VRAM struct {
 	data [RamSize]byte
 }
 
@@ -41,10 +41,10 @@ func getAddr(addr int) int {
 	return addr
 }
 
-func (r *RAM) Read(addr int) byte {
-	return r.data[getAddr(addr)]
+func (v *VRAM) Read(addr int) byte {
+	return v.data[getAddr(addr)]
 }
 
-func (r *RAM) Write(addr int, data byte) {
-	r.data[getAddr(addr)] = data
+func (v *VRAM) Write(addr int, data byte) {
+	v.data[getAddr(addr)] = data
 }

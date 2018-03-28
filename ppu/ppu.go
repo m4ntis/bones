@@ -7,8 +7,8 @@ import (
 )
 
 type PPU struct {
-	RAM *VRAM
-	OAM *OAM
+	VRAM *VRAM
+	OAM  *OAM
 
 	scanline int
 	x        int
@@ -33,12 +33,12 @@ type PPU struct {
 }
 
 func New(nmi chan bool) *PPU {
-	var ram VRAM
+	var vram VRAM
 	var oam OAM
 
 	return &PPU{
-		RAM: &ram,
-		OAM: &oam,
+		VRAM: &vram,
+		OAM:  &oam,
 
 		scrollFirstWrite: true,
 
@@ -49,7 +49,7 @@ func New(nmi chan bool) *PPU {
 
 func (ppu *PPU) LoadROM(rom *models.ROM) {
 	// Load first 2 pages of ChrROM (not supporting mappers as of yet)
-	copy(ppu.RAM.data[0x0:models.ChrROMPageSize], rom.ChrROM[0][:])
+	copy(ppu.VRAM.data[0x0:models.ChrROMPageSize], rom.ChrROM[0][:])
 }
 
 func (ppu *PPU) Cycle() models.Pixel {
@@ -153,17 +153,17 @@ func (ppu *PPU) PPUDataRead() byte {
 		// TODO: Reading the palettes still updates the internal buffer though,
 		// but the data placed in it is the mirrored nametable data that would
 		// appear "underneath" the palette.
-		return ppu.RAM.Read(ppu.ppuAddr)
+		return ppu.VRAM.Read(ppu.ppuAddr)
 	}
 
-	defer func() { ppu.ppuDataBuf = ppu.RAM.Read(ppu.ppuAddr) }()
+	defer func() { ppu.ppuDataBuf = ppu.VRAM.Read(ppu.ppuAddr) }()
 	return ppu.ppuDataBuf
 }
 
 func (ppu *PPU) PPUDataWrite(d byte) {
 	defer ppu.incAddr()
 
-	ppu.RAM.Write(ppu.ppuAddr, d)
+	ppu.VRAM.Write(ppu.ppuAddr, d)
 }
 
 //TODO: Take note of oamaddr
@@ -195,15 +195,15 @@ func (ppu *PPU) visibleFrameCycle() color.RGBA {
 	at := (ppu.scanline/32)*8 + ppu.x/32
 
 	// For now we assume nametable 0
-	ntByte := ppu.RAM.Read(NT0Idx + nt)
+	ntByte := ppu.VRAM.Read(NT0Idx + nt)
 
 	patternAddr := 0x1000*pt + int(ntByte)*16
 
 	ptx := ppu.x % 8
 	pty := ppu.scanline % 8
-	ptLowByte := ppu.RAM.Read(patternAddr + pty)
+	ptLowByte := ppu.VRAM.Read(patternAddr + pty)
 	ptLowBit := ptLowByte >> uint(ptx) & 1
-	ptHighByte := ppu.RAM.Read(patternAddr + pty + 8)
+	ptHighByte := ppu.VRAM.Read(patternAddr + pty + 8)
 	ptHighBit := ptHighByte >> uint(ptx) & 1
 
 	peAddrLow := ptLowBit + ptHighBit<<1
@@ -211,13 +211,13 @@ func (ppu *PPU) visibleFrameCycle() color.RGBA {
 	atQuarter := ppu.x%32/16 + ppu.scanline%32/16<<1
 
 	// Assuming nametable 0, as mentioned above
-	atByte := ppu.RAM.Read(AT0Idx + at)
+	atByte := ppu.VRAM.Read(AT0Idx + at)
 
 	peAddrHigh := atByte >> uint(2*atQuarter) & 3
 
 	peAddr := peAddrLow + peAddrHigh<<2
 
-	pIdx := ppu.RAM.Read(BgrPaletteIdx + int(peAddr))
+	pIdx := ppu.VRAM.Read(BgrPaletteIdx + int(peAddr))
 
 	return Palette[pIdx]
 }

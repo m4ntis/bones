@@ -13,7 +13,7 @@ type breakPoints map[int]bool
 type BreakData struct {
 	Reg  *cpu.Regs
 	CRAM *cpu.RAM
-	PRAM *ppu.VRAM
+	VRAM *ppu.VRAM
 
 	Disass disass.Disassembly
 }
@@ -135,7 +135,7 @@ func (w *Worker) breakOper() {
 		w.vals <- BreakData{
 			Reg:  w.c.Reg,
 			CRAM: w.c.RAM,
-			PRAM: w.p.RAM,
+			VRAM: w.p.VRAM,
 
 			Disass: w.d,
 		}

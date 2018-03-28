@@ -28,14 +28,15 @@ func getAddr(addr int) int {
 		panic("RAM accessing addr out of range")
 	}
 
+	addr %= RamMirrorIdx
 	if addr >= TablesMirrorIdx && addr < BgrPaletteIdx {
 		return addr - 0x1000
 	}
 	if addr >= PaletteMirrorIdx && addr < RamMirrorIdx {
+		if addr == 0x3f10 || addr == 0x3f14 || addr == 0x3f18 || addr == 0x3f0c {
+			return addr - 0x10
+		}
 		return (addr-BgrPaletteIdx)%0x20 + BgrPaletteIdx
-	}
-	if addr >= RamMirrorIdx {
-		return addr % 0x4000
 	}
 	return addr
 }

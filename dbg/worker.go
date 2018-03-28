@@ -1,8 +1,6 @@
 package dbg
 
 import (
-	"sync"
-
 	"github.com/m4ntis/bones/cpu"
 	"github.com/m4ntis/bones/disass"
 	"github.com/m4ntis/bones/drawer"
@@ -26,9 +24,8 @@ type Worker struct {
 	drawer *drawer.Drawer
 	frame  *models.Frame
 
-	d      disass.Disassembly
-	bps    breakPoints
-	bpsMux *sync.Mutex
+	d   disass.Disassembly
+	bps breakPoints
 
 	nmi chan bool
 
@@ -65,7 +62,6 @@ func NewWorker(rom *models.ROM, vals chan<- BreakData, d *drawer.Drawer) *Worker
 		bps: breakPoints{
 			c.Reg.PC: true,
 		},
-		bpsMux: &sync.Mutex{},
 
 		nmi: nmi,
 
@@ -100,17 +96,11 @@ func (w *Worker) Break(addr int) (success bool) {
 		return false
 	}
 
-	w.bpsMux.Lock()
-	defer w.bpsMux.Unlock()
-
 	w.bps[addr] = true
 	return true
 }
 
 func (w *Worker) Delete(addr int) (success bool) {
-	w.bpsMux.Lock()
-	defer w.bpsMux.Unlock()
-
 	_, success = w.bps[addr]
 	if success {
 		delete(w.bps, addr)
@@ -119,18 +109,12 @@ func (w *Worker) Delete(addr int) (success bool) {
 }
 
 func (w *Worker) DeleteAll() {
-	w.bpsMux.Lock()
-	defer w.bpsMux.Unlock()
-
 	for addr, _ := range w.bps {
 		delete(w.bps, addr)
 	}
 }
 
 func (w *Worker) List() (breaks []int) {
-	w.bpsMux.Lock()
-	defer w.bpsMux.Unlock()
-
 	for addr, _ := range w.bps {
 		breaks = append(breaks, addr)
 	}
@@ -138,9 +122,7 @@ func (w *Worker) List() (breaks []int) {
 }
 
 func (w *Worker) handleBps() {
-	w.bpsMux.Lock()
 	_, ok := w.bps[w.c.Reg.PC]
-	w.bpsMux.Unlock()
 
 	if ok {
 		w.breakOper()

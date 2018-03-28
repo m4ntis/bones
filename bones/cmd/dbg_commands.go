@@ -230,9 +230,9 @@ func createCommands() map[string]*dbgCommand {
 				return false
 			},
 
-			description: "Print a value from ppu RAM",
+			description: "Print a value from VRAM",
 			usage:       "vprint <address>",
-			hString:     "Prints the hex value from ppu RAM at a given address in hex",
+			hString:     "Prints the hex value from VRAM at a given address in hex",
 		},
 		dbgCommand{
 			name:    "regs",

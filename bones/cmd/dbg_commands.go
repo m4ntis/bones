@@ -201,7 +201,7 @@ func createCommands() map[string]*dbgCommand {
 					return false
 				}
 
-				fmt.Printf("$%04x: 0x%02x\n", int(addr), data.RAM.Observe(int(addr)))
+				fmt.Printf("$%04x: 0x%02x\n", int(addr), data.CRAM.Observe(int(addr)))
 				return false
 			},
 

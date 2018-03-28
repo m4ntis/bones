@@ -11,8 +11,9 @@ import (
 type breakPoints map[int]bool
 
 type BreakData struct {
-	RAM *cpu.RAM
-	Reg *cpu.Regs
+	Reg  *cpu.Regs
+	CRAM *cpu.RAM
+	PRAM *ppu.RAM
 
 	Disass disass.Disassembly
 }
@@ -132,9 +133,11 @@ func (w *Worker) handleBps() {
 func (w *Worker) breakOper() {
 	for {
 		w.vals <- BreakData{
+			Reg:  w.c.Reg,
+			CRAM: w.c.RAM,
+			PRAM: w.p.RAM,
+
 			Disass: w.d,
-			RAM:    w.c.RAM,
-			Reg:    w.c.Reg,
 		}
 
 		select {

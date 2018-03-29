@@ -33,7 +33,8 @@ type Worker struct {
 	d   disass.Disassembly
 	bps breakPoints
 
-	nmi chan bool
+	nmi    chan bool
+	framec chan bool
 
 	continuec chan bool
 	nextc     chan bool
@@ -47,7 +48,8 @@ type Worker struct {
 // cpu breaks, describing the current cpu state.
 func NewWorker(rom *models.ROM, vals chan<- BreakData, d Drawer) *Worker {
 	nmi := make(chan bool)
-	p := ppu.New(nmi)
+	framec := make(chan bool)
+	p := ppu.New(nmi, framec)
 	p.LoadROM(rom)
 
 	ram := cpu.RAM{}
@@ -69,7 +71,8 @@ func NewWorker(rom *models.ROM, vals chan<- BreakData, d Drawer) *Worker {
 			c.Reg.PC: true,
 		},
 
-		nmi: nmi,
+		nmi:    nmi,
+		framec: framec,
 
 		continuec: make(chan bool),
 		nextc:     make(chan bool),
@@ -82,6 +85,7 @@ func NewWorker(rom *models.ROM, vals chan<- BreakData, d Drawer) *Worker {
 // Runs in a loop, should be run in a goroutine
 func (w *Worker) Start() {
 	go w.handleNmi()
+	go w.handleFrame()
 
 	for {
 		w.handleBps()
@@ -158,7 +162,11 @@ func (w *Worker) breakOper() {
 func (w *Worker) handleNmi() {
 	for <-w.nmi {
 		w.c.NMI()
-		// This isn't the correct place for this
+	}
+}
+
+func (w *Worker) handleFrame() {
+	for <-w.framec {
 		w.drawer.Draw(w.frame.Create())
 	}
 }

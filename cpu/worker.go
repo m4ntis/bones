@@ -17,13 +17,15 @@ type Worker struct {
 
 	drawer Drawer
 	frame  *models.Frame
+	framec chan bool
 
 	nmi chan bool
 }
 
 func NewWorker(rom *models.ROM, d Drawer) *Worker {
 	nmi := make(chan bool)
-	p := ppu.New(nmi)
+	framec := make(chan bool)
+	p := ppu.New(nmi, framec)
 	p.LoadROM(rom)
 
 	ram := RAM{}
@@ -40,12 +42,14 @@ func NewWorker(rom *models.ROM, d Drawer) *Worker {
 		drawer: d,
 		frame:  &models.Frame{},
 
-		nmi: nmi,
+		nmi:    nmi,
+		framec: framec,
 	}
 }
 
 func (w *Worker) Start() {
 	go w.handleNmi()
+	go w.handleFrame()
 
 	for {
 		w.execNext()
@@ -55,7 +59,11 @@ func (w *Worker) Start() {
 func (w *Worker) handleNmi() {
 	for <-w.nmi {
 		w.c.NMI()
-		// This isn't the correct place for this
+	}
+}
+
+func (w *Worker) handleFrame() {
+	for <-w.framec {
 		w.drawer.Draw(w.frame.Create())
 	}
 }

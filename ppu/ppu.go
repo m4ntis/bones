@@ -41,6 +41,7 @@ func New(nmi chan bool) *PPU {
 		OAM:  &oam,
 
 		scrollFirstWrite: true,
+		addrFirstWrite:   true,
 
 		vblank: false,
 		nmi:    nmi,
@@ -138,11 +139,10 @@ func (ppu *PPU) PPUAddrWrite(data byte) {
 	defer func() { ppu.addrFirstWrite = !ppu.addrFirstWrite }()
 
 	if ppu.addrFirstWrite {
-		ppu.ppuAddr = int(data)
+		ppu.ppuAddr = int(data) << 8
 		return
 	}
-
-	ppu.ppuAddr |= int(data) << 8
+	ppu.ppuAddr |= int(data)
 }
 
 func (ppu *PPU) PPUDataRead() byte {

@@ -1,9 +1,10 @@
 package dbg
 
 import (
+	"image"
+
 	"github.com/m4ntis/bones/cpu"
 	"github.com/m4ntis/bones/disass"
-	"github.com/m4ntis/bones/drawer"
 	"github.com/m4ntis/bones/models"
 	"github.com/m4ntis/bones/ppu"
 )
@@ -13,16 +14,20 @@ type breakPoints map[int]bool
 type BreakData struct {
 	Reg  *cpu.Regs
 	CRAM *cpu.RAM
-	PRAM *ppu.RAM
+	VRAM *ppu.VRAM
 
 	Disass disass.Disassembly
+}
+
+type Drawer interface {
+	Draw(image.Image)
 }
 
 type Worker struct {
 	c *cpu.CPU
 	p *ppu.PPU
 
-	drawer *drawer.Drawer
+	drawer Drawer
 	frame  *models.Frame
 
 	d   disass.Disassembly
@@ -40,7 +45,7 @@ type Worker struct {
 //
 // The vals channel is the channel containing the data returned each time the
 // cpu breaks, describing the current cpu state.
-func NewWorker(rom *models.ROM, vals chan<- BreakData, d *drawer.Drawer) *Worker {
+func NewWorker(rom *models.ROM, vals chan<- BreakData, d Drawer) *Worker {
 	nmi := make(chan bool)
 	p := ppu.New(nmi)
 	p.LoadROM(rom)
@@ -135,7 +140,7 @@ func (w *Worker) breakOper() {
 		w.vals <- BreakData{
 			Reg:  w.c.Reg,
 			CRAM: w.c.RAM,
-			PRAM: w.p.RAM,
+			VRAM: w.p.VRAM,
 
 			Disass: w.d,
 		}

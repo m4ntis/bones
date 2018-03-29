@@ -211,28 +211,28 @@ func createCommands() map[string]*dbgCommand {
 			hString:     "Prints the hex value from RAM at a given address in hex",
 		},
 		dbgCommand{
-			name:    "pprint",
-			aliases: []string{"pp"},
+			name:    "vprint",
+			aliases: []string{"vp"},
 
 			cmd: func(data dbg.BreakData, args []string) bool {
 				if len(args) != 1 {
-					fmt.Println("pprint command takes exactly one argument")
+					fmt.Println("vprint command takes exactly one argument")
 					return false
 				}
 
 				addr, err := strconv.ParseInt(args[0], 16, 32)
 				if err != nil || addr > ppu.RamSize {
-					fmt.Printf("pprint command only takes a numeric value between 0 and 0x%x\n", cpu.RamSize)
+					fmt.Printf("vprint command only takes a numeric value between 0 and 0x%x\n", cpu.RamSize)
 					return false
 				}
 
-				fmt.Printf("$%04x: 0x%02x\n", int(addr), data.PRAM.Read(int(addr)))
+				fmt.Printf("$%04x: 0x%02x\n", int(addr), data.VRAM.Read(int(addr)))
 				return false
 			},
 
-			description: "Print a value from ppu RAM",
-			usage:       "pprint <address>",
-			hString:     "Prints the hex value from ppu RAM at a given address in hex",
+			description: "Print a value from VRAM",
+			usage:       "vprint <address>",
+			hString:     "Prints the hex value from VRAM at a given address in hex",
 		},
 		dbgCommand{
 			name:    "regs",

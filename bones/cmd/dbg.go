@@ -23,7 +23,8 @@ var (
 	dbgCommands map[string]*dbgCommand
 	help        string
 
-	line = liner.NewLiner()
+	line      = liner.NewLiner()
+	lastInput = ""
 
 	// dbgCmd represents the dbg cli command
 	dbgCmd = &cobra.Command{
@@ -106,9 +107,14 @@ func interact(data dbg.BreakData) {
 
 func handleUserInput(data dbg.BreakData) (finished bool) {
 	var input string
+	defer func() { lastInput = input }()
+
 	for input == "" {
 		input, _ = line.Prompt("(dbg) ")
 		line.AppendHistory(input)
+		if input == "" {
+			input = lastInput
+		}
 	}
 
 	args := strings.Fields(input)

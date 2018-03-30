@@ -17,15 +17,19 @@ type Worker struct {
 
 	drawer Drawer
 	frame  *models.Frame
-	framec chan bool
 
 	nmi chan bool
+
+	framec chan bool
+	pixelc chan models.Pixel
 }
 
 func NewWorker(rom *models.ROM, d Drawer) *Worker {
 	nmi := make(chan bool)
 	framec := make(chan bool)
-	p := ppu.New(nmi, framec)
+	pixelc := make(chan models.Pixel)
+
+	p := ppu.New(nmi, framec, pixelc)
 	p.LoadROM(rom)
 
 	ram := RAM{}
@@ -42,13 +46,16 @@ func NewWorker(rom *models.ROM, d Drawer) *Worker {
 		drawer: d,
 		frame:  &models.Frame{},
 
-		nmi:    nmi,
+		nmi: nmi,
+
 		framec: framec,
+		pixelc: pixelc,
 	}
 }
 
 func (w *Worker) Start() {
 	go w.handleNmi()
+	go w.handlePixel()
 	go w.handleFrame()
 
 	for {
@@ -62,6 +69,12 @@ func (w *Worker) handleNmi() {
 	}
 }
 
+func (w *Worker) handlePixel() {
+	for pix := range w.pixelc {
+		w.frame.Push(pix)
+	}
+}
+
 func (w *Worker) handleFrame() {
 	for <-w.framec {
 		w.drawer.Draw(w.frame.Create())
@@ -72,6 +85,6 @@ func (w *Worker) execNext() {
 	w.c.HandleInterupts()
 	cycles := w.c.ExecNext()
 	for i := 0; i < cycles*3; i++ {
-		w.frame.Push(w.p.Cycle())
+		w.p.Cycle()
 	}
 }

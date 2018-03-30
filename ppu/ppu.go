@@ -30,10 +30,12 @@ type PPU struct {
 
 	vblank bool
 	nmi    chan bool
+
 	framec chan bool
+	pixelc chan models.Pixel
 }
 
-func New(nmi chan bool, framec chan bool) *PPU {
+func New(nmi chan bool, framec chan bool, pixelc chan models.Pixel) *PPU {
 	var vram VRAM
 	var oam OAM
 
@@ -46,6 +48,8 @@ func New(nmi chan bool, framec chan bool) *PPU {
 
 		vblank: false,
 		nmi:    nmi,
+
+		pixelc: pixelc,
 		framec: framec,
 	}
 }
@@ -55,11 +59,11 @@ func (ppu *PPU) LoadROM(rom *models.ROM) {
 	copy(ppu.VRAM.data[0x0:models.ChrROMPageSize], rom.ChrROM[0][:])
 }
 
-func (ppu *PPU) Cycle() models.Pixel {
+func (ppu *PPU) Cycle() {
 	defer ppu.incCoords()
 
 	if ppu.scanline >= 0 && ppu.scanline < 240 {
-		return models.Pixel{
+		ppu.pixelc <- models.Pixel{
 			X: ppu.x,
 			Y: ppu.scanline,
 
@@ -78,12 +82,6 @@ func (ppu *PPU) Cycle() models.Pixel {
 	} else if ppu.scanline == 261 && ppu.x == 1 {
 		ppu.ppuStatus = 0
 		ppu.vblank = false
-	}
-
-	return models.Pixel{
-		X:     ppu.x,
-		Y:     ppu.scanline,
-		Color: color.RGBA{},
 	}
 }
 

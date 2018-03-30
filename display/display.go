@@ -12,7 +12,7 @@ import (
 var (
 	width  = 256
 	height = 240
-	scale  = float64(0.5)
+	scale  = float64(4)
 )
 
 type Display struct {

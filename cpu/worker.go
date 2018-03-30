@@ -7,16 +7,16 @@ import (
 	"github.com/m4ntis/bones/ppu"
 )
 
-type Drawer interface {
-	Draw(image.Image)
+type Displayer interface {
+	Display(image.Image)
 }
 
 type Worker struct {
 	c *CPU
 	p *ppu.PPU
 
-	drawer Drawer
-	frame  *models.Frame
+	disp  Displayer
+	frame *models.Frame
 
 	nmi chan bool
 
@@ -24,7 +24,7 @@ type Worker struct {
 	pixelc chan models.Pixel
 }
 
-func NewWorker(rom *models.ROM, d Drawer) *Worker {
+func NewWorker(rom *models.ROM, d Displayer) *Worker {
 	nmi := make(chan bool)
 	framec := make(chan bool)
 	pixelc := make(chan models.Pixel)
@@ -43,8 +43,8 @@ func NewWorker(rom *models.ROM, d Drawer) *Worker {
 		c: c,
 		p: p,
 
-		drawer: d,
-		frame:  &models.Frame{},
+		disp:  d,
+		frame: &models.Frame{},
 
 		nmi: nmi,
 
@@ -77,7 +77,7 @@ func (w *Worker) handlePixel() {
 
 func (w *Worker) handleFrame() {
 	for <-w.framec {
-		w.drawer.Draw(w.frame.Create())
+		w.disp.Display(w.frame.Create())
 	}
 }
 

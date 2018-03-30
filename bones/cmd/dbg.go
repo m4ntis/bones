@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/m4ntis/bones/dbg"
-	"github.com/m4ntis/bones/drawer"
+	"github.com/m4ntis/bones/display"
 	"github.com/m4ntis/bones/ines"
 	"github.com/m4ntis/bones/models"
 	"github.com/peterh/liner"
@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	d = drawer.New()
+	d = display.New()
 
 	dw *dbg.Worker
 

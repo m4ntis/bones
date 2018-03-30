@@ -206,9 +206,9 @@ func (ppu *PPU) visibleFrameCycle() color.RGBA {
 	ptx := ppu.x % 8
 	pty := ppu.scanline % 8
 	ptLowByte := ppu.VRAM.Read(patternAddr + pty)
-	ptLowBit := ptLowByte >> uint(ptx) & 1
+	ptLowBit := ptLowByte >> uint(7-ptx) & 1
 	ptHighByte := ppu.VRAM.Read(patternAddr + pty + 8)
-	ptHighBit := ptHighByte >> uint(ptx) & 1
+	ptHighBit := ptHighByte >> uint(7-ptx) & 1
 
 	peAddrLow := ptLowBit + ptHighBit<<1
 

@@ -1,4 +1,4 @@
-package drawer
+package display
 
 import (
 	"image"
@@ -12,20 +12,20 @@ import (
 var (
 	width  = 256
 	height = 240
-	scale  = float64(4)
+	scale  = float64(0.5)
 )
 
-type Drawer struct {
+type Display struct {
 	imgc chan image.Image
 }
 
-func New() *Drawer {
-	return &Drawer{
+func New() *Display {
+	return &Display{
 		imgc: make(chan image.Image),
 	}
 }
 
-func (d *Drawer) Draw(img image.Image) {
+func (d *Display) Display(img image.Image) {
 	r := image.Rect(0, 0, width, height)
 	cropped := image.NewRGBA(r)
 	draw.Draw(cropped, r, img, image.ZP, draw.Src)
@@ -33,11 +33,11 @@ func (d *Drawer) Draw(img image.Image) {
 }
 
 // Run must be called from the main goroutine
-func (d *Drawer) Run() {
+func (d *Display) Run() {
 	pixelgl.Run(d.run)
 }
 
-func (d *Drawer) run() {
+func (d *Display) run() {
 	cfg := pixelgl.WindowConfig{
 		Title:  "BoNES",
 		Bounds: pixel.R(0, 0, float64(width)*scale, float64(height)*scale),

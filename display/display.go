@@ -52,13 +52,12 @@ func (d *Display) run() {
 	c := win.Bounds().Center()
 
 	for !win.Closed() {
-		win.Clear(colornames.White)
-
 		img := <-d.imgc
 		p := pixel.PictureDataFromImage(img)
-		pixel.NewSprite(p, p.Bounds()).
-			Draw(win, pixel.IM.Moved(c).Scaled(c, scale))
+		s := pixel.NewSprite(p, p.Bounds())
 
+		win.Clear(colornames.White)
+		s.Draw(win, pixel.IM.Moved(c).Scaled(c, scale))
 		win.Update()
 	}
 }

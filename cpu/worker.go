@@ -20,16 +20,14 @@ type Worker struct {
 
 	nmi chan bool
 
-	framec chan bool
 	pixelc chan models.Pixel
 }
 
 func NewWorker(rom *models.ROM, d Displayer) *Worker {
 	nmi := make(chan bool)
-	framec := make(chan bool)
 	pixelc := make(chan models.Pixel)
 
-	p := ppu.New(nmi, framec, pixelc)
+	p := ppu.New(nmi, pixelc)
 	p.LoadROM(rom)
 
 	ram := RAM{}
@@ -48,7 +46,6 @@ func NewWorker(rom *models.ROM, d Displayer) *Worker {
 
 		nmi: nmi,
 
-		framec: framec,
 		pixelc: pixelc,
 	}
 }
@@ -56,7 +53,6 @@ func NewWorker(rom *models.ROM, d Displayer) *Worker {
 func (w *Worker) Start() {
 	go w.handleNmi()
 	go w.handlePixel()
-	go w.handleFrame()
 
 	for {
 		w.execNext()
@@ -72,12 +68,9 @@ func (w *Worker) handleNmi() {
 func (w *Worker) handlePixel() {
 	for pix := range w.pixelc {
 		w.frame.Push(pix)
-	}
-}
-
-func (w *Worker) handleFrame() {
-	for <-w.framec {
-		w.disp.Display(w.frame.Create())
+		if pix.X == 255 && pix.Y == 239 {
+			w.disp.Display(w.frame.Create())
+		}
 	}
 }
 

@@ -35,7 +35,6 @@ type Worker struct {
 
 	nmi chan bool
 
-	framec chan bool
 	pixelc chan models.Pixel
 
 	continuec chan bool
@@ -50,10 +49,9 @@ type Worker struct {
 // cpu breaks, describing the current cpu state.
 func NewWorker(rom *models.ROM, vals chan<- BreakData, d Displayer) *Worker {
 	nmi := make(chan bool)
-	framec := make(chan bool)
 	pixelc := make(chan models.Pixel)
 
-	p := ppu.New(nmi, framec, pixelc)
+	p := ppu.New(nmi, pixelc)
 	p.LoadROM(rom)
 
 	ram := cpu.RAM{}
@@ -77,7 +75,6 @@ func NewWorker(rom *models.ROM, vals chan<- BreakData, d Displayer) *Worker {
 
 		nmi: nmi,
 
-		framec: framec,
 		pixelc: pixelc,
 
 		continuec: make(chan bool),
@@ -92,7 +89,6 @@ func NewWorker(rom *models.ROM, vals chan<- BreakData, d Displayer) *Worker {
 func (w *Worker) Start() {
 	go w.handleNmi()
 	go w.handlePixel()
-	go w.handleFrame()
 
 	for {
 		w.handleBps()
@@ -175,12 +171,9 @@ func (w *Worker) handleNmi() {
 func (w *Worker) handlePixel() {
 	for pix := range w.pixelc {
 		w.frame.Push(pix)
-	}
-}
-
-func (w *Worker) handleFrame() {
-	for <-w.framec {
-		w.disp.Display(w.frame.Create())
+		if pix.X == 255 && pix.Y == 239 {
+			w.disp.Display(w.frame.Create())
+		}
 	}
 }
 

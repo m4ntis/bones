@@ -31,11 +31,10 @@ type PPU struct {
 	vblank bool
 	nmi    chan bool
 
-	framec chan bool
 	pixelc chan models.Pixel
 }
 
-func New(nmi chan bool, framec chan bool, pixelc chan models.Pixel) *PPU {
+func New(nmi chan bool, pixelc chan models.Pixel) *PPU {
 	var vram VRAM
 	var oam OAM
 
@@ -50,7 +49,6 @@ func New(nmi chan bool, framec chan bool, pixelc chan models.Pixel) *PPU {
 		nmi:    nmi,
 
 		pixelc: pixelc,
-		framec: framec,
 	}
 }
 
@@ -74,10 +72,6 @@ func (ppu *PPU) Cycle() {
 		ppu.ppuStatus |= 1 << 7
 		if ppu.ppuCtrl>>7 == 1 {
 			ppu.nmi <- true
-		}
-		// If any rendering is enabled
-		if ppu.ppuMask>>3&3 > 0 {
-			ppu.framec <- true
 		}
 	} else if ppu.scanline == 261 && ppu.x == 1 {
 		ppu.ppuStatus = 0

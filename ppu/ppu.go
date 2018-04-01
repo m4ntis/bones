@@ -227,31 +227,34 @@ func (ppu *PPU) visibleFrameCycle() color.RGBA {
 	ptLowBit := ptLowByte >> uint(7-ptx) & 1
 	ptHighBit := ptHighByte >> uint(7-ptx) & 1
 
-	peAddrLow := ptLowBit + ptHighBit<<1
+	bgLo := ptLowBit + ptHighBit<<1
 
 	atQuarter := ppu.x%32/16 + ppu.scanline%32/16<<1
 
 	// Assuming nametable 0, as mentioned above
 	atByte := ppu.VRAM.Read(AT0Idx + at)
 
-	peAddrHigh := atByte >> uint(2*atQuarter) & 3
+	bgHi := atByte >> uint(2*atQuarter) & 3
 
-	peAddr := peAddrLow + peAddrHigh<<2
-
-	pIdx := ppu.VRAM.Read(BgrPaletteIdx + int(peAddr))
+	pIdx := ppu.calcPaletteIdx(int(bgLo), int(bgHi), ppu.calcSprForPixel())
 
 	return Palette[pIdx]
 }
 
-func (ppu *PPU) calcPaletteIdx(bg, bgPaletteHi int, spr Sprite) (pIdx byte) {
+func (ppu *PPU) calcPaletteIdx(bgLo, bgHi, sprIdx int) (pIdx byte) {
+	if sprIdx == -1 {
+		return ppu.VRAM.Read(BgrPaletteIdx + int(bgLo+bgHi<<2))
+	}
+
+	spr := ppu.sprites[sprIdx]
 	sprData := spr.dataLo&1 + spr.dataHi&1<<1
 
 	// bg 0 or sprite not opaque and with front priority
-	if bg == 0 || (sprData != 0 && spr.attr>>5&1 == 0) {
+	if bgLo == 0 || (sprData != 0 && spr.attr>>5&1 == 0) {
 		return ppu.VRAM.Read(SprPaletteIdx + int(sprData+spr.attr&3<<2))
 	}
 
-	return ppu.VRAM.Read(BgrPaletteIdx + int(bg+bgPaletteHi<<2))
+	return ppu.VRAM.Read(BgrPaletteIdx + bgHi + bgHi<<2)
 }
 
 func (ppu *PPU) spriteEval() {
@@ -319,4 +322,13 @@ func (ppu *PPU) shiftSprites() {
 			}
 		}
 	}
+}
+
+func (ppu *PPU) calcSprForPixel() (idx int) {
+	for i, spr := range ppu.sprites {
+		if spr.x == 0 && spr.shifted < 8 && spr.attr>>5&1 == 0 {
+			return i
+		}
+	}
+	return -1
 }

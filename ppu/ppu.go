@@ -13,6 +13,8 @@ type Sprite struct {
 	attr byte
 
 	x byte
+
+	shifted int
 }
 
 type PPU struct {
@@ -275,6 +277,8 @@ func (ppu *PPU) spriteEval() {
 
 			ppu.evalSprN++
 		}
+
+		ppu.shiftSprites()
 	} else if ppu.x >= 257 && ppu.x <= 320 {
 		// Gotta do this once every 8 cycles
 		if ppu.x%8 == 1 {
@@ -298,6 +302,20 @@ func (ppu *PPU) spriteEval() {
 				dataLo: sprDataLo,
 
 				x: ppu.sOAM[sprN*4+3],
+			}
+		}
+	}
+}
+
+func (ppu *PPU) shiftSprites() {
+	for i := range ppu.sprites {
+		if ppu.sprites[i].shifted > 8 {
+			if ppu.sprites[i].x > 0 {
+				ppu.sprites[i].x--
+			} else {
+				ppu.sprites[i].dataHi >>= 1
+				ppu.sprites[i].dataLo >>= 1
+				ppu.sprites[i].shifted++
 			}
 		}
 	}

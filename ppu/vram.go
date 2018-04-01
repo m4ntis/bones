@@ -13,7 +13,7 @@ const (
 	AT3Idx           = 0x2fc0
 	TablesMirrorIdx  = 0x3000
 	BgrPaletteIdx    = 0x3f00
-	SpritePaletteIdx = 0x3f10
+	SprPaletteIdx    = 0x3f10
 	PaletteMirrorIdx = 0x3f20
 	RamMirrorIdx     = 0x4000
 	RamSize          = 0x10000

@@ -6,9 +6,22 @@ import (
 	"github.com/m4ntis/bones/models"
 )
 
+type sprite struct {
+	dataLo byte
+	dataHi byte
+
+	attr byte
+
+	x byte
+}
+
 type PPU struct {
 	VRAM *VRAM
-	OAM  *OAM
+
+	OAM             *OAM
+	secondaryOAM    *SecondaryOAM
+	finishOAMSearch bool
+	sprites         []sprite
 
 	scanline int
 	x        int
@@ -67,6 +80,8 @@ func (ppu *PPU) Cycle() {
 
 			Color: ppu.visibleFrameCycle(),
 		}
+
+		ppu.spriteEval()
 	} else if ppu.scanline == 241 && ppu.x == 1 {
 		ppu.vblank = true
 		ppu.ppuStatus |= 1 << 7
@@ -218,4 +233,19 @@ func (ppu *PPU) visibleFrameCycle() color.RGBA {
 	pIdx := ppu.VRAM.Read(BgrPaletteIdx + int(peAddr))
 
 	return Palette[pIdx]
+}
+
+func (ppu *PPU) calcPaletteIdx(bg, bgPaletteHi int, spr sprite) (pIdx byte) {
+	sprData := spr.dataLo&1 + spr.dataHi&1<<1
+
+	// bg 0 or sprite not opaque and with front priority
+	if bg == 0 || (sprData != 0 && spr.attr>>5&1 == 0) {
+		return ppu.VRAM.Read(SprPaletteIdx + int(sprData+spr.attr&3<<2))
+	}
+
+	return ppu.VRAM.Read(BgrPaletteIdx + int(bg+bgPaletteHi<<2))
+}
+
+func (ppu *PPU) spriteEval() {
+
 }

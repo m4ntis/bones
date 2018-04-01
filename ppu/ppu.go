@@ -6,7 +6,7 @@ import (
 	"github.com/m4ntis/bones/models"
 )
 
-type sprite struct {
+type Sprite struct {
 	dataLo byte
 	dataHi byte
 
@@ -18,10 +18,12 @@ type sprite struct {
 type PPU struct {
 	VRAM *VRAM
 
-	OAM             *OAM
-	secondaryOAM    *SecondaryOAM
-	finishOAMSearch bool
-	sprites         []sprite
+	OAM     *OAM
+	sOAM    *SecondaryOAM
+	sprites [8]Sprite
+
+	evalSprN      int
+	foundSprCount int
 
 	scanline int
 	x        int
@@ -50,10 +52,14 @@ type PPU struct {
 func New(nmi chan bool, pixelc chan models.Pixel) *PPU {
 	var vram VRAM
 	var oam OAM
+	var soam SecondaryOAM
 
 	return &PPU{
 		VRAM: &vram,
-		OAM:  &oam,
+
+		OAM:     &oam,
+		sOAM:    &soam,
+		sprites: [8]Sprite{},
 
 		scrollFirstWrite: true,
 		addrFirstWrite:   true,
@@ -215,8 +221,8 @@ func (ppu *PPU) visibleFrameCycle() color.RGBA {
 	ptx := ppu.x % 8
 	pty := ppu.scanline % 8
 	ptLowByte := ppu.VRAM.Read(patternAddr + pty)
-	ptLowBit := ptLowByte >> uint(7-ptx) & 1
 	ptHighByte := ppu.VRAM.Read(patternAddr + pty + 8)
+	ptLowBit := ptLowByte >> uint(7-ptx) & 1
 	ptHighBit := ptHighByte >> uint(7-ptx) & 1
 
 	peAddrLow := ptLowBit + ptHighBit<<1
@@ -235,7 +241,7 @@ func (ppu *PPU) visibleFrameCycle() color.RGBA {
 	return Palette[pIdx]
 }
 
-func (ppu *PPU) calcPaletteIdx(bg, bgPaletteHi int, spr sprite) (pIdx byte) {
+func (ppu *PPU) calcPaletteIdx(bg, bgPaletteHi int, spr Sprite) (pIdx byte) {
 	sprData := spr.dataLo&1 + spr.dataHi&1<<1
 
 	// bg 0 or sprite not opaque and with front priority
@@ -247,5 +253,52 @@ func (ppu *PPU) calcPaletteIdx(bg, bgPaletteHi int, spr sprite) (pIdx byte) {
 }
 
 func (ppu *PPU) spriteEval() {
+	if ppu.x >= 1 && ppu.x <= 256 {
+		if ppu.x == 1 {
+			// Reset ppu sprite eval flags
+			ppu.evalSprN = 0
+			ppu.foundSprCount = 0
+			ppu.sOAM = &SecondaryOAM{}
+		}
+		if ppu.evalSprN < 64 {
+			// Sprite in scanline range
+			if int(ppu.OAM[ppu.evalSprN*4]) >= ppu.scanline &&
+				int(ppu.OAM[ppu.evalSprN*4]) < ppu.scanline+8 {
+				if ppu.foundSprCount >= 8 {
+					// Set overflow flag
+					ppu.ppuStatus &= 1 << 5
+				} else {
+					// Copy 4 bytes of sprite data from OAM to secondary OAM
+					copy(ppu.sOAM[ppu.foundSprCount*4:ppu.foundSprCount*4+4], ppu.OAM[ppu.evalSprN*4:ppu.evalSprN*4+4])
+				}
+			}
 
+			ppu.evalSprN++
+		}
+	} else if ppu.x >= 257 && ppu.x <= 320 {
+		// Gotta do this once every 8 cycles
+		if ppu.x%8 == 1 {
+			sprN := (ppu.x - 256) / 8
+
+			// Determine pattern table
+			pt := int(ppu.ppuCtrl >> 3 & 1)
+			patternAddr := 0x1000*pt + int(ppu.sOAM[sprN*4+1])*16
+
+			// Line of the sprite to be displayed on the scanline
+			sprLine := ppu.scanline - int(ppu.sOAM[sprN*4])
+
+			// TODO: Might gotta invert this
+			sprDataLo := ppu.VRAM.Read(patternAddr + sprLine)
+			sprDataHi := ppu.VRAM.Read(patternAddr + sprLine + 8)
+
+			ppu.sprites[sprN] = Sprite{
+				attr: ppu.sOAM[sprN*4+2],
+
+				dataHi: sprDataHi,
+				dataLo: sprDataLo,
+
+				x: ppu.sOAM[sprN*4+3],
+			}
+		}
+	}
 }

@@ -250,7 +250,7 @@ func (ppu *PPU) calcPaletteIdx(bgLo, bgHi, sprIdx int) (pIdx byte) {
 	sprData := spr.dataLo&1 + spr.dataHi&1<<1
 
 	// bg 0 or sprite not opaque and with front priority
-	if bgLo == 0 || (sprData != 0 && spr.attr>>5&1 == 0) {
+	if bgLo == 0 && sprData != 0 && spr.attr>>5&1 == 0 {
 		return ppu.VRAM.Read(SprPaletteIdx + int(sprData+spr.attr&3<<2))
 	}
 
@@ -287,24 +287,35 @@ func (ppu *PPU) spriteEval() {
 		if ppu.x%8 == 1 {
 			sprN := (ppu.x - 256) / 8
 
-			// Determine pattern table
-			pt := int(ppu.ppuCtrl >> 3 & 1)
-			patternAddr := 0x1000*pt + int(ppu.sOAM[sprN*4+1])*16
+			if ppu.foundSprCount >= sprN+1 {
+				// Determine pattern table
+				pt := int(ppu.ppuCtrl >> 3 & 1)
+				patternAddr := 0x1000*pt + int(ppu.sOAM[sprN*4+1])*16
 
-			// Line of the sprite to be displayed on the scanline
-			sprLine := ppu.scanline - int(ppu.sOAM[sprN*4])
+				// Line of the sprite to be displayed on the scanline
+				sprLine := ppu.scanline - int(ppu.sOAM[sprN*4])
 
-			// TODO: Might gotta invert this
-			sprDataLo := ppu.VRAM.Read(patternAddr + sprLine)
-			sprDataHi := ppu.VRAM.Read(patternAddr + sprLine + 8)
+				// TODO: Might gotta invert this
+				sprDataLo := ppu.VRAM.Read(patternAddr + sprLine)
+				sprDataHi := ppu.VRAM.Read(patternAddr + sprLine + 8)
 
-			ppu.sprites[sprN] = Sprite{
-				attr: ppu.sOAM[sprN*4+2],
+				ppu.sprites[sprN] = Sprite{
+					attr: ppu.sOAM[sprN*4+2],
 
-				dataHi: sprDataHi,
-				dataLo: sprDataLo,
+					dataHi: sprDataHi,
+					dataLo: sprDataLo,
 
-				x: ppu.sOAM[sprN*4+3],
+					x: ppu.sOAM[sprN*4+3],
+				}
+			} else {
+				ppu.sprites[sprN] = Sprite{
+					attr: 0xff,
+
+					dataHi: 0xff,
+					dataLo: 0xff,
+
+					x: 0xff,
+				}
 			}
 		}
 	}

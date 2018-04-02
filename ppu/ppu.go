@@ -1,6 +1,7 @@
 package ppu
 
 import (
+	"fmt"
 	"image/color"
 
 	"github.com/m4ntis/bones/models"
@@ -243,7 +244,7 @@ func (ppu *PPU) visibleFrameCycle() color.RGBA {
 
 func (ppu *PPU) calcPaletteIdx(bgLo, bgHi, sprIdx int) (pIdx byte) {
 	if sprIdx == -1 {
-		return ppu.VRAM.Read(BgrPaletteIdx + int(bgLo+bgHi<<2))
+		return ppu.VRAM.Read(BgrPaletteIdx + bgLo + bgHi<<2)
 	}
 
 	spr := ppu.sprites[sprIdx]
@@ -254,7 +255,7 @@ func (ppu *PPU) calcPaletteIdx(bgLo, bgHi, sprIdx int) (pIdx byte) {
 		return ppu.VRAM.Read(SprPaletteIdx + int(sprData+spr.attr&3<<2))
 	}
 
-	return ppu.VRAM.Read(BgrPaletteIdx + bgHi + bgHi<<2)
+	return ppu.VRAM.Read(BgrPaletteIdx + bgLo + bgHi<<2)
 }
 
 func (ppu *PPU) spriteEval() {
@@ -267,14 +268,15 @@ func (ppu *PPU) spriteEval() {
 		}
 		if ppu.evalSprN < 64 {
 			// Sprite in scanline range
-			if int(ppu.OAM[ppu.evalSprN*4]) >= ppu.scanline &&
-				int(ppu.OAM[ppu.evalSprN*4]) < ppu.scanline+8 {
+			if ppu.scanline >= int(ppu.OAM[ppu.evalSprN*4]) &&
+				ppu.scanline < int(ppu.OAM[ppu.evalSprN*4])+8 {
 				if ppu.foundSprCount >= 8 {
 					// Set overflow flag
 					ppu.ppuStatus &= 1 << 5
 				} else {
 					// Copy 4 bytes of sprite data from OAM to secondary OAM
 					copy(ppu.sOAM[ppu.foundSprCount*4:ppu.foundSprCount*4+4], ppu.OAM[ppu.evalSprN*4:ppu.evalSprN*4+4])
+					ppu.foundSprCount++
 				}
 			}
 
@@ -307,6 +309,7 @@ func (ppu *PPU) spriteEval() {
 
 					x: ppu.sOAM[sprN*4+3],
 				}
+				fmt.Println(ppu.sprites[sprN])
 			} else {
 				ppu.sprites[sprN] = Sprite{
 					attr: 0xff,
@@ -323,7 +326,7 @@ func (ppu *PPU) spriteEval() {
 
 func (ppu *PPU) shiftSprites() {
 	for i := range ppu.sprites {
-		if ppu.sprites[i].shifted > 8 {
+		if ppu.sprites[i].shifted < 8 {
 			if ppu.sprites[i].x > 0 {
 				ppu.sprites[i].x--
 			} else {

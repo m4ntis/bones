@@ -1,7 +1,6 @@
 package ppu
 
 import (
-	"fmt"
 	"image/color"
 
 	"github.com/m4ntis/bones/models"
@@ -309,7 +308,6 @@ func (ppu *PPU) spriteEval() {
 
 					x: ppu.sOAM[sprN*4+3],
 				}
-				fmt.Println(ppu.sprites[sprN])
 			} else {
 				ppu.sprites[sprN] = Sprite{
 					attr: 0xff,

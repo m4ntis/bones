@@ -1,8 +1,8 @@
 package models
 
 const (
-	ButtonPressed  = 0
 	ButtonReleased = 0
+	ButtonPressed  = 1
 )
 
 type Controller struct {
@@ -29,6 +29,8 @@ func (c *Controller) Strobe(s byte) {
 }
 
 func (c *Controller) Read() byte {
+	defer func() { c.readCount++ }()
+
 	if c.readCount == 0 {
 		return c.aState
 	} else if c.readCount == 1 {
@@ -45,9 +47,9 @@ func (c *Controller) Read() byte {
 		return c.leftState
 	} else if c.readCount == 7 {
 		return c.rightState
-	} else {
-		return 1
 	}
+
+	return 1
 }
 
 func (c *Controller) PressA() {

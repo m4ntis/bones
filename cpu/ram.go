@@ -1,6 +1,9 @@
 package cpu
 
-import "github.com/m4ntis/bones/ppu"
+import (
+	"github.com/m4ntis/bones/models"
+	"github.com/m4ntis/bones/ppu"
+)
 
 const (
 	ZeroPageBeginIdx         = 0x0
@@ -27,13 +30,15 @@ const (
 	PPUAddr   = 0x2006
 	PPUData   = 0x2007
 	OAMDMA    = 0x4014
+	Ctrl1     = 0x4016
 )
 
 type RAM struct {
 	data [RamSize]byte
 
-	CPU *CPU
-	PPU *ppu.PPU
+	CPU  *CPU
+	PPU  *ppu.PPU
+	Ctrl *models.Controller
 }
 
 // getAddr returns the underlying address after mapping.
@@ -75,6 +80,8 @@ func (r *RAM) Read(addr int) byte {
 		d = r.PPU.PPUDataRead()
 	case OAMDMA:
 		panic("Invalid read from OAMDMA")
+	case Ctrl1:
+		d = r.Ctrl.Read()
 	default:
 		d = r.data[addr]
 	}
@@ -115,6 +122,8 @@ func (r *RAM) Write(addr int, d byte) (cycles int) {
 		if r.CPU.cycles%2 == 1 {
 			cycles++
 		}
+	case Ctrl1:
+		r.Ctrl.Strobe(d & 1)
 	}
 
 	// We write it anyway, even if mapped i/o, so RAM.Observe can see the value

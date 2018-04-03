@@ -6,25 +6,29 @@ const (
 )
 
 type Controller struct {
-	aState int
-	bState int
+	aState byte
+	bState byte
 
-	selectState int
-	startState  int
+	selectState byte
+	startState  byte
 
-	upState    int
-	downState  int
-	leftState  int
-	rightState int
+	upState    byte
+	downState  byte
+	leftState  byte
+	rightState byte
 
 	readCount int
+	strobe    byte
 }
 
-func (c *Controller) Poll() {
-	c.readCount = 0
+func (c *Controller) Strobe(s byte) {
+	c.strobe = s
+	if s == 0 {
+		c.readCount = 0
+	}
 }
 
-func (c *Controller) Read() int {
+func (c *Controller) Read() byte {
 	if c.readCount == 0 {
 		return c.aState
 	} else if c.readCount == 1 {

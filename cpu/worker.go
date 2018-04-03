@@ -23,7 +23,7 @@ type Worker struct {
 	pixelc chan models.Pixel
 }
 
-func NewWorker(rom *models.ROM, d Displayer) *Worker {
+func NewWorker(rom *models.ROM, d Displayer, ctrl *models.Controller) *Worker {
 	nmi := make(chan bool)
 	pixelc := make(chan models.Pixel)
 
@@ -36,6 +36,7 @@ func NewWorker(rom *models.ROM, d Displayer) *Worker {
 
 	ram.CPU = c
 	ram.PPU = p
+	ram.Ctrl = ctrl
 
 	return &Worker{
 		c: c,

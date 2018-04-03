@@ -47,7 +47,7 @@ type Worker struct {
 //
 // The vals channel is the channel containing the data returned each time the
 // cpu breaks, describing the current cpu state.
-func NewWorker(rom *models.ROM, vals chan<- BreakData, d Displayer) *Worker {
+func NewWorker(rom *models.ROM, vals chan<- BreakData, d Displayer, ctrl *models.Controller) *Worker {
 	nmi := make(chan bool)
 	pixelc := make(chan models.Pixel)
 
@@ -60,6 +60,7 @@ func NewWorker(rom *models.ROM, vals chan<- BreakData, d Displayer) *Worker {
 
 	ram.CPU = c
 	ram.PPU = p
+	ram.Ctrl = ctrl
 
 	return &Worker{
 		c: c,

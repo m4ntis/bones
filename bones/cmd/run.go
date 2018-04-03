@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"github.com/m4ntis/bones/cpu"
+	"github.com/m4ntis/bones/display"
+	"github.com/m4ntis/bones/models"
 	"github.com/spf13/cobra"
 )
 
@@ -14,8 +16,10 @@ var (
 		Short: "Run an iNES program",
 		Long:  "The bones run command is used to run NES roms, in iNES format.\n",
 		Run: func(cmd *cobra.Command, args []string) {
+			ctrl := &models.Controller{}
+			d := display.New(ctrl)
 			rom := openRom(args)
-			w = cpu.NewWorker(rom, d)
+			w = cpu.NewWorker(rom, d, ctrl)
 
 			go w.Start()
 			d.Run()

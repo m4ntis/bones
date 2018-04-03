@@ -14,8 +14,6 @@ import (
 )
 
 var (
-	d = display.New()
-
 	dw *dbg.Worker
 
 	breakVals chan dbg.BreakData
@@ -32,9 +30,11 @@ var (
 		Short: "Debug an iNES program",
 		Long:  "The bones dbg command is used to debug NES roms, in iNES format.\n",
 		Run: func(cmd *cobra.Command, args []string) {
+			ctrl := &models.Controller{}
+			d := display.New(ctrl)
 			rom := openRom(args)
 			breakVals = make(chan dbg.BreakData)
-			dw = dbg.NewWorker(rom, breakVals, d)
+			dw = dbg.NewWorker(rom, breakVals, d, ctrl)
 
 			go dw.Start()
 			go startInteractiveDbg()

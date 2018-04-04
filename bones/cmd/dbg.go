@@ -91,10 +91,10 @@ func displayBreak(data dbg.BreakData) {
 		inst := data.Disass.Code[i]
 
 		if i == instIdx {
-			fmt.Printf("=> 0x%04x: %s\n", inst.Addr, inst.Text)
+			fmt.Printf("=> %04x: %s\n", inst.Addr, inst.Text)
 			continue
 		}
-		fmt.Printf("   0x%04x: %s\n", inst.Addr, inst.Text)
+		fmt.Printf("   %04x: %s\n", inst.Addr, inst.Text)
 	}
 }
 

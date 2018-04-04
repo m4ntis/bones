@@ -35,7 +35,7 @@ var disassCmd = &cobra.Command{
 
 		d := disass.Disassemble(rom.PrgROM)
 		for _, inst := range d.Code {
-			fmt.Printf("0x%04x: %s\n", inst.Addr, inst.Text)
+			fmt.Printf("%04x: %s\n", inst.Addr, inst.Text)
 		}
 	},
 }

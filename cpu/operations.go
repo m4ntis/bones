@@ -261,7 +261,7 @@ func CMP(cpu *CPU, op Operand) (extraCycles int) {
 	res := cpu.Reg.A - d
 
 	setNZ(cpu, res)
-	if d > cpu.Reg.A {
+	if d <= cpu.Reg.A {
 		cpu.Reg.C = Set
 	} else {
 		cpu.Reg.C = Clear

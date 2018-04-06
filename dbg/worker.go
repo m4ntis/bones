@@ -27,15 +27,10 @@ type Worker struct {
 	c *cpu.CPU
 	p *ppu.PPU
 
-	disp  Displayer
-	frame *models.Frame
-
 	d   disass.Disassembly
 	bps breakPoints
 
 	nmi chan bool
-
-	pixelc chan models.Pixel
 
 	continuec chan bool
 	nextc     chan bool
@@ -47,11 +42,10 @@ type Worker struct {
 //
 // The vals channel is the channel containing the data returned each time the
 // cpu breaks, describing the current cpu state.
-func NewWorker(rom *models.ROM, vals chan<- BreakData, d Displayer, ctrl *models.Controller) *Worker {
+func NewWorker(rom *models.ROM, vals chan<- BreakData, disp ppu.Displayer, ctrl *models.Controller) *Worker {
 	nmi := make(chan bool)
-	pixelc := make(chan models.Pixel)
 
-	p := ppu.New(nmi, pixelc)
+	p := ppu.New(nmi, disp)
 	p.LoadROM(rom)
 
 	ram := cpu.RAM{}
@@ -66,17 +60,12 @@ func NewWorker(rom *models.ROM, vals chan<- BreakData, d Displayer, ctrl *models
 		c: c,
 		p: p,
 
-		disp:  d,
-		frame: &models.Frame{},
-
 		d: disass.Disassemble(rom.PrgROM),
 		bps: breakPoints{
 			c.Reg.PC: true,
 		},
 
 		nmi: nmi,
-
-		pixelc: pixelc,
 
 		continuec: make(chan bool),
 		nextc:     make(chan bool),
@@ -89,7 +78,6 @@ func NewWorker(rom *models.ROM, vals chan<- BreakData, d Displayer, ctrl *models
 // Runs in a loop, should be run in a goroutine
 func (w *Worker) Start() {
 	go w.handleNmi()
-	go w.handlePixel()
 
 	for {
 		w.handleBps()
@@ -166,15 +154,6 @@ func (w *Worker) breakOper() {
 func (w *Worker) handleNmi() {
 	for <-w.nmi {
 		w.c.NMI()
-	}
-}
-
-func (w *Worker) handlePixel() {
-	for pix := range w.pixelc {
-		w.frame.Push(pix)
-		if pix.X == 255 && pix.Y == 239 {
-			w.disp.Display(w.frame.Create())
-		}
 	}
 }
 

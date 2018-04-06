@@ -1,6 +1,7 @@
 package ppu
 
 import (
+	"image"
 	"image/color"
 
 	"github.com/m4ntis/bones/models"
@@ -15,6 +16,10 @@ type Sprite struct {
 	x byte
 
 	shifted int
+}
+
+type Displayer interface {
+	Display(image.Image)
 }
 
 type PPU struct {
@@ -48,10 +53,11 @@ type PPU struct {
 	vblank bool
 	nmi    chan bool
 
-	pixelc chan models.Pixel
+	frame *models.Frame
+	disp  Displayer
 }
 
-func New(nmi chan bool, pixelc chan models.Pixel) *PPU {
+func New(nmi chan bool, disp Displayer) *PPU {
 	var vram VRAM
 	var oam OAM
 	var soam SecondaryOAM
@@ -69,7 +75,8 @@ func New(nmi chan bool, pixelc chan models.Pixel) *PPU {
 		vblank: false,
 		nmi:    nmi,
 
-		pixelc: pixelc,
+		frame: &models.Frame{},
+		disp:  disp,
 	}
 }
 
@@ -82,12 +89,12 @@ func (ppu *PPU) Cycle() {
 	defer ppu.incCoords()
 
 	if ppu.scanline >= 0 && ppu.scanline < 240 {
-		ppu.pixelc <- models.Pixel{
+		ppu.frame.Push(models.Pixel{
 			X: ppu.x,
 			Y: ppu.scanline,
 
 			Color: ppu.visibleFrameCycle(),
-		}
+		})
 
 		ppu.spriteEval()
 	} else if ppu.scanline == 241 && ppu.x == 1 {
@@ -96,6 +103,8 @@ func (ppu *PPU) Cycle() {
 		if ppu.ppuCtrl>>7 == 1 {
 			ppu.nmi <- true
 		}
+
+		ppu.disp.Display(ppu.frame.Create())
 	} else if ppu.scanline == 261 && ppu.x == 1 {
 		ppu.ppuStatus = 0
 		ppu.vblank = false

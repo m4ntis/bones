@@ -179,8 +179,8 @@ func (w *Worker) handlePixel() {
 }
 
 func (w *Worker) execNext() {
-	w.c.HandleInterupts()
 	cycles := w.c.ExecNext()
+	w.c.HandleInterupts()
 	for i := 0; i < cycles*3; i++ {
 		w.p.Cycle()
 	}

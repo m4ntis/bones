@@ -471,7 +471,13 @@ func SBC(cpu *CPU, op Operand) (extraCycles int) {
 	arg1 := int8(cpu.Reg.A)
 	arg2 := int8(op.Read())
 
-	res := byte(arg1 - arg2)
+	var res byte
+	if cpu.Reg.C == 0 {
+		res = byte(arg1-arg2) - 1
+	} else {
+		res = byte(arg1 - arg2)
+	}
+
 	cpu.Reg.A = res
 
 	// Set flags

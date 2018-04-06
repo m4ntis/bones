@@ -300,6 +300,13 @@ func (ppu *PPU) spriteEval() {
 				sprDataLo := ppu.VRAM.Read(patternAddr + sprLine)
 				sprDataHi := ppu.VRAM.Read(patternAddr + sprLine + 8)
 
+				attr := ppu.sOAM[sprN*4+2]
+				// Check horizontal invert bit off
+				if attr>>6&1 == 0 {
+					sprDataLo = flip_byte(sprDataLo)
+					sprDataHi = flip_byte(sprDataHi)
+				}
+
 				ppu.sprites[sprN] = Sprite{
 					attr: ppu.sOAM[sprN*4+2],
 
@@ -343,4 +350,11 @@ func (ppu *PPU) calcSprForPixel() (idx int) {
 		}
 	}
 	return -1
+}
+
+func flip_byte(d byte) byte {
+	d = ((d >> 1) & 0x55) | ((d & 0x55) << 1)
+	d = ((d >> 2) & 0x33) | ((d & 0x33) << 2)
+	d = ((d >> 4) & 0x0F) | ((d & 0x0F) << 4)
+	return d
 }

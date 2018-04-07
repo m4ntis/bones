@@ -78,7 +78,7 @@ func New(nmi chan bool, disp Displayer) *PPU {
 		vblank: false,
 		nmi:    nmi,
 
-		frame: &models.Frame{},
+		frame: models.NewFrame(),
 		disp:  disp,
 	}
 }
@@ -90,12 +90,14 @@ func (ppu *PPU) LoadROM(rom *models.ROM) {
 
 func (ppu *PPU) Cycle() {
 	if ppu.scanline >= 0 && ppu.scanline < 240 {
-		ppu.frame.Push(models.Pixel{
-			X: ppu.x,
-			Y: ppu.scanline,
+		if ppu.x < 256 {
+			ppu.frame.Push(models.Pixel{
+				X: ppu.x,
+				Y: ppu.scanline,
 
-			Color: ppu.visibleFrameCycle(),
-		})
+				Color: ppu.visibleFrameCycle(),
+			})
+		}
 
 		ppu.spriteEval()
 	} else if ppu.scanline == 241 && ppu.x == 1 {

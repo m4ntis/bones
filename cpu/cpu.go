@@ -1,8 +1,6 @@
 package cpu
 
 import (
-	"sync"
-
 	"github.com/m4ntis/bones/models"
 )
 
@@ -15,8 +13,6 @@ type CPU struct {
 	irq   bool
 	nmi   bool
 	reset bool
-
-	interruptMux *sync.Mutex
 }
 
 func New(ram *RAM) *CPU {
@@ -29,8 +25,6 @@ func New(ram *RAM) *CPU {
 		irq:   false,
 		nmi:   false,
 		reset: false,
-
-		interruptMux: &sync.Mutex{},
 	}
 }
 
@@ -70,10 +64,7 @@ func (cpu *CPU) ExecNext() (cycles int) {
 	return cycles
 }
 
-// Interrupt Handling
 func (cpu *CPU) HandleInterupts() {
-	cpu.interruptMux.Lock()
-	defer cpu.interruptMux.Unlock()
 	if cpu.reset {
 		cpu.interrupt(0xfffc)
 		cpu.reset = false
@@ -88,22 +79,16 @@ func (cpu *CPU) HandleInterupts() {
 
 func (cpu *CPU) IRQ() {
 	if cpu.Reg.I == Clear {
-		cpu.interruptMux.Lock()
 		cpu.irq = true
-		cpu.interruptMux.Unlock()
 	}
 }
 
 func (cpu *CPU) NMI() {
-	cpu.interruptMux.Lock()
 	cpu.nmi = true
-	cpu.interruptMux.Unlock()
 }
 
 func (cpu *CPU) Reset() {
-	cpu.interruptMux.Lock()
 	cpu.reset = true
-	cpu.interruptMux.Unlock()
 }
 
 func (cpu *CPU) interrupt(handlerAddr int) {

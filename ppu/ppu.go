@@ -347,16 +347,79 @@ func (ppu *PPU) spriteEval() {
 	}
 }
 
+// shiftSprites is implemented in a duff machine fashion for optimization
+// purposes
 func (ppu *PPU) shiftSprites() {
-	for i := range ppu.sprites {
-		if ppu.sprites[i].shifted < 8 {
-			if ppu.sprites[i].x > 0 {
-				ppu.sprites[i].x--
-			} else {
-				ppu.sprites[i].dataHi >>= 1
-				ppu.sprites[i].dataLo >>= 1
-				ppu.sprites[i].shifted++
-			}
+	if ppu.sprites[0].shifted < 8 {
+		if ppu.sprites[0].x > 0 {
+			ppu.sprites[0].x--
+		} else {
+			ppu.sprites[0].dataHi >>= 1
+			ppu.sprites[0].dataLo >>= 1
+			ppu.sprites[0].shifted++
+		}
+	}
+	if ppu.sprites[1].shifted < 8 {
+		if ppu.sprites[1].x > 0 {
+			ppu.sprites[1].x--
+		} else {
+			ppu.sprites[1].dataHi >>= 1
+			ppu.sprites[1].dataLo >>= 1
+			ppu.sprites[1].shifted++
+		}
+	}
+	if ppu.sprites[2].shifted < 8 {
+		if ppu.sprites[2].x > 0 {
+			ppu.sprites[2].x--
+		} else {
+			ppu.sprites[2].dataHi >>= 1
+			ppu.sprites[2].dataLo >>= 1
+			ppu.sprites[2].shifted++
+		}
+	}
+	if ppu.sprites[3].shifted < 8 {
+		if ppu.sprites[3].x > 0 {
+			ppu.sprites[3].x--
+		} else {
+			ppu.sprites[3].dataHi >>= 1
+			ppu.sprites[3].dataLo >>= 1
+			ppu.sprites[3].shifted++
+		}
+	}
+	if ppu.sprites[4].shifted < 8 {
+		if ppu.sprites[4].x > 0 {
+			ppu.sprites[4].x--
+		} else {
+			ppu.sprites[4].dataHi >>= 1
+			ppu.sprites[4].dataLo >>= 1
+			ppu.sprites[4].shifted++
+		}
+	}
+	if ppu.sprites[5].shifted < 8 {
+		if ppu.sprites[5].x > 0 {
+			ppu.sprites[5].x--
+		} else {
+			ppu.sprites[5].dataHi >>= 1
+			ppu.sprites[5].dataLo >>= 1
+			ppu.sprites[5].shifted++
+		}
+	}
+	if ppu.sprites[6].shifted < 8 {
+		if ppu.sprites[6].x > 0 {
+			ppu.sprites[6].x--
+		} else {
+			ppu.sprites[6].dataHi >>= 1
+			ppu.sprites[6].dataLo >>= 1
+			ppu.sprites[6].shifted++
+		}
+	}
+	if ppu.sprites[7].shifted < 8 {
+		if ppu.sprites[7].x > 0 {
+			ppu.sprites[7].x--
+		} else {
+			ppu.sprites[7].dataHi >>= 1
+			ppu.sprites[7].dataLo >>= 1
+			ppu.sprites[7].shifted++
 		}
 	}
 }

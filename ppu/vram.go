@@ -24,10 +24,6 @@ type VRAM struct {
 }
 
 func getAddr(addr int) int {
-	if addr < 0 || addr > RamSize {
-		panic("RAM accessing addr out of range")
-	}
-
 	addr %= RamMirrorIdx
 	if addr >= TablesMirrorIdx && addr < BgrPaletteIdx {
 		return addr - 0x1000

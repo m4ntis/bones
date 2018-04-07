@@ -1,6 +1,7 @@
 package ppu
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 
@@ -55,6 +56,8 @@ type PPU struct {
 
 	frame *models.Frame
 	disp  Displayer
+
+	frames int
 }
 
 func New(nmi chan bool, disp Displayer) *PPU {
@@ -86,8 +89,6 @@ func (ppu *PPU) LoadROM(rom *models.ROM) {
 }
 
 func (ppu *PPU) Cycle() {
-	defer ppu.incCoords()
-
 	if ppu.scanline >= 0 && ppu.scanline < 240 {
 		ppu.frame.Push(models.Pixel{
 			X: ppu.x,
@@ -105,10 +106,16 @@ func (ppu *PPU) Cycle() {
 		}
 
 		ppu.disp.Display(ppu.frame.Create())
+		ppu.frames++
+		if ppu.frames%200 == 0 {
+			fmt.Println(ppu.frames)
+		}
 	} else if ppu.scanline == 261 && ppu.x == 1 {
 		ppu.ppuStatus = 0
 		ppu.vblank = false
 	}
+
+	ppu.incCoords()
 }
 
 func (ppu *PPU) PPUCtrlWrite(data byte) {

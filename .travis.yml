@@ -1,4 +1,8 @@
 language: go
+addons:
+  apt_packages:
+    - libgl1-mesa-dev
+    - xorg-dev
 go:
 - 1.x
 before_deploy: cd web

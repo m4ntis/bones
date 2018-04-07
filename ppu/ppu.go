@@ -1,11 +1,14 @@
 package ppu
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 
 	"github.com/m4ntis/bones/models"
+)
+
+const (
+	FrontPriority = byte(0)
 )
 
 type Sprite struct {
@@ -56,8 +59,6 @@ type PPU struct {
 
 	frame *models.Frame
 	disp  Displayer
-
-	frames int
 }
 
 func New(nmi chan bool, disp Displayer) *PPU {
@@ -108,10 +109,6 @@ func (ppu *PPU) Cycle() {
 		}
 
 		ppu.disp.Display(ppu.frame.Create())
-		ppu.frames++
-		if ppu.frames%200 == 0 {
-			fmt.Println(ppu.frames)
-		}
 	} else if ppu.scanline == 261 && ppu.x == 1 {
 		ppu.ppuStatus = 0
 		ppu.vblank = false
@@ -254,25 +251,19 @@ func (ppu *PPU) visibleFrameCycle() color.RGBA {
 
 	bgHi := atByte >> uint(2*atQuarter) & 3
 
-	pIdx := ppu.calcPaletteIdx(int(bgLo), int(bgHi), ppu.calcSprForPixel())
+	sprLo, sprHi, sprPriority := ppu.calcSprForPixel()
+	pIdx := ppu.calcPaletteIdx(bgLo, bgHi, sprLo, sprHi, sprPriority)
 
 	return Palette[pIdx]
 }
 
-func (ppu *PPU) calcPaletteIdx(bgLo, bgHi, sprIdx int) (pIdx byte) {
-	if sprIdx == -1 {
-		return ppu.VRAM.Read(BgrPaletteIdx + bgLo + bgHi<<2)
-	}
-
-	spr := ppu.sprites[sprIdx]
-	sprData := spr.dataLo&1 + spr.dataHi&1<<1
-
+func (ppu *PPU) calcPaletteIdx(bgLo, bgHi, sprLo, sprHi, sprPriority byte) (pIdx byte) {
 	// bg 0 or sprite not opaque and with front priority
-	if bgLo == 0 && sprData != 0 && spr.attr>>5&1 == 0 {
-		return ppu.VRAM.Read(SprPaletteIdx + int(sprData+spr.attr&3<<2))
+	if bgLo == 0 || (sprLo != 0 && sprPriority == FrontPriority) {
+		return ppu.VRAM.Read(SprPaletteIdx + int(sprLo+sprHi<<2))
 	}
 
-	return ppu.VRAM.Read(BgrPaletteIdx + bgLo + bgHi<<2)
+	return ppu.VRAM.Read(BgrPaletteIdx + int(bgLo) + int(bgHi<<2))
 }
 
 func (ppu *PPU) spriteEval() {
@@ -424,13 +415,56 @@ func (ppu *PPU) shiftSprites() {
 	}
 }
 
-func (ppu *PPU) calcSprForPixel() (idx int) {
-	for i, spr := range ppu.sprites {
-		if spr.x == 0 && spr.shifted < 8 && spr.attr>>5&1 == 0 {
-			return i
+func (ppu *PPU) calcSprForPixel() (sprLo, sprHi, priority byte) {
+	if ppu.sprites[0].x == 0 && ppu.sprites[0].shifted < 8 {
+		sprLo := ppu.sprites[0].dataLo&1 + ppu.sprites[0].dataHi&1<<1
+		if sprLo != 0 {
+			return sprLo, ppu.sprites[0].attr & 3, ppu.sprites[0].attr >> 5 & 1
 		}
 	}
-	return -1
+	if ppu.sprites[1].x == 0 && ppu.sprites[1].shifted < 8 {
+		sprLo := ppu.sprites[1].dataLo&1 + ppu.sprites[1].dataHi&1<<1
+		if sprLo != 0 {
+			return sprLo, ppu.sprites[1].attr & 3, ppu.sprites[1].attr >> 5 & 1
+		}
+	}
+	if ppu.sprites[2].x == 0 && ppu.sprites[2].shifted < 8 {
+		sprLo := ppu.sprites[2].dataLo&1 + ppu.sprites[2].dataHi&1<<1
+		if sprLo != 0 {
+			return sprLo, ppu.sprites[2].attr & 3, ppu.sprites[2].attr >> 5 & 1
+		}
+	}
+	if ppu.sprites[3].x == 0 && ppu.sprites[3].shifted < 8 {
+		sprLo := ppu.sprites[3].dataLo&1 + ppu.sprites[3].dataHi&1<<1
+		if sprLo != 0 {
+			return sprLo, ppu.sprites[3].attr & 3, ppu.sprites[3].attr >> 5 & 1
+		}
+	}
+	if ppu.sprites[4].x == 0 && ppu.sprites[4].shifted < 8 {
+		sprLo := ppu.sprites[4].dataLo&1 + ppu.sprites[4].dataHi&1<<1
+		if sprLo != 0 {
+			return sprLo, ppu.sprites[4].attr & 3, ppu.sprites[4].attr >> 5 & 1
+		}
+	}
+	if ppu.sprites[5].x == 0 && ppu.sprites[5].shifted < 8 {
+		sprLo := ppu.sprites[5].dataLo&1 + ppu.sprites[5].dataHi&1<<1
+		if sprLo != 0 {
+			return sprLo, ppu.sprites[5].attr & 3, ppu.sprites[5].attr >> 5 & 1
+		}
+	}
+	if ppu.sprites[6].x == 0 && ppu.sprites[6].shifted < 8 {
+		sprLo := ppu.sprites[6].dataLo&1 + ppu.sprites[6].dataHi&1<<1
+		if sprLo != 0 {
+			return sprLo, ppu.sprites[6].attr & 3, ppu.sprites[6].attr >> 5 & 1
+		}
+	}
+	if ppu.sprites[7].x == 0 && ppu.sprites[7].shifted < 8 {
+		sprLo := ppu.sprites[7].dataLo&1 + ppu.sprites[7].dataHi&1<<1
+		if sprLo != 0 {
+			return sprLo, ppu.sprites[7].attr & 3, ppu.sprites[7].attr >> 5 & 1
+		}
+	}
+	return 0, 0, 1
 }
 
 func flip_byte(d byte) byte {

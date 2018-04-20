@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"net/http"
+	_ "net/http/pprof"
+
 	"github.com/m4ntis/bones/cpu"
 	"github.com/m4ntis/bones/display"
 	"github.com/m4ntis/bones/models"
@@ -16,6 +19,8 @@ var (
 		Short: "Run an iNES program",
 		Long:  "The bones run command is used to run NES roms, in iNES format.\n",
 		Run: func(cmd *cobra.Command, args []string) {
+			go func() { http.ListenAndServe("localhost:6060", nil) }()
+
 			ctrl := &models.Controller{}
 			d := display.New(ctrl)
 			rom := openRom(args)

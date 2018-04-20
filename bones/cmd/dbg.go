@@ -28,7 +28,7 @@ var (
 	dbgCmd = &cobra.Command{
 		Use:   "dbg",
 		Short: "Debug an iNES program",
-		Long:  "The bones dbg command is used to debug NES roms, in iNES format.\n",
+		Long:  "The dbg command is used to debug NES roms, in iNES format.\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			ctrl := &models.Controller{}
 			d := display.New(ctrl)

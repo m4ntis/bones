@@ -13,7 +13,7 @@ import (
 var disassCmd = &cobra.Command{
 	Use:   "disass",
 	Short: "Disassemble an iNES program",
-	Long:  "The bones disass command is used to disassemble NES roms, in iNES format.\n",
+	Long:  "The disass command is used to disassemble NES roms in iNES format.\n",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
 			fmt.Println("Usage:\n  bones disass <romname>.nes")

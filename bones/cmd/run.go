@@ -17,7 +17,7 @@ var (
 	runCmd = &cobra.Command{
 		Use:   "run",
 		Short: "Run an iNES program",
-		Long:  "The bones run command is used to run NES roms, in iNES format.\n",
+		Long:  "The run command is used to run NES roms, in iNES format.\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			go func() { http.ListenAndServe("localhost:6060", nil) }()
 

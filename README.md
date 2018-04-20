@@ -20,7 +20,7 @@ go get -u github.com/m4ntis/bones/bones
 ```
 
 Make sure that you add Go's bin directory to your `PATH` environment variable
-as explained their installation instructions.
+as explained the language's installation instructions.
 
 ## Build Status
 [![Build Status](https://travis-ci.org/m4ntis/bones.svg?branch=master)](https://travis-ci.org/m4ntis/bones)

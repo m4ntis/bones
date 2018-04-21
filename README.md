@@ -7,11 +7,19 @@ usage or `bones [command] -h` for detailed information.
 BoNES is written in go, and requires golang to be installed on your computer.
 I recommend installing go and compiling as described below (really quick and
 easy), but if you are in a hurry or just can't be bothered, you can get the
-already compiled binaries from the latest release in the
-[releases page](https://github.com/m4ntis/bones/releases) 
+pre-compiled binaries of the latest release in the
+[releases page](https://github.com/m4ntis/bones/releases).
 
-NOTE: There are currently binaries only for linux-amd64, so if you are running
-on a different plaform you'll need to compile it anyway.
+NOTE: If you can't find the binaries for your platform, you will need to
+compile it yourself.
+
+### Build deps
+Building bones on a debian based distro requires the following packages to be
+installed:
+- `libgl1-mesa-dev`
+- `xorg-dev`
+
+### Building and installing
 
 For information about installing go, you can visit
 [Golang's download page](https://golang.org/dl).
@@ -25,6 +33,13 @@ go get -u github.com/m4ntis/bones/bones
 
 Make sure that you add Go's bin directory to your `PATH` environment variable
 as explained the language's installation instructions.
+
+## Caveats
+BoNES still currently implements only basic hardware features and basic
+rendering functionality, meaning that harder to emulate games such as the ones
+listed [here](https://wiki.nesdev.com/w/index.php/Tricky-to-emulate_games).
+BoNES has been currently tested and found to work propperly only with a Donkey
+Kong rom.
 
 ## Build Status
 [![Build Status](https://travis-ci.org/m4ntis/bones.svg?branch=master)](https://travis-ci.org/m4ntis/bones)

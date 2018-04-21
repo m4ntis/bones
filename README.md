@@ -37,9 +37,9 @@ as explained the language's installation instructions.
 ## Caveats
 BoNES still currently implements only basic hardware features and basic
 rendering functionality, meaning that harder to emulate games such as the ones
-listed [here](https://wiki.nesdev.com/w/index.php/Tricky-to-emulate_games).
-BoNES has been currently tested and found to work propperly only with a Donkey
-Kong rom.
+listed [here](https://wiki.nesdev.com/w/index.php/Tricky-to-emulate_games)
+aren't fully supported yet. BoNES has been currently tested and found to work
+propperly only with a Donkey Kong rom.
 
 ## Build Status
 [![Build Status](https://travis-ci.org/m4ntis/bones.svg?branch=master)](https://travis-ci.org/m4ntis/bones)

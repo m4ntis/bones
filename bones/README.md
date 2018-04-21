@@ -1,2 +1,0 @@
-# BoNES CLI
-

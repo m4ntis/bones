@@ -1,7 +1,7 @@
 # BoNES
-BoNES is a NES emulator library for go, as well as a cli for NES related
-utilities. For in depth documentation on the cli, see this
-[README](bones/README.md).
+BoNES is a NES emulation library for go, as well as a cli for NES related
+utilities. For in depth documentation on the cli, run `bones -h` for general
+usage or `bones [command] -h` for detailed information.
 
 ## Installation
 BoNES is written in go, and requires golang to be installed on your computer.

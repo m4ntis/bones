@@ -2,12 +2,10 @@ package disass
 
 import (
 	"fmt"
-
-	"github.com/m4ntis/bones/disass"
 )
 
 func Example() {
-	d := disass.Disassemble(rom.PrgROM)
+	d := Disassemble(rom.PrgROM)
 	for _, inst := range d.Code {
 		fmt.Printf("%04x: %s\n", inst.Addr, inst.Text)
 	}

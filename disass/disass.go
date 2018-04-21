@@ -1,3 +1,4 @@
+// Package disass provides simple disassembly fucntionality for NES roms
 package disass
 
 import (
@@ -7,23 +8,39 @@ import (
 	"github.com/m4ntis/bones/models"
 )
 
+// Instruction represents a single logical instruction in an NES rom.
+//
 type Instruction struct {
+	// Addr holds the instuction's location in the rom
 	Addr int
+	// Code contains the coniguous bytes in rom representing the instruction
+	// (opcode + operands)
 	Code []byte
+	// Text is the formatted textual representation of the instruction
 	Text string
 }
 
+// Code is a slice of instructions, representing a program written for the mos
+// 6502.
 type Code []Instruction
 
 // addrTable maps an address in RAM to it's index in the code
 type addrTable map[int]int
 
+// Disassembly contains a code object and logic for translation between an
+// address and it's location in the code. This is the type returned when
+// disassembling a rom.
 type Disassembly struct {
 	Code Code
 
 	addrTable addrTable
 }
 
+// IndexOf is used to get the index of an address in the code of a disassembly.
+// This is because you can't infer the location by using the address alone, as
+// the operand length of an opcode varies.
+//
+// IndexOf returns -1 if the address isn't a beginning of an instruction
 func (d Disassembly) IndexOf(addr int) int {
 	i, ok := d.addrTable[addr]
 
@@ -33,6 +50,8 @@ func (d Disassembly) IndexOf(addr int) int {
 	return -1
 }
 
+// Disassemble is the main method of this package, taking the program and
+// returning the disassembled code.
 func Disassemble(prgROM []models.PrgROMPage) Disassembly {
 	asm := genContiguousAsm(prgROM)
 	code := disassemble(asm)

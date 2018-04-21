@@ -38,7 +38,7 @@ as explained the language's installation instructions.
 BoNES still currently implements only basic hardware features and basic
 rendering functionality, meaning that harder to emulate games such as the ones
 listed [here](https://wiki.nesdev.com/w/index.php/Tricky-to-emulate_games)
-aren't fully supported yet. BoNES has been currently tested and found to work
+aren't yet fully supported. BoNES has been currently tested and found to work
 propperly only with a Donkey Kong rom.
 
 ## Build Status

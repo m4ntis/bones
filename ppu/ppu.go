@@ -92,11 +92,11 @@ func (ppu *PPU) LoadROM(rom *models.ROM) {
 func (ppu *PPU) Cycle() {
 	if ppu.scanline >= 0 && ppu.scanline < 240 {
 		if ppu.x < 256 {
-			ppu.frame.push(models.Pixel{
-				X: ppu.x,
-				Y: ppu.scanline,
+			ppu.frame.push(pixel{
+				x: ppu.x,
+				y: ppu.scanline,
 
-				Color: ppu.visibleFrameCycle(),
+				color: ppu.visibleFrameCycle(),
 			})
 		}
 

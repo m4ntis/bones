@@ -1,3 +1,4 @@
+// Package ines provides an api for ines format parsing
 package ines
 
 import (
@@ -78,10 +79,8 @@ func parseHeader(headerBuff []byte) (header *inesHeader, err error) {
 	}, nil
 }
 
-// Parse reads from the reader, parses the data and populates a ROM
-// struct accordingly.
-//
-// The errors it returns may relate to reading errors or ines format errors
+// Parse reads an ines file from r and populates a ROM struct or returns an
+// error.
 func Parse(r io.Reader) (rom *models.ROM, err error) {
 	// Read and parse header
 	headerBuff, err := readHeader(r)

@@ -1,3 +1,5 @@
+// Package models contains some common types that are used throughout the
+// several packages, and don't contain any logic.
 package models
 
 const (
@@ -10,12 +12,10 @@ type Trainer [TrainerSize]byte
 type PrgROMPage [PrgROMPageSize]byte
 type ChrROMPage [ChrROMPageSize]byte
 
+// ROM represents a whole NES rom, containing the program rom, chr rom and the
+// optional trainer
 type ROM struct {
 	Trainer Trainer
 	PrgROM  []PrgROMPage
 	ChrROM  []ChrROMPage
-}
-
-func NewROM(trainer Trainer, prgROM []PrgROMPage, chrROM []ChrROMPage) *ROM {
-	return &ROM{Trainer: trainer, PrgROM: prgROM, ChrROM: chrROM}
 }

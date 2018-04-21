@@ -124,5 +124,5 @@ func Parse(r io.Reader) (rom *models.ROM, err error) {
 			romBuff[startIndex:startIndex+models.ChrROMPageSize])
 	}
 
-	return models.NewROM(trainer, prgROM, chrROM), nil
+	return &models.ROM{Trainer: trainer, PrgROM: prgROM, ChrROM: chrROM}, nil
 }

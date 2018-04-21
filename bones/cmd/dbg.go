@@ -28,7 +28,21 @@ var (
 	dbgCmd = &cobra.Command{
 		Use:   "dbg",
 		Short: "Debug an iNES program",
-		Long:  "The dbg command is used to debug NES roms, in iNES format.\n",
+		Long: `The dbg command is used to debug NES roms, in iNES format.
+
+The command prompts up an interactive gdb style debugger, waiting for user
+input before executing each command. It has pretty basic functionality including
+breakpoints, next and continue instructions, as well as printing registers, ram
+and vram values.
+
+The debugger also opens a separate window for displaying the ppu's output. It
+may appear as frozen or 'Not responding' or anything of the sort, but that is
+because frames are renedered on it only when the ppu finishes a frame and the
+display is blocked on that.
+
+For full documentation and options run the 'help' command in the interractive
+debugger.
+`,
 		Run: func(cmd *cobra.Command, args []string) {
 			ctrl := &models.Controller{}
 			d := display.New(ctrl)

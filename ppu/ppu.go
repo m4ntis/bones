@@ -57,7 +57,7 @@ type PPU struct {
 	vblank bool
 	nmi    chan bool
 
-	frame *models.Frame
+	frame *frame
 	disp  Displayer
 }
 
@@ -79,7 +79,7 @@ func New(nmi chan bool, disp Displayer) *PPU {
 		vblank: false,
 		nmi:    nmi,
 
-		frame: models.NewFrame(),
+		frame: newFrame(),
 		disp:  disp,
 	}
 }
@@ -92,7 +92,7 @@ func (ppu *PPU) LoadROM(rom *models.ROM) {
 func (ppu *PPU) Cycle() {
 	if ppu.scanline >= 0 && ppu.scanline < 240 {
 		if ppu.x < 256 {
-			ppu.frame.Push(models.Pixel{
+			ppu.frame.push(models.Pixel{
 				X: ppu.x,
 				Y: ppu.scanline,
 
@@ -108,7 +108,7 @@ func (ppu *PPU) Cycle() {
 			ppu.nmi <- true
 		}
 
-		ppu.disp.Display(ppu.frame.Create())
+		ppu.disp.Display(ppu.frame.create())
 	} else if ppu.scanline == 261 && ppu.x == 1 {
 		ppu.ppuStatus = 0
 		ppu.vblank = false

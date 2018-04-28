@@ -1,7 +1,12 @@
+// Package cpu provides an api for the mos 6502
 package cpu
 
 import "github.com/m4ntis/bones/ines"
 
+// CPU represents the mos 6502 and implements its functionality.
+//
+// CPU should be loaded with a ROM, and can then execute the programme opcode by
+// opcode.
 type CPU struct {
 	RAM *RAM
 	Reg *Regs
@@ -13,12 +18,15 @@ type CPU struct {
 	reset bool
 }
 
+// New creates an instance of the CPU struct.
+//
+// ram is passed to the CPU instead of initialized within, as it is shared with
+// other components via memory mapped i/o. It is the caller's responsibility to
+// initialize and pass it to the other parts of the NES.
 func New(ram *RAM) *CPU {
 	return &CPU{
 		RAM: ram,
-		Reg: &Regs{
-			PC: 0x8000,
-		},
+		Reg: &Regs{},
 
 		irq:   false,
 		nmi:   false,
@@ -26,6 +34,8 @@ func New(ram *RAM) *CPU {
 	}
 }
 
+// LoadROM loads a parsed ROM to CPU memory, and initialized the PC register to
+// the reset vector.
 func (cpu *CPU) LoadROM(rom *ines.ROM) {
 	if len(rom.PrgROM) > 1 {
 		// Load first 2 pages of PrgROM (not supporting mappers as of yet)
@@ -42,19 +52,21 @@ func (cpu *CPU) LoadROM(rom *ines.ROM) {
 	cpu.Reg.PC = int(cpu.RAM.Read(0xfffc)) | int(cpu.RAM.Read(0xfffd))<<8
 }
 
+// ExecNext reads the next opcode from RAM, executes it and returns the cycle
+// count.
 func (cpu *CPU) ExecNext() (cycles int) {
-	op := OpCodes[cpu.RAM.Read(cpu.Reg.PC)]
+	defer cpu.handleInterrupts()
 
-	cycles = op.cycles
+	op := OpCodes[cpu.RAM.Read(cpu.Reg.PC)]
 
 	// We are doing this manually cus there are only 3 posibilities and writing
 	// logic to describe this would be ugly IMO
 	if op.Mode.OpsLen == 1 {
-		cycles += op.Exec(cpu, cpu.RAM.Read(cpu.Reg.PC+1))
+		cycles = op.Exec(cpu, cpu.RAM.Read(cpu.Reg.PC+1))
 	} else if op.Mode.OpsLen == 2 {
-		cycles += op.Exec(cpu, cpu.RAM.Read(cpu.Reg.PC+1), cpu.RAM.Read(cpu.Reg.PC+2))
+		cycles = op.Exec(cpu, cpu.RAM.Read(cpu.Reg.PC+1), cpu.RAM.Read(cpu.Reg.PC+2))
 	} else {
-		cycles += op.Exec(cpu)
+		cycles = op.Exec(cpu)
 	}
 
 	// TODO: decrement cycles after 1786830 cycles
@@ -62,7 +74,7 @@ func (cpu *CPU) ExecNext() (cycles int) {
 	return cycles
 }
 
-func (cpu *CPU) HandleInterupts() {
+func (cpu *CPU) handleInterrupts() {
 	if cpu.reset {
 		cpu.interrupt(0xfffc)
 		cpu.reset = false

@@ -1,4 +1,4 @@
-// Package ines provides an api for ines format parsing
+// Package ines provides an api for iNES format parsing
 package ines
 
 import (

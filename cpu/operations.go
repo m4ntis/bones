@@ -4,29 +4,22 @@ import (
 	"math"
 )
 
-// Operation defines an operation that the CPU executes in one or more of it's
+// Operation defines an operation that the CPU executes in one or more of its
 // opcodes.
 //
-// The byte values it received are it's arguments. Arguments can be of any
-// length, depending on the operation. There isn't a gurantee that the
-// operation will check for the correct number of arguments, so make sure that
-// you pass in the correct amount. Note that the args are in the form of
-// pointers to bytes. This is for the operation to be able to write to the
-// arguments too, changing the underlying RAM or Register.
+// The operation receives a reference to the cpu in order to read or set its ram
+// or registers' state.
 //
-// The operation also gets a reference to the cpu so it can test and change the
-// Registers and RAM.
+// It also receives a single operand, given to it by the addressing mode that
+// calls it. This abstraction enables to define the opcode's logic once,
+// separating it from the way the operand is fetched, and leaving that logic to
+// the addressing mode.
 //
 // Similar to addressing modes, opcodes too return whether the operation's
 // execution took extra cycles. This happens on the operation level only in
 // branching operations.
 type Operation func(*CPU, Operand) int
 
-// ADC - Add Carry
-// A + val + C  => A
-//
-// N Z C I D V
-// v v v - - v
 func ADC(cpu *CPU, op Operand) (extraCycles int) {
 	// Calculate result and store in a
 	arg1 := cpu.Reg.A
@@ -59,23 +52,12 @@ func ADC(cpu *CPU, op Operand) (extraCycles int) {
 	return
 }
 
-// AND - And with A
-// A & val => A
-//
-// N Z C I D V
-// v v - - - -
 func AND(cpu *CPU, op Operand) (extraCycles int) {
 	cpu.Reg.A &= op.Read()
 	setNZ(cpu, cpu.Reg.A)
 	return
 }
 
-// ASL - Shift Left One Bit
-// val[7] -> c
-// val << 1 -> val
-//
-// N Z C I D V
-// v v v - - -
 func ASL(cpu *CPU, op Operand) (extraCycles int) {
 	d := op.Read()
 
@@ -88,11 +70,6 @@ func ASL(cpu *CPU, op Operand) (extraCycles int) {
 	return
 }
 
-// BCC - Branch Carry Clear
-// C == 0 -> branch
-//
-// N Z C I D V
-// - - - - - -
 func BCC(cpu *CPU, op Operand) (extraCycles int) {
 	initPC := cpu.Reg.PC
 
@@ -107,11 +84,6 @@ func BCC(cpu *CPU, op Operand) (extraCycles int) {
 	return
 }
 
-// BCS - Branch Carry Set
-// C == 1 -> branch
-//
-// N Z C I D V
-// - - - - - -
 func BCS(cpu *CPU, op Operand) (extraCycles int) {
 	initPC := cpu.Reg.PC
 
@@ -126,11 +98,6 @@ func BCS(cpu *CPU, op Operand) (extraCycles int) {
 	return
 }
 
-// BEQ - Branch result zero
-// C == 1 -> branch
-//
-// N Z C I D V
-// - - - - - -
 func BEQ(cpu *CPU, op Operand) (extraCycles int) {
 	initPC := cpu.Reg.PC
 
@@ -275,7 +242,7 @@ func CPX(cpu *CPU, op Operand) (extraCycles int) {
 	res := cpu.Reg.X - d
 
 	setNZ(cpu, res)
-	if d > cpu.Reg.A {
+	if d < cpu.Reg.A {
 		cpu.Reg.C = Set
 	} else {
 		cpu.Reg.C = Clear

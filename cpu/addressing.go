@@ -2,22 +2,21 @@ package cpu
 
 import "fmt"
 
-// AddressingMode defines one of the 2a03's ways of addressing the operands of
-// the different opcodes.
+// AddressingMode defines one of the mos 6502's ways of addressing operands.
 //
 // Each addressing mode is responsible of fetching the operands in it's way,
 // and calling the operation with them.
 //
-// The bool tells whether there needs to be a page boundry check
+// The bool tells whether there needs to be a page boundry check.
 //
-// The addressing mode returns the amount of extra cycles caused by page boundry
-// crossing, if any.
+// The addressing mode returns the amount of extra cycles the opration took
+// because of page boundry or branching.
 type AddressingMode struct {
 	Name   string
 	OpsLen int
 	Format func([]byte) string
 
-	address func(*CPU, Operation, bool, ...byte) int
+	Address func(*CPU, Operation, bool, ...byte) int
 }
 
 var (
@@ -26,7 +25,7 @@ var (
 		OpsLen: 0,
 		Format: func(ops []byte) string { return "" },
 
-		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
+		Address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
 			cpu.Reg.PC++
 			op(cpu, NilOperand{})
 			return
@@ -38,7 +37,7 @@ var (
 		OpsLen: 0,
 		Format: func(ops []byte) string { return "A" },
 
-		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
+		Address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
 			op(cpu, RegOperand{Reg: &cpu.Reg.A})
 			cpu.Reg.PC++
 			return
@@ -50,7 +49,7 @@ var (
 		OpsLen: 1,
 		Format: func(ops []byte) string { return fmt.Sprintf("#$%02x", ops[0]) },
 
-		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
+		Address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
 			op(cpu, ConstOperand{D: ops[0]})
 			cpu.Reg.PC += 2
 			return
@@ -62,7 +61,7 @@ var (
 		OpsLen: 1,
 		Format: func(ops []byte) string { return fmt.Sprintf("$%02x", ops[0]) },
 
-		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
+		Address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
 			op(cpu, RAMOperand{RAM: cpu.RAM, Addr: int(ops[0])})
 			cpu.Reg.PC += 2
 			return
@@ -74,7 +73,7 @@ var (
 		OpsLen: 1,
 		Format: func(ops []byte) string { return fmt.Sprintf("$%02x, X", ops[0]) },
 
-		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
+		Address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
 			op(cpu, RAMOperand{RAM: cpu.RAM, Addr: int(ops[0] + cpu.Reg.X)})
 			cpu.Reg.PC += 2
 			return
@@ -86,7 +85,7 @@ var (
 		OpsLen: 1,
 		Format: func(ops []byte) string { return fmt.Sprintf("$%02x, Y", ops[0]) },
 
-		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
+		Address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
 			op(cpu, RAMOperand{RAM: cpu.RAM, Addr: int(ops[0] + cpu.Reg.Y)})
 			cpu.Reg.PC += 2
 			return
@@ -98,7 +97,7 @@ var (
 		OpsLen: 1,
 		Format: func(ops []byte) string { return fmt.Sprintf("$%02x", ops[0]) },
 
-		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
+		Address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
 			extraCycles = op(cpu, ConstOperand{D: ops[0]})
 			cpu.Reg.PC += 2
 			return
@@ -110,7 +109,7 @@ var (
 		OpsLen: 2,
 		Format: func(ops []byte) string { return fmt.Sprintf("$%02x%02x", ops[1], ops[0]) },
 
-		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
+		Address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
 			// We inc this beforehand so that JSR wont be incremented after
 			// execution
 			cpu.Reg.PC += 3
@@ -126,7 +125,7 @@ var (
 		OpsLen: 2,
 		Format: func(ops []byte) string { return fmt.Sprintf("$%02x%02x, X", ops[1], ops[0]) },
 
-		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
+		Address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
 			addr := int(ops[0]) | int(ops[1])<<8
 			xAddr := addr + int(cpu.Reg.X)
 
@@ -145,7 +144,7 @@ var (
 		OpsLen: 2,
 		Format: func(ops []byte) string { return fmt.Sprintf("$%02x%02x, Y", ops[1], ops[0]) },
 
-		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
+		Address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
 			addr := int(ops[0]) | int(ops[1])<<8
 			yAddr := addr + int(cpu.Reg.Y)
 
@@ -164,7 +163,7 @@ var (
 		OpsLen: 2,
 		Format: func(ops []byte) string { return fmt.Sprintf("($%02x%02x)", ops[1], ops[0]) },
 
-		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
+		Address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
 			addr := int(ops[0]) + int(ops[1])<<8
 
 			adl := cpu.RAM.Read(addr)
@@ -180,7 +179,7 @@ var (
 		OpsLen: 1,
 		Format: func(ops []byte) string { return fmt.Sprintf("($%02x, X)", ops[0]) },
 
-		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
+		Address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
 			addr := int(ops[0] + cpu.Reg.X)
 
 			adl := cpu.RAM.Read(addr)
@@ -197,7 +196,7 @@ var (
 		OpsLen: 1,
 		Format: func(ops []byte) string { return fmt.Sprintf("($%02x), Y", ops[0]) },
 
-		address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
+		Address: func(cpu *CPU, op Operation, pageBoundryCheck bool, ops ...byte) (extraCycles int) {
 			addr := int(ops[0])
 
 			adl := cpu.RAM.Read(addr)

@@ -1,9 +1,8 @@
 package cpu
 
-// OpCode defines an opcode of the 2a03.
+// OpCode defines an opcode of the mos 6502.
 //
-// Contains it's textual representation, addressing mode and the operation
-// itself.
+// Name is the opcode's textual name in assembly language.
 //
 // The opcode also contains some informaition on the amount of cycles it takes
 // to execute. cycles is the base cycle count, and pageBoundryCheck tells the
@@ -22,6 +21,6 @@ type OpCode struct {
 //
 // It runs it's addressing mode, which in turn fetches the arguments and calls
 // the operation
-func (op OpCode) Exec(cpu *CPU, ops ...byte) (extraCycles int) {
-	return op.Mode.address(cpu, op.Oper, op.pageBoundryCheck, ops...)
+func (op OpCode) Exec(cpu *CPU, ops ...byte) (cycles int) {
+	return op.Mode.Address(cpu, op.Oper, op.pageBoundryCheck, ops...) + op.cycles
 }

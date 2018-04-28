@@ -1,4 +1,4 @@
-// package dbg provides a worker that runs the NES with an api for breaking the
+// Package dbg provides a worker that runs the NES with an api for breaking the
 // cpu and handling breaks
 package dbg
 
@@ -171,7 +171,6 @@ func (w *Worker) handleNmi() {
 
 func (w *Worker) execNext() {
 	cycles := w.c.ExecNext()
-	w.c.HandleInterupts()
 	for i := 0; i < cycles*3; i++ {
 		w.p.Cycle()
 	}

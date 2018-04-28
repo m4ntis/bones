@@ -50,7 +50,6 @@ func (w *Worker) handleNmi() {
 }
 
 func (w *Worker) execNext() {
-	w.c.HandleInterupts()
 	cycles := w.c.ExecNext()
 	for i := 0; i < cycles*3; i++ {
 		w.p.Cycle()

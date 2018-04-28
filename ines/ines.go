@@ -78,8 +78,8 @@ func parseHeader(headerBuff []byte) (header *inesHeader, err error) {
 	}, nil
 }
 
-// Parse reads an ines file from r and populates a ROM struct or returns an
-// error.
+// Parse reads an ines file from r and populates a ROM struct with its data or
+// returns an error.
 func Parse(r io.Reader) (rom *ROM, err error) {
 	// Read and parse header
 	headerBuff, err := readHeader(r)

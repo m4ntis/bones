@@ -1,5 +1,3 @@
-// Package ines contains some common types that are used throughout the
-// several packages, and don't contain any logic.
 package ines
 
 const (

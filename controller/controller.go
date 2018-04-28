@@ -1,4 +1,4 @@
-package models
+package controller
 
 const (
 	ButtonReleased = 0

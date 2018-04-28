@@ -6,7 +6,7 @@ import (
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
-	"github.com/m4ntis/bones/models"
+	"github.com/m4ntis/bones/controller"
 	"golang.org/x/image/colornames"
 )
 
@@ -19,10 +19,10 @@ var (
 type Display struct {
 	imgc chan image.Image
 
-	ctrl *models.Controller
+	ctrl *controller.Controller
 }
 
-func New(ctrl *models.Controller) *Display {
+func New(ctrl *controller.Controller) *Display {
 	return &Display{
 		imgc: make(chan image.Image),
 

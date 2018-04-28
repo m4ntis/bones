@@ -1,7 +1,7 @@
 package cpu
 
 import (
-	"github.com/m4ntis/bones/models"
+	"github.com/m4ntis/bones/controller"
 	"github.com/m4ntis/bones/ppu"
 )
 
@@ -38,7 +38,7 @@ type RAM struct {
 
 	CPU  *CPU
 	PPU  *ppu.PPU
-	Ctrl *models.Controller
+	Ctrl *controller.Controller
 }
 
 // getAddr returns the underlying address after mapping.

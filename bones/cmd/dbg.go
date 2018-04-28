@@ -5,10 +5,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/m4ntis/bones/controller"
 	"github.com/m4ntis/bones/dbg"
 	"github.com/m4ntis/bones/display"
 	"github.com/m4ntis/bones/ines"
-	"github.com/m4ntis/bones/models"
 	"github.com/peterh/liner"
 	"github.com/spf13/cobra"
 )
@@ -44,7 +44,7 @@ For full documentation and options run the 'help' command in the interractive
 debugger.
 `,
 		Run: func(cmd *cobra.Command, args []string) {
-			ctrl := &models.Controller{}
+			ctrl := &controller.Controller{}
 			d := display.New(ctrl)
 			rom := openRom(args)
 			breakVals = make(chan dbg.BreakData)

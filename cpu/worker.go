@@ -1,8 +1,8 @@
 package cpu
 
 import (
+	"github.com/m4ntis/bones/controller"
 	"github.com/m4ntis/bones/ines"
-	"github.com/m4ntis/bones/models"
 	"github.com/m4ntis/bones/ppu"
 )
 
@@ -13,7 +13,7 @@ type Worker struct {
 	nmi chan bool
 }
 
-func NewWorker(rom *ines.ROM, disp ppu.Displayer, ctrl *models.Controller) *Worker {
+func NewWorker(rom *ines.ROM, disp ppu.Displayer, ctrl *controller.Controller) *Worker {
 	nmi := make(chan bool)
 
 	p := ppu.New(nmi, disp)

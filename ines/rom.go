@@ -1,6 +1,6 @@
-// Package models contains some common types that are used throughout the
+// Package ines contains some common types that are used throughout the
 // several packages, and don't contain any logic.
-package models
+package ines
 
 const (
 	TrainerSize    = 512

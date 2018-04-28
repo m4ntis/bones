@@ -1,8 +1,6 @@
 package cpu
 
-import (
-	"github.com/m4ntis/bones/models"
-)
+import "github.com/m4ntis/bones/ines"
 
 type CPU struct {
 	RAM *RAM
@@ -28,15 +26,15 @@ func New(ram *RAM) *CPU {
 	}
 }
 
-func (cpu *CPU) LoadROM(rom *models.ROM) {
+func (cpu *CPU) LoadROM(rom *ines.ROM) {
 	if len(rom.PrgROM) > 1 {
 		// Load first 2 pages of PrgROM (not supporting mappers as of yet)
-		copy(cpu.RAM.data[0x8000:0x8000+models.PrgROMPageSize], rom.PrgROM[0][:])
-		copy(cpu.RAM.data[0x8000+models.PrgROMPageSize:0x8000+2*models.PrgROMPageSize],
+		copy(cpu.RAM.data[0x8000:0x8000+ines.PrgROMPageSize], rom.PrgROM[0][:])
+		copy(cpu.RAM.data[0x8000+ines.PrgROMPageSize:0x8000+2*ines.PrgROMPageSize],
 			rom.PrgROM[1][:])
 	} else {
 		// If there is only one page of prg rom, load it to $c000 ~ $ffff
-		copy(cpu.RAM.data[0x8000+models.PrgROMPageSize:0x8000+2*models.PrgROMPageSize],
+		copy(cpu.RAM.data[0x8000+ines.PrgROMPageSize:0x8000+2*ines.PrgROMPageSize],
 			rom.PrgROM[0][:])
 	}
 

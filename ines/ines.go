@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"io"
 
-	"github.com/m4ntis/bones/models"
 	"github.com/pkg/errors"
 )
 
@@ -81,7 +80,7 @@ func parseHeader(headerBuff []byte) (header *inesHeader, err error) {
 
 // Parse reads an ines file from r and populates a ROM struct or returns an
 // error.
-func Parse(r io.Reader) (rom *models.ROM, err error) {
+func Parse(r io.Reader) (rom *ROM, err error) {
 	// Read and parse header
 	headerBuff, err := readHeader(r)
 	if err != nil {
@@ -93,9 +92,9 @@ func Parse(r io.Reader) (rom *models.ROM, err error) {
 	}
 
 	// Calculate ROM size and read it
-	trainerSize := header.Trainer * models.TrainerSize
-	prgROMSize := header.PrgROMSize * models.PrgROMPageSize
-	chrROMSize := header.ChrROMSize * models.ChrROMPageSize
+	trainerSize := header.Trainer * TrainerSize
+	prgROMSize := header.PrgROMSize * PrgROMPageSize
+	chrROMSize := header.ChrROMSize * ChrROMPageSize
 	romSize := trainerSize + prgROMSize + chrROMSize
 
 	romBuff := make([]byte, romSize)
@@ -107,22 +106,22 @@ func Parse(r io.Reader) (rom *models.ROM, err error) {
 	}
 
 	// Populate ROM fields
-	var trainer models.Trainer
+	var trainer Trainer
 	copy(trainer[:], romBuff[:trainerSize])
 
-	prgROM := make([]models.PrgROMPage, header.PrgROMSize)
+	prgROM := make([]PrgROMPage, header.PrgROMSize)
 	for i := range prgROM {
-		startIndex := trainerSize + i*models.PrgROMPageSize
+		startIndex := trainerSize + i*PrgROMPageSize
 		copy(prgROM[i][:],
-			romBuff[startIndex:startIndex+models.PrgROMPageSize])
+			romBuff[startIndex:startIndex+PrgROMPageSize])
 	}
 
-	chrROM := make([]models.ChrROMPage, header.ChrROMSize)
+	chrROM := make([]ChrROMPage, header.ChrROMSize)
 	for i := range chrROM {
-		startIndex := trainerSize + prgROMSize + i*models.ChrROMPageSize
+		startIndex := trainerSize + prgROMSize + i*ChrROMPageSize
 		copy(chrROM[i][:],
-			romBuff[startIndex:startIndex+models.ChrROMPageSize])
+			romBuff[startIndex:startIndex+ChrROMPageSize])
 	}
 
-	return &models.ROM{Trainer: trainer, PrgROM: prgROM, ChrROM: chrROM}, nil
+	return &ROM{Trainer: trainer, PrgROM: prgROM, ChrROM: chrROM}, nil
 }

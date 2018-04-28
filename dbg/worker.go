@@ -5,6 +5,7 @@ import (
 
 	"github.com/m4ntis/bones/cpu"
 	"github.com/m4ntis/bones/disass"
+	"github.com/m4ntis/bones/ines"
 	"github.com/m4ntis/bones/models"
 	"github.com/m4ntis/bones/ppu"
 )
@@ -42,7 +43,7 @@ type Worker struct {
 //
 // The vals channel is the channel containing the data returned each time the
 // cpu breaks, describing the current cpu state.
-func NewWorker(rom *models.ROM, vals chan<- BreakData, disp ppu.Displayer, ctrl *models.Controller) *Worker {
+func NewWorker(rom *ines.ROM, vals chan<- BreakData, disp ppu.Displayer, ctrl *models.Controller) *Worker {
 	nmi := make(chan bool)
 
 	p := ppu.New(nmi, disp)

@@ -57,7 +57,7 @@ debugger.
 	}
 )
 
-func openRom(args []string) *models.ROM {
+func openRom(args []string) *ines.ROM {
 	if len(args) != 1 {
 		fmt.Println("Usage:\n  bones dbg <romname>.nes")
 		os.Exit(1)

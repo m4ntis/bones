@@ -4,7 +4,7 @@ import (
 	"image"
 	"image/color"
 
-	"github.com/m4ntis/bones/models"
+	"github.com/m4ntis/bones/ines"
 )
 
 const (
@@ -84,9 +84,9 @@ func New(nmi chan bool, disp Displayer) *PPU {
 	}
 }
 
-func (ppu *PPU) LoadROM(rom *models.ROM) {
+func (ppu *PPU) LoadROM(rom *ines.ROM) {
 	// Load first 2 pages of ChrROM (not supporting mappers as of yet)
-	copy(ppu.VRAM.data[0x0:models.ChrROMPageSize], rom.ChrROM[0][:])
+	copy(ppu.VRAM.data[0x0:ines.ChrROMPageSize], rom.ChrROM[0][:])
 }
 
 func (ppu *PPU) Cycle() {

@@ -1,3 +1,5 @@
+// The bones controller package provides a controller struct with an api for
+// controlling and reading its state
 package controller
 
 const (
@@ -5,6 +7,8 @@ const (
 	ButtonPressed  = 1
 )
 
+// Controller can be pressed on the one hand, maintain its state and be strobed
+// and read on the other.
 type Controller struct {
 	aState byte
 	bState byte

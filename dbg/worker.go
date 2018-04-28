@@ -12,9 +12,9 @@ import (
 
 type breakPoints map[int]bool
 
-type BreakData struct {
+type BreakState struct {
 	Reg  *cpu.Regs
-	CRAM *cpu.RAM
+	RAM  *cpu.RAM
 	VRAM *ppu.VRAM
 
 	Disass disass.Disassembly
@@ -35,7 +35,7 @@ type Worker struct {
 
 	continuec chan bool
 	nextc     chan bool
-	vals      chan<- BreakData
+	vals      chan<- BreakState
 }
 
 // NewWorker creates a dbg worker that will start a cpu that will run on the
@@ -43,7 +43,7 @@ type Worker struct {
 //
 // The vals channel is the channel containing the data returned each time the
 // cpu breaks, describing the current cpu state.
-func NewWorker(rom *ines.ROM, vals chan<- BreakData, disp ppu.Displayer, ctrl *controller.Controller) *Worker {
+func NewWorker(rom *ines.ROM, vals chan<- BreakState, disp ppu.Displayer, ctrl *controller.Controller) *Worker {
 	nmi := make(chan bool)
 
 	p := ppu.New(nmi, disp)
@@ -134,9 +134,9 @@ func (w *Worker) handleBps() {
 
 func (w *Worker) breakOper() {
 	for {
-		w.vals <- BreakData{
+		w.vals <- BreakState{
 			Reg:  w.c.Reg,
-			CRAM: w.c.RAM,
+			RAM:  w.c.RAM,
 			VRAM: w.p.VRAM,
 
 			Disass: w.d,

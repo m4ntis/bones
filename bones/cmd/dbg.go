@@ -16,7 +16,7 @@ import (
 var (
 	dw *dbg.Worker
 
-	breakVals chan dbg.BreakData
+	breakVals chan dbg.BreakState
 
 	dbgCommands map[string]*dbgCommand
 	help        string
@@ -47,7 +47,7 @@ debugger.
 			ctrl := &controller.Controller{}
 			d := display.New(ctrl)
 			rom := openRom(args)
-			breakVals = make(chan dbg.BreakData)
+			breakVals = make(chan dbg.BreakState)
 			dw = dbg.NewWorker(rom, breakVals, d, ctrl)
 
 			go dw.Start()
@@ -87,7 +87,7 @@ func startInteractiveDbg() {
 	}
 }
 
-func displayBreak(data dbg.BreakData) {
+func displayBreak(data dbg.BreakState) {
 	var startIdx int
 	var endIdx int
 
@@ -112,14 +112,14 @@ func displayBreak(data dbg.BreakData) {
 	}
 }
 
-func interact(data dbg.BreakData) {
+func interact(data dbg.BreakState) {
 	finished := false
 	for !finished {
 		finished = handleUserInput(data)
 	}
 }
 
-func handleUserInput(data dbg.BreakData) (finished bool) {
+func handleUserInput(data dbg.BreakState) (finished bool) {
 	var input string
 	defer func() { lastInput = input }()
 

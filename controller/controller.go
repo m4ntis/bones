@@ -1,4 +1,4 @@
-// The bones controller package provides a controller struct with an api for
+// Package controller provides a controller struct with an api for
 // controlling and reading its state
 package controller
 

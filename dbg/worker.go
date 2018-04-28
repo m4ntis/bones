@@ -1,8 +1,8 @@
+// package dbg provides a worker that runs the NES with an api for breaking the
+// cpu and handling breaks
 package dbg
 
 import (
-	"image"
-
 	"github.com/m4ntis/bones/controller"
 	"github.com/m4ntis/bones/cpu"
 	"github.com/m4ntis/bones/disass"
@@ -12,6 +12,8 @@ import (
 
 type breakPoints map[int]bool
 
+// BreakState describes the state of the NES and the running programme when the
+// cpu breaks.
 type BreakState struct {
 	Reg  *cpu.Regs
 	RAM  *cpu.RAM
@@ -20,10 +22,8 @@ type BreakState struct {
 	Disass disass.Disassembly
 }
 
-type Displayer interface {
-	Display(image.Image)
-}
-
+// Worker runs the NES and provides an api for all basic debugging
+// functionality.
 type Worker struct {
 	c *cpu.CPU
 	p *ppu.PPU
@@ -38,12 +38,15 @@ type Worker struct {
 	vals      chan<- BreakState
 }
 
-// NewWorker creates a dbg worker that will start a cpu that will run on the
-// given ROM.
+// NewWorker creates an instance of a dbg worker.
 //
-// The vals channel is the channel containing the data returned each time the
-// cpu breaks, describing the current cpu state.
-func NewWorker(rom *ines.ROM, vals chan<- BreakState, disp ppu.Displayer, ctrl *controller.Controller) *Worker {
+// vals is a channel being populated by the worker each time it breaks,
+// containing information about the current state of the NES.
+//
+// ctrl will be read by the cpu the worker runs and is expected to be controlled
+// by the caller.
+func NewWorker(rom *ines.ROM, vals chan<- BreakState, disp ppu.Displayer,
+	ctrl *controller.Controller) *Worker {
 	nmi := make(chan bool)
 
 	p := ppu.New(nmi, disp)
@@ -74,9 +77,9 @@ func NewWorker(rom *ines.ROM, vals chan<- BreakState, disp ppu.Displayer, ctrl *
 	}
 }
 
-// Start starts the debug worker.
+// Start makes the worker start running the NES.
 //
-// Runs in a loop, should be run in a goroutine
+// Start should be run in a goroutine.
 func (w *Worker) Start() {
 	go w.handleNmi()
 
@@ -86,14 +89,18 @@ func (w *Worker) Start() {
 	}
 }
 
+// Continue resumes the programme's execution until the next breakpoint is hit.
 func (w *Worker) Continue() {
 	w.continuec <- true
 }
 
+// Next executes the next opcode in the programme and breaks.
 func (w *Worker) Next() {
 	w.nextc <- true
 }
 
+// Break adds a breakpoint at an address, and returns whether the address is a
+// valid breaking address (the start of a new instruction).
 func (w *Worker) Break(addr int) (success bool) {
 	if w.d.IndexOf(addr) == -1 {
 		return false
@@ -103,6 +110,8 @@ func (w *Worker) Break(addr int) (success bool) {
 	return true
 }
 
+// Delete attempts to delete an existing breakpoint at an address, returning
+// whether there was a breakpoint in that address or not.
 func (w *Worker) Delete(addr int) (success bool) {
 	_, success = w.bps[addr]
 	if success {
@@ -111,12 +120,14 @@ func (w *Worker) Delete(addr int) (success bool) {
 	return success
 }
 
+// DeleteAll removes all set breakpoints.
 func (w *Worker) DeleteAll() {
 	for addr, _ := range w.bps {
 		delete(w.bps, addr)
 	}
 }
 
+// List returns the list of breakpoints set.
 func (w *Worker) List() (breaks []int) {
 	for addr, _ := range w.bps {
 		breaks = append(breaks, addr)

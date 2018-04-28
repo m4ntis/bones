@@ -11,7 +11,7 @@ type PrgROMPage [PrgROMPageSize]byte
 type ChrROMPage [ChrROMPageSize]byte
 
 // ROM represents a whole NES rom, containing the program rom, chr rom and the
-// optional trainer
+// optional trainer.
 type ROM struct {
 	Trainer Trainer
 	PrgROM  []PrgROMPage

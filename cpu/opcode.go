@@ -10,7 +10,10 @@ package cpu
 type OpCode struct {
 	Name string
 
-	cycles           int
+	// cycles contains the base cycle count for the opcode
+	cycles int
+	// pageBoundryCheck tells the addressing mode whether a page boundry cross
+	// affects it's cycle count
 	pageBoundryCheck bool
 
 	Mode AddressingMode

@@ -33,6 +33,16 @@ const (
 	Ctrl1     = 0x4016
 )
 
+// TODO: should consider whethere the ram should know all of it's memory
+// mappings or where there should be some sort of part to manage it (motherboard
+// or something of the sort).
+
+// RAM holds the mos 6502's 64k of on chip memory.
+//
+// The RAM contains some memory mapped i/o and therefore should be initialized
+// and passed to the CPU as well as the mapped components.
+//
+// All RAM accessing methods contain logic for mirrored address translation.
 type RAM struct {
 	data [RamSize]byte
 
@@ -56,6 +66,7 @@ func getAddr(addr int) int {
 	return addr
 }
 
+// Read returns the byte in the address specified.
 func (r *RAM) Read(addr int) byte {
 	addr = getAddr(addr)
 
@@ -92,6 +103,10 @@ func (r *RAM) Read(addr int) byte {
 	return d
 }
 
+// Write writes a value to the specified address.
+//
+// Write returns a cycle count the memory access took, as some memory mapped i/o
+// operations may block the cpu and take up cycles, such as DMA.
 func (r *RAM) Write(addr int, d byte) (cycles int) {
 	addr = getAddr(addr)
 
@@ -131,6 +146,11 @@ func (r *RAM) Write(addr int, d byte) (cycles int) {
 	return
 }
 
+// Observe is used as an api for debuggers, letting the caller read the value in
+// RAM without triggering memory mapped i/o operations.
+//
+// Reading from memory mapped i/o locations will return the last value written
+// to these locations.
 func (r *RAM) Observe(addr int) byte {
 	addr = getAddr(addr)
 	return r.data[addr]

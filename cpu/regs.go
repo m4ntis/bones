@@ -5,6 +5,11 @@ const (
 	Clear = 0
 )
 
+// Regs is a simple struct containing all the CPU's registers.
+//
+// The P register is separated into it's different bits for ease of accessing.
+// Reading from or writing to the P register at whole should instead be done
+// using the Get and Set opreations.
 type Regs struct {
 	PC int
 	SP byte
@@ -22,11 +27,15 @@ type Regs struct {
 	N byte
 }
 
+// GetP returns the value of the P register, calculated from all the status
+// bit registers.
 func (reg *Regs) GetP() byte {
 	return reg.C | reg.Z<<1 | reg.I<<2 | reg.D<<3 | reg.B<<4 | reg.V<<6 |
 		reg.N<<7
 }
 
+// SetP sets a value to the P register, translated to all the separate status
+// bits it contains.
 func (reg *Regs) SetP(p byte) {
 	reg.C = p & 1
 	reg.Z = p & 2

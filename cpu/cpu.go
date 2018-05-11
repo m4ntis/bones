@@ -87,16 +87,22 @@ func (cpu *CPU) handleInterrupts() {
 	}
 }
 
+// IRQ causes the IRQ handler to be executed right after the current opcode
+// finished execution, as long as the 'I' bit of the status register is reset.
 func (cpu *CPU) IRQ() {
 	if cpu.Reg.I == Clear {
 		cpu.irq = true
 	}
 }
 
+// NMi causes the IRQ handler to be executed right after the current opcode
+// finished execution.
 func (cpu *CPU) NMI() {
 	cpu.nmi = true
 }
 
+// Reset causes the IRQ handler to be executed right after the current opcode
+// finished execution.
 func (cpu *CPU) Reset() {
 	cpu.reset = true
 }

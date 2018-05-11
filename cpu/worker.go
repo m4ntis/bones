@@ -6,6 +6,13 @@ import (
 	"github.com/m4ntis/bones/ppu"
 )
 
+// TODO: Worker should probably moved away from the cpu package, as it is more
+// on the whole NES level
+
+// Worker is used to run the NES.
+//
+// The worker is initialized with a parsed NES ROM, running it's programme,
+// reading from the controller and displaying to the given display.
 type Worker struct {
 	c *CPU
 	p *ppu.PPU
@@ -13,6 +20,10 @@ type Worker struct {
 	nmi chan bool
 }
 
+// NewWorker initializes an instance of a worker, returning the instance.
+//
+// The controller passed to the worker is only read fby the worker, and expected
+// to be controlled by the caller.
 func NewWorker(rom *ines.ROM, disp ppu.Displayer, ctrl *controller.Controller) *Worker {
 	nmi := make(chan bool)
 
@@ -35,6 +46,7 @@ func NewWorker(rom *ines.ROM, disp ppu.Displayer, ctrl *controller.Controller) *
 	}
 }
 
+// Start starts running the NES.
 func (w *Worker) Start() {
 	go w.handleNmi()
 

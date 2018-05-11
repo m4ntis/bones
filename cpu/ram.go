@@ -37,7 +37,7 @@ const (
 // mappings or where there should be some sort of part to manage it (motherboard
 // or something of the sort).
 
-// RAM holds the mos 6502's 64k of on chip memory.
+// RAM holds the mos 6502's 16k (64 when mirrored) of on chip memory.
 //
 // The RAM contains some memory mapped i/o and therefore should be initialized
 // and passed to the CPU as well as the mapped components.

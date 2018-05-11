@@ -1,3 +1,4 @@
+// package ppu implements the NES's Ricoh 2A03 ppu
 package ppu
 
 import (
@@ -11,7 +12,7 @@ const (
 	FrontPriority = byte(0)
 )
 
-type Sprite struct {
+type sprite struct {
 	dataLo byte
 	dataHi byte
 
@@ -22,16 +23,26 @@ type Sprite struct {
 	shifted int
 }
 
+// Displayer describes a place that the PPU outputs its frames to.
 type Displayer interface {
 	Display(image.Image)
 }
 
+// PPU implements the Ricoh 2A03.
+//
+// Before starting to run the PPU, it should first be initialized with a parsed
+// NES ROM, containing graphic data for the PPU (CHR ROM).
+//
+// The ppu exports its VRAM which can be read and written to.
+//
+// The PPU also contains methods for reading and writing to it's registers, as
+// they are interfaces via memory mapped i/o.
 type PPU struct {
 	VRAM *VRAM
 
 	OAM     *OAM
-	sOAM    *SecondaryOAM
-	sprites [8]Sprite
+	sOAM    *secondaryOAM
+	sprites [8]sprite
 
 	evalSprN      int
 	foundSprCount int
@@ -61,17 +72,22 @@ type PPU struct {
 	disp  Displayer
 }
 
+// New initialized a PPU instance and returns it.
+//
+// nmi is the channel on which the PPU publishes NMIs.
+//
+// disp is the where the PPU outputs its frames.
 func New(nmi chan bool, disp Displayer) *PPU {
 	var vram VRAM
 	var oam OAM
-	var soam SecondaryOAM
+	var soam secondaryOAM
 
 	return &PPU{
 		VRAM: &vram,
 
 		OAM:     &oam,
 		sOAM:    &soam,
-		sprites: [8]Sprite{},
+		sprites: [8]sprite{},
 
 		scrollFirstWrite: true,
 		addrFirstWrite:   true,
@@ -84,11 +100,15 @@ func New(nmi chan bool, disp Displayer) *PPU {
 	}
 }
 
+// LoadROM loads the CHR ROM of a parsed NES ROM into the PPU's on chip VRAM.
 func (ppu *PPU) LoadROM(rom *ines.ROM) {
 	// Load first 2 pages of ChrROM (not supporting mappers as of yet)
 	copy(ppu.VRAM.data[0x0:ines.ChrROMPageSize], rom.ChrROM[0][:])
 }
 
+// Cycle executes a single PPU cycle.
+//
+// Cycle may cause the ppu to generate an NMI or output a frame to the display.
 func (ppu *PPU) Cycle() {
 	if ppu.scanline >= 0 && ppu.scanline < 240 {
 		if ppu.x < 256 {
@@ -160,6 +180,7 @@ func (ppu *PPU) OAMDataWrite(data byte) {
 
 // TODO: Changes made to the vertical scroll during rendering will only take
 // effect on the next frame
+
 func (ppu *PPU) PPUScrollWrite(data byte) {
 	defer func() { ppu.scrollFirstWrite = !ppu.scrollFirstWrite }()
 
@@ -203,6 +224,8 @@ func (ppu *PPU) PPUDataWrite(d byte) {
 }
 
 //TODO: Take note of oamaddr
+
+// DMA is copies 256 bytes of OAM data to the PPU's OAM
 func (ppu *PPU) DMA(oamData [256]byte) {
 	oam := OAM(oamData)
 	ppu.OAM = &oam
@@ -272,7 +295,7 @@ func (ppu *PPU) spriteEval() {
 			// Reset ppu sprite eval flags
 			ppu.evalSprN = 0
 			ppu.foundSprCount = 0
-			ppu.sOAM = &SecondaryOAM{}
+			ppu.sOAM = &secondaryOAM{}
 		}
 		if ppu.evalSprN < 64 {
 			// Sprite in scanline range
@@ -316,7 +339,7 @@ func (ppu *PPU) spriteEval() {
 					sprDataHi = flip_byte(sprDataHi)
 				}
 
-				ppu.sprites[sprN] = Sprite{
+				ppu.sprites[sprN] = sprite{
 					attr: ppu.sOAM[sprN*4+2],
 
 					dataHi: sprDataHi,
@@ -325,7 +348,7 @@ func (ppu *PPU) spriteEval() {
 					x: ppu.sOAM[sprN*4+3],
 				}
 			} else {
-				ppu.sprites[sprN] = Sprite{
+				ppu.sprites[sprN] = sprite{
 					attr: 0xff,
 
 					dataHi: 0xff,

@@ -19,6 +19,9 @@ const (
 	RamSize          = 0x10000
 )
 
+// VRAM holds the Ricoh 2A03's 16kb (64 when mirrored) of on board memory.
+//
+// All VRAM accessing methods contain logic for mirrored address translation.
 type VRAM struct {
 	data [RamSize]byte
 }
@@ -37,10 +40,12 @@ func getAddr(addr int) int {
 	return addr
 }
 
+// Read returns the a value in a specified address.
 func (v *VRAM) Read(addr int) byte {
 	return v.data[getAddr(addr)]
 }
 
+// Write sets a specified address with a given value.
 func (v *VRAM) Write(addr int, data byte) {
 	v.data[getAddr(addr)] = data
 }

@@ -3,10 +3,12 @@ package cpu
 
 import "github.com/m4ntis/bones/ines"
 
-// CPU represents the mos 6502 and implements its functionality.
+// CPU implements the mos 6502.
 //
 // CPU should be loaded with a ROM, and can then execute the programme opcode by
 // opcode.
+//
+// CPU exports its RAM and registers which can both be read and written to.
 type CPU struct {
 	RAM *RAM
 	Reg *Regs

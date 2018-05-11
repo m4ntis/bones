@@ -1,4 +1,4 @@
-// package ppu implements the NES's Ricoh 2A03 ppu
+// Package ppu implements the NES's Ricoh 2A03 ppu
 package ppu
 
 import (
@@ -41,7 +41,7 @@ type PPU struct {
 	VRAM *VRAM
 
 	OAM     *OAM
-	sOAM    *secondaryOAM
+	sOAM    *SecondaryOAM
 	sprites [8]sprite
 
 	evalSprN      int
@@ -80,7 +80,7 @@ type PPU struct {
 func New(nmi chan bool, disp Displayer) *PPU {
 	var vram VRAM
 	var oam OAM
-	var soam secondaryOAM
+	var soam SecondaryOAM
 
 	return &PPU{
 		VRAM: &vram,
@@ -295,7 +295,7 @@ func (ppu *PPU) spriteEval() {
 			// Reset ppu sprite eval flags
 			ppu.evalSprN = 0
 			ppu.foundSprCount = 0
-			ppu.sOAM = &secondaryOAM{}
+			ppu.sOAM = &SecondaryOAM{}
 		}
 		if ppu.evalSprN < 64 {
 			// Sprite in scanline range

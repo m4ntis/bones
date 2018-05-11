@@ -1,3 +1,4 @@
+// Package display implements a simple OpenGL PPU Display.
 package display
 
 import (
@@ -16,12 +17,16 @@ var (
 	scale  = float64(4)
 )
 
+// Display is BoNES' implementation of a simple OpenGL PPU display.
 type Display struct {
 	imgc chan image.Image
 
 	ctrl *controller.Controller
 }
 
+// New returns an instance of a Display, initialized with a controller.
+//
+// ctrl is controlled by the display and read by the NES.
 func New(ctrl *controller.Controller) *Display {
 	return &Display{
 		imgc: make(chan image.Image),
@@ -30,6 +35,7 @@ func New(ctrl *controller.Controller) *Display {
 	}
 }
 
+// Display sets the image to be displayed.
 func (d *Display) Display(img image.Image) {
 	r := image.Rect(0, 0, width, height)
 	cropped := image.NewRGBA(r)
@@ -37,7 +43,11 @@ func (d *Display) Display(img image.Image) {
 	d.imgc <- cropped
 }
 
-// Run must be called from the main goroutine
+// Run starts displaying the set images.
+//
+// IMPORTANT: As the implementation of Display uses OpenGL, Run must be called
+// from the main goroutine. This method blocks forever, and the remaining logic
+// must be run in a different goroutine.
 func (d *Display) Run() {
 	pixelgl.Run(d.run)
 }

@@ -281,8 +281,9 @@ func (ppu *PPU) visibleFrameCycle() color.RGBA {
 }
 
 func (ppu *PPU) calcPaletteIdx(bgLo, bgHi, sprLo, sprHi, sprPriority byte) (pIdx byte) {
+	// sprPriority == 255 when a sprite wasn't found for the scanline
 	// bg 0 or sprite not opaque and with front priority
-	if bgLo == 0 || (sprLo != 0 && sprPriority == FrontPriority) {
+	if sprPriority != 255 && (bgLo == 0 || (sprLo != 0 && sprPriority == FrontPriority)) {
 		return ppu.VRAM.Read(SprPaletteIdx + int(sprLo+sprHi<<2))
 	}
 
@@ -487,7 +488,7 @@ func (ppu *PPU) calcSprForPixel() (sprLo, sprHi, priority byte) {
 			return sprLo, ppu.sprites[7].attr & 3, ppu.sprites[7].attr >> 5 & 1
 		}
 	}
-	return 0, 0, 1
+	return 0, 0, 255
 }
 
 func flip_byte(d byte) byte {

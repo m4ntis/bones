@@ -16,7 +16,7 @@ const (
 	VerticalMirroring   = 1
 )
 
-type inesHeader struct {
+type INESHeader struct {
 	PrgROMSize int
 	ChrROMSize int
 
@@ -44,29 +44,54 @@ func readHeader(r io.Reader) (header []byte, err error) {
 // This method expects the slice to be of size 16, and panics if shorter and
 // disregards the trailing data if longer, so the caller must ensure that the
 // sent buffer is of len() >= 16.
-func parseHeader(headerBuff []byte) (header *inesHeader, err error) {
+func parseHeader(headerBuff []byte) (header INESHeader, err error) {
 	if !bytes.Equal(headerBuff[:4], []byte{0x4e, 0x45, 0x53, 0x1a}) {
-		return nil, errors.Errorf("Incorrect iNes header prefix: %s",
+		return INESHeader{}, errors.Errorf("Incorrect iNes header prefix: %s",
 			hex.Dump(headerBuff[:4]))
 	}
 
 	prgROMSize := headerBuff[4]
 	if prgROMSize == 0 {
-		return nil, errors.New("PRG ROM size can't be 0")
+		return INESHeader{}, errors.New("PRG ROM size can't be 0")
 	}
 
 	chrROMSize := headerBuff[5]
-	if chrROMSize == 0 {
-		chrROMSize = 1
+
+	/*
+		Flag 6
+		76543210
+		||||||||
+		|||||||+- Mirroring: 0: horizontal (vertical arrangement) (CIRAM A10 = PPU A11)
+		|||||||              1: vertical (horizontal arrangement) (CIRAM A10 = PPU A10)
+		||||||+-- 1: Cartridge contains battery-backed PRG RAM ($6000-7FFF) or other persistent memory
+		|||||+--- 1: 512-byte trainer at $7000-$71FF (stored before PRG data)
+		||||+---- 1: Ignore mirroring control or above mirroring bit; instead provide four-screen VRAM
+		++++----- Lower nybble of mapper number
+	*/
+	mirroring := headerBuff[6] & 1
+	persistentMemory := headerBuff[6] & 2 >> 1
+	trainer := headerBuff[6] & 4 >> 2
+	ignoreMirror := headerBuff[6] & 8 >> 3
+	mapperNumber := headerBuff[6] & 240 >> 4
+
+	/*
+		Flag 7
+		76543210
+		||||||||
+		|||||||+- VS Unisystem
+		||||||+-- PlayChoice-10 (8KB of Hint Screen data stored after CHR data)
+		||||++--- If equal to 2, flags 8-15 are in NES 2.0 format
+		++++----- Upper nybble of mapper number
+	*/
+	//version := headerBuff[7] & 12 >> 2
+	mapperNumber += headerBuff[7] & 240 >> 4
+
+	tvSystem := headerBuff[9] & 1
+	if tvSystem == 1 {
+		return INESHeader{}, errors.Errorf("This is a PAL ROM. BoNES only supports NTSC games")
 	}
 
-	mirroring := headerBuff[6] & 1
-	persistentMemory := headerBuff[6] & 2
-	trainer := headerBuff[6] & 4
-	ignoreMirror := headerBuff[6] & 8
-	mapperNumber := headerBuff[6] & 240
-
-	return &inesHeader{
+	return INESHeader{
 		PrgROMSize: int(prgROMSize),
 		ChrROMSize: int(chrROMSize),
 
@@ -123,5 +148,5 @@ func Parse(r io.Reader) (rom *ROM, err error) {
 			romBuff[startIndex:startIndex+ChrROMPageSize])
 	}
 
-	return &ROM{Trainer: trainer, PrgROM: prgROM, ChrROM: chrROM}, nil
+	return &ROM{Header: header, Trainer: trainer, PrgROM: prgROM, ChrROM: chrROM}, nil
 }

@@ -102,6 +102,10 @@ func New(nmi chan bool, disp Displayer) *PPU {
 
 // LoadROM loads the CHR ROM of a parsed NES ROM into the PPU's on chip VRAM.
 func (ppu *PPU) LoadROM(rom *ines.ROM) {
+	if rom.Header.ChrROMSize == 0 {
+		// Handle SRAM
+	}
+
 	// Load first 2 pages of ChrROM (not supporting mappers as of yet)
 	copy(ppu.VRAM.data[0x0:ines.ChrROMPageSize], rom.ChrROM[0][:])
 }

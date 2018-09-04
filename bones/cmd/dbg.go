@@ -66,13 +66,13 @@ func openRom(args []string) *ines.ROM {
 	filename := args[0]
 	f, err := os.Open(filename)
 	if err != nil {
-		fmt.Printf("Error opening file %s:\n%s\n", filename, err.Error())
+		fmt.Printf("Error opening file %s:\n%s\n", filename, err)
 		os.Exit(1)
 	}
 
 	rom, err := ines.Parse(f)
 	if err != nil {
-		fmt.Printf("Error parsing iNES file %s:\n%s\n", filename, err.Error())
+		fmt.Printf("Error parsing iNES file %s:\n%s\n", filename, err)
 		os.Exit(1)
 	}
 

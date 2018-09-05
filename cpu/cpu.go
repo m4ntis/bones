@@ -39,15 +39,15 @@ func New(ram *RAM) *CPU {
 // LoadROM loads a parsed ROM to CPU memory, and initialized the PC register to
 // the reset vector.
 func (cpu *CPU) LoadROM(rom *ines.ROM) {
-	if len(rom.PrgROM) > 1 {
+	if len(rom.PrgROM) == 1 {
+		// If there is only one page of prg rom, load it to $c000 ~ $ffff
+		copy(cpu.RAM.data[0x8000+ines.PrgROMPageSize:0x8000+2*ines.PrgROMPageSize],
+			rom.PrgROM[0][:])
+	} else {
 		// Load first 2 pages of PrgROM (not supporting mappers as of yet)
 		copy(cpu.RAM.data[0x8000:0x8000+ines.PrgROMPageSize], rom.PrgROM[0][:])
 		copy(cpu.RAM.data[0x8000+ines.PrgROMPageSize:0x8000+2*ines.PrgROMPageSize],
 			rom.PrgROM[1][:])
-	} else {
-		// If there is only one page of prg rom, load it to $c000 ~ $ffff
-		copy(cpu.RAM.data[0x8000+ines.PrgROMPageSize:0x8000+2*ines.PrgROMPageSize],
-			rom.PrgROM[0][:])
 	}
 
 	// Init pc to the reset handler addr

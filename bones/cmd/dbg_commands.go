@@ -256,7 +256,7 @@ func createCommands() map[string]*dbgCommand {
 				return false
 			},
 
-			description: "Display the source code and current location",
+			description: "Display source code and current location",
 			usage:       "",
 			hString:     "",
 		},

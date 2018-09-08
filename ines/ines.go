@@ -124,8 +124,8 @@ func Parse(r io.Reader) (rom *ROM, err error) {
 
 	// Calculate ROM size and read it
 	trainerSize := header.Trainer * TrainerSize
-	prgROMSize := header.PrgROMSize * PrgROMPageSize
-	chrROMSize := header.ChrROMSize * ChrROMPageSize
+	prgROMSize := header.PrgROMSize * mapper.PrgROMPageSize
+	chrROMSize := header.ChrROMSize * mapper.ChrROMPageSize
 	romSize := trainerSize + prgROMSize + chrROMSize
 
 	romBuff := make([]byte, romSize)
@@ -140,18 +140,18 @@ func Parse(r io.Reader) (rom *ROM, err error) {
 	var trainer Trainer
 	copy(trainer[:], romBuff[:trainerSize])
 
-	prgROM := make([]PrgROMPage, header.PrgROMSize)
+	prgROM := make([]mapper.PrgROMPage, header.PrgROMSize)
 	for i := range prgROM {
-		startIndex := trainerSize + i*PrgROMPageSize
+		startIndex := trainerSize + i*mapper.PrgROMPageSize
 		copy(prgROM[i][:],
-			romBuff[startIndex:startIndex+PrgROMPageSize])
+			romBuff[startIndex:startIndex+mapper.PrgROMPageSize])
 	}
 
-	chrROM := make([]ChrROMPage, header.ChrROMSize)
+	chrROM := make([]mapper.ChrROMPage, header.ChrROMSize)
 	for i := range chrROM {
-		startIndex := trainerSize + prgROMSize + i*ChrROMPageSize
+		startIndex := trainerSize + prgROMSize + i*mapper.ChrROMPageSize
 		copy(chrROM[i][:],
-			romBuff[startIndex:startIndex+ChrROMPageSize])
+			romBuff[startIndex:startIndex+mapper.ChrROMPageSize])
 	}
 
 	romMapper.Populate(prgROM, chrROM)

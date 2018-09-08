@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/m4ntis/bones/cpu"
+	"github.com/m4ntis/bones/ines"
 	"github.com/m4ntis/bones/ines/mapper"
 )
 
@@ -52,7 +53,9 @@ func (d Disassembly) IndexOf(addr int) int {
 
 // Disassemble is the main method of this package, taking the program and
 // returning the disassembled code.
-func Disassemble(prgROM []mapper.PrgROMPage) Disassembly {
+func Disassemble(rom *ines.ROM) Disassembly {
+	prgROM := rom.Mapper.GetPRGRom()
+
 	asm := genContiguousAsm(prgROM)
 	code := disassemble(asm)
 	addrTable := genAddrTable(code)

@@ -18,6 +18,8 @@ type Mapper interface {
 	Observe(addr int) byte
 
 	Populate([]PrgROMPage, []ChrROMPage)
+
+	GetPRGRom() []PrgROMPage
 }
 
 func New(num int) (mapper Mapper, err error) {

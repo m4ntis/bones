@@ -65,7 +65,7 @@ func NewWorker(rom *ines.ROM, vals chan<- BreakState, disp ppu.Displayer,
 		c: c,
 		p: p,
 
-		d: disass.Disassemble(rom.PrgROM),
+		d: disass.Disassemble(rom),
 		bps: breakPoints{
 			c.Reg.PC: true,
 		},

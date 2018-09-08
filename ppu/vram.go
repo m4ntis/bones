@@ -27,7 +27,7 @@ const (
 type VRAM struct {
 	data [RamSize]byte
 
-	Map mapper.Mapper
+	Mapper mapper.Mapper
 }
 
 // getAddr translates the requested address into it's actual address, stipping any
@@ -56,7 +56,7 @@ func (v *VRAM) Read(addr int) byte {
 
 	// addr it a PT address
 	if addr < NT0Idx {
-		return w.Map.Read(addr)
+		return v.Mapper.Read(addr)
 	}
 
 	return v.data[addr]
@@ -68,7 +68,8 @@ func (v *VRAM) Write(addr int, d byte) {
 
 	// addr it a PT address
 	if addr < NT0Idx {
-		return w.Map.Write(addr, d)
+		v.Mapper.Write(addr, d)
+		return
 	}
 
 	v.data[addr] = d

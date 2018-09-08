@@ -31,4 +31,6 @@ func New(num int) (mapper Mapper, err error) {
 	return mapper, nil
 }
 
-var mappers = map[int]Mapper{}
+var mappers = map[int]Mapper{
+	0: &Mapper000{},
+}

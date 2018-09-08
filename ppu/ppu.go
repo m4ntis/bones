@@ -257,14 +257,14 @@ func (ppu *PPU) incCoords() {
 }
 
 func (ppu *PPU) visibleFrameCycle() color.RGBA {
-	pt := int(ppu.ppuCtrl >> 4 & 1)
+	pt := ppu.getPTAddr()
 	nt := (ppu.scanline/8)*32 + ppu.x/8
 	at := (ppu.scanline/32)*8 + ppu.x/32
 
 	ntBase := getNTAddr(ppu.ppuCtrl&3, ppu.mirror)
 	ntByte := ppu.VRAM.Read(ntBase + nt)
 
-	patternAddr := 0x1000*pt + int(ntByte)*16
+	patternAddr := pt + int(ntByte)*16
 
 	ptx := ppu.x % 8
 	pty := ppu.scanline % 8
@@ -286,6 +286,14 @@ func (ppu *PPU) visibleFrameCycle() color.RGBA {
 	pIdx := ppu.calcPaletteIdx(bgLo, bgHi, sprLo, sprHi, sprPriority)
 
 	return Palette[pIdx]
+}
+
+func (ppu *PPU) getPTAddr() int {
+	if int(ppu.ppuCtrl>>4&1) == 0 {
+		return PT0Idx
+	} else {
+		return PT1Idx
+	}
 }
 
 func getNTAddr(nt byte, mirroring int) int {

@@ -62,6 +62,8 @@ type PPU struct {
 	addrFirstWrite bool
 	ppuAddr        int
 
+	mirror int
+
 	ppuData    byte
 	ppuDataBuf byte
 
@@ -77,7 +79,7 @@ type PPU struct {
 // nmi is the channel on which the PPU publishes NMIs.
 //
 // disp is the where the PPU outputs its frames.
-func New(nmi chan bool, disp Displayer) *PPU {
+func New(mirror int, nmi chan bool, disp Displayer) *PPU {
 	var vram VRAM
 	var oam OAM
 	var soam secondaryOAM
@@ -91,6 +93,8 @@ func New(nmi chan bool, disp Displayer) *PPU {
 
 		scrollFirstWrite: true,
 		addrFirstWrite:   true,
+
+		mirror: mirror,
 
 		vblank: false,
 		nmi:    nmi,
@@ -257,8 +261,8 @@ func (ppu *PPU) visibleFrameCycle() color.RGBA {
 	nt := (ppu.scanline/8)*32 + ppu.x/8
 	at := (ppu.scanline/32)*8 + ppu.x/32
 
-	// For now we assume nametable 0
-	ntByte := ppu.VRAM.Read(NT0Idx + nt)
+	ntBase := getNTAddr(ppu.ppuCtrl&3, ppu.mirror)
+	ntByte := ppu.VRAM.Read(ntBase + nt)
 
 	patternAddr := 0x1000*pt + int(ntByte)*16
 
@@ -282,6 +286,23 @@ func (ppu *PPU) visibleFrameCycle() color.RGBA {
 	pIdx := ppu.calcPaletteIdx(bgLo, bgHi, sprLo, sprHi, sprPriority)
 
 	return Palette[pIdx]
+}
+
+func getNTAddr(nt byte, mirroring int) int {
+	// Assuming either horizontal or vertical mirroring
+	if mirroring == ines.HorizontalMirroring {
+		if nt == 0 || nt == 1 {
+			return NT0Idx
+		} else {
+			return NT2Idx
+		}
+	} else {
+		if nt == 0 || nt == 2 {
+			return NT0Idx
+		} else {
+			return NT1Idx
+		}
+	}
 }
 
 func (ppu *PPU) calcPaletteIdx(bgLo, bgHi, sprLo, sprHi, sprPriority byte) (pIdx byte) {

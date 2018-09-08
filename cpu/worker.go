@@ -27,7 +27,7 @@ type Worker struct {
 func NewWorker(rom *ines.ROM, disp ppu.Displayer, ctrl *controller.Controller) *Worker {
 	nmi := make(chan bool)
 
-	p := ppu.New(nmi, disp)
+	p := ppu.New(rom.Header.Mirroring, nmi, disp)
 	p.LoadROM(rom)
 
 	ram := RAM{}

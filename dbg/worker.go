@@ -49,7 +49,7 @@ func NewWorker(rom *ines.ROM, vals chan<- BreakState, disp ppu.Displayer,
 	ctrl *controller.Controller) *Worker {
 	nmi := make(chan bool)
 
-	p := ppu.New(nmi, disp)
+	p := ppu.New(rom.Header.Mirroring, nmi, disp)
 	p.LoadROM(rom)
 
 	ram := cpu.RAM{}

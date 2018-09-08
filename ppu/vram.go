@@ -26,17 +26,23 @@ type VRAM struct {
 	data [RamSize]byte
 }
 
+// getAddr translates the requested address into it's actual address, stipping any
+// mirroring if present.
 func getAddr(addr int) int {
+	// VRam is mirrored entirely every `RamMirrorIdx` bytes
 	addr %= RamMirrorIdx
+
 	if addr >= TablesMirrorIdx && addr < BgrPaletteIdx {
 		return addr - 0x1000
 	}
+
 	if addr >= PaletteMirrorIdx && addr < RamMirrorIdx {
 		if addr == 0x3f10 || addr == 0x3f14 || addr == 0x3f18 || addr == 0x3f0c {
 			return addr - 0x10
 		}
 		return (addr-BgrPaletteIdx)%0x20 + BgrPaletteIdx
 	}
+
 	return addr
 }
 

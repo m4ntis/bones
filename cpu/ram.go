@@ -15,7 +15,7 @@ const (
 	LowerIORegMirrorBeginIdx = 0x2008
 	UpperIORegBeginIdx       = 0x4000
 	ExpansionRomBeginIdx     = 0x4020
-	SramBeginIdx             = 0x4000
+	SramBeginIdx             = 0x6000
 	PrgRomLowerBeginIdx      = 0x8000
 	PrgRomUpperBeginIdx      = 0xc000
 	RamSize                  = 0x10000

@@ -16,6 +16,5 @@ type ROM struct {
 	Header INESHeader
 
 	Trainer Trainer
-	PrgROM  []PrgROMPage
-	ChrROM  []ChrROMPage
+	Mapper  Mapper
 }

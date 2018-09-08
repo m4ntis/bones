@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"io"
 
+	"github.com/m4ntis/bones/ines/mapper"
 	"github.com/pkg/errors"
 )
 
@@ -103,7 +104,7 @@ func parseHeader(headerBuff []byte) (header INESHeader, err error) {
 	}, nil
 }
 
-// Parse reads an ines file from r and populates a ROM struct with its data or
+// Parse reads an ines rom from r and populates a ROM struct with its data or
 // returns an error.
 func Parse(r io.Reader) (rom *ROM, err error) {
 	// Read and parse header
@@ -114,6 +115,11 @@ func Parse(r io.Reader) (rom *ROM, err error) {
 	header, err := parseHeader(headerBuff)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error while parsing iNes header")
+	}
+
+	romMapper, err := mapper.New(header.MapperNumber)
+	if err != nil {
+		return nil, errors.Wrap(err, "Error while parsing iNes rom")
 	}
 
 	// Calculate ROM size and read it
@@ -148,5 +154,7 @@ func Parse(r io.Reader) (rom *ROM, err error) {
 			romBuff[startIndex:startIndex+ChrROMPageSize])
 	}
 
-	return &ROM{Header: header, Trainer: trainer, PrgROM: prgROM, ChrROM: chrROM}, nil
+	romMapper.Populate(prgROM, chrROM)
+
+	return &ROM{Header: header, Trainer: trainer, Mapper: romMapper}, nil
 }

@@ -277,8 +277,8 @@ func (ppu *PPU) visibleFrameCycle() color.RGBA {
 
 	atQuarter := ppu.x%32/16 + ppu.scanline%32/16<<1
 
-	// Assuming nametable 0, as mentioned above
-	atByte := ppu.VRAM.Read(AT0Idx + at)
+	atBase := getATAddr(ntBase)
+	atByte := ppu.VRAM.Read(atBase + at)
 
 	bgHi := atByte >> uint(2*atQuarter) & 3
 
@@ -303,6 +303,10 @@ func getNTAddr(nt byte, mirroring int) int {
 			return NT1Idx
 		}
 	}
+}
+
+func getATAddr(nt int) int {
+	return nt + 0x3c0
 }
 
 func (ppu *PPU) calcPaletteIdx(bgLo, bgHi, sprLo, sprHi, sprPriority byte) (pIdx byte) {

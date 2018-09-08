@@ -1,5 +1,7 @@
 package ppu
 
+import "github.com/m4ntis/bones/ines/mapper"
+
 const (
 	PT0Idx           = 0x0
 	PT1Idx           = 0x1000
@@ -24,6 +26,8 @@ const (
 // All VRAM accessing methods contain logic for mirrored address translation.
 type VRAM struct {
 	data [RamSize]byte
+
+	Map mapper.Mapper
 }
 
 // getAddr translates the requested address into it's actual address, stipping any
@@ -48,10 +52,24 @@ func getAddr(addr int) int {
 
 // Read returns the a value in a specified address.
 func (v *VRAM) Read(addr int) byte {
-	return v.data[getAddr(addr)]
+	addr = getAddr(addr)
+
+	// addr it a PT address
+	if addr < NT0Idx {
+		return w.Map.Read(addr)
+	}
+
+	return v.data[addr]
 }
 
 // Write sets a specified address with a given value.
-func (v *VRAM) Write(addr int, data byte) {
-	v.data[getAddr(addr)] = data
+func (v *VRAM) Write(addr int, d byte) {
+	addr = getAddr(addr)
+
+	// addr it a PT address
+	if addr < NT0Idx {
+		return w.Map.Write(addr, d)
+	}
+
+	v.data[addr] = d
 }

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/m4ntis/bones/cpu"
-	"github.com/m4ntis/bones/ines"
+	"github.com/m4ntis/bones/ines/mapper"
 )
 
 // Instruction represents a single logical instruction in an NES rom.
@@ -52,7 +52,7 @@ func (d Disassembly) IndexOf(addr int) int {
 
 // Disassemble is the main method of this package, taking the program and
 // returning the disassembled code.
-func Disassemble(prgROM []ines.PrgROMPage) Disassembly {
+func Disassemble(prgROM []mapper.PrgROMPage) Disassembly {
 	asm := genContiguousAsm(prgROM)
 	code := disassemble(asm)
 	addrTable := genAddrTable(code)
@@ -64,7 +64,7 @@ func Disassemble(prgROM []ines.PrgROMPage) Disassembly {
 	}
 }
 
-func genContiguousAsm(prgROM []ines.PrgROMPage) []byte {
+func genContiguousAsm(prgROM []mapper.PrgROMPage) []byte {
 	asm := make([]byte, 0)
 
 	for _, page := range prgROM {
@@ -78,7 +78,7 @@ func disassemble(asm []byte) Code {
 
 	// If only single page of prg rom, it is loaded to $c000 instead of the
 	// usual $8000
-	if len(asm) == ines.PrgROMPageSize {
+	if len(asm) == mapper.PrgROMPageSize {
 		loadAddr = 0xc000
 	}
 

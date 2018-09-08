@@ -6,6 +6,7 @@ import (
 
 type Mapper interface {
 	Read(addr int) byte
+	Populate([]PrgROMPage, []ChrROMPage)
 }
 
 func New(num int) (mapper Mapper, err error) {

@@ -17,7 +17,7 @@ func Example() {
 		return
 	}
 
-	d := Disassemble(rom.PrgROM)
+	d := Disassemble(rom)
 	for _, inst := range d.Code {
 		fmt.Printf("%04x: %s\n", inst.Addr, inst.Text)
 	}

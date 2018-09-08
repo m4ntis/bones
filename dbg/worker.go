@@ -49,16 +49,17 @@ func NewWorker(rom *ines.ROM, vals chan<- BreakState, disp ppu.Displayer,
 	ctrl *controller.Controller) *Worker {
 	nmi := make(chan bool)
 
-	p := ppu.New(rom.Header.Mirroring, nmi, disp)
-	p.LoadROM(rom)
+	p := ppu.New(rom.Header.Mirroring, rom.Mapper, nmi, disp)
 
 	ram := cpu.RAM{}
 	c := cpu.New(&ram)
-	c.LoadROM(rom)
 
 	ram.CPU = c
 	ram.PPU = p
 	ram.Ctrl = ctrl
+	ram.Mapper = rom.Mapper
+
+	c.ResetPC()
 
 	return &Worker{
 		c: c,

@@ -6,6 +6,7 @@ import (
 	"image/color"
 
 	"github.com/m4ntis/bones/ines"
+	"github.com/m4ntis/bones/ines/mapper"
 )
 
 const (
@@ -79,8 +80,11 @@ type PPU struct {
 // nmi is the channel on which the PPU publishes NMIs.
 //
 // disp is the where the PPU outputs its frames.
-func New(mirror int, nmi chan bool, disp Displayer) *PPU {
-	var vram VRAM
+func New(mirror int, romMapper mapper.Mapper, nmi chan bool, disp Displayer) *PPU {
+	vram := VRAM{
+		Mapper: romMapper,
+	}
+
 	var oam OAM
 	var soam secondaryOAM
 
@@ -102,16 +106,6 @@ func New(mirror int, nmi chan bool, disp Displayer) *PPU {
 		frame: newFrame(),
 		disp:  disp,
 	}
-}
-
-// LoadROM loads the CHR ROM of a parsed NES ROM into the PPU's on chip VRAM.
-func (ppu *PPU) LoadROM(rom *ines.ROM) {
-	if rom.Header.ChrROMSize == 0 {
-		// Handle SRAM
-	}
-
-	// Load first 2 pages of ChrROM (not supporting mappers as of yet)
-	copy(ppu.VRAM.data[0x0:ines.ChrROMPageSize], rom.ChrROM[0][:])
 }
 
 // Cycle executes a single PPU cycle.

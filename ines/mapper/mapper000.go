@@ -7,6 +7,10 @@ type Mapper000 struct {
 	chrROM []ChrROMPage
 }
 
+func (m *Mapper000) SetSram(b bool) {
+	// No sram in ines mapper 000
+}
+
 func (m *Mapper000) Read(addr int) byte {
 	if addr >= 0 && addr < 0x2000 {
 		return m.readChrROM(addr)

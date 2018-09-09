@@ -20,6 +20,8 @@ type Mapper interface {
 	Populate([]PrgROMPage, []ChrROMPage)
 
 	GetPRGRom() []PrgROMPage
+
+	SetSram(bool)
 }
 
 func New(num int) (mapper Mapper, err error) {

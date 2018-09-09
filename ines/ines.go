@@ -122,6 +122,8 @@ func Parse(r io.Reader) (rom *ROM, err error) {
 		return nil, errors.Wrap(err, "Error while parsing iNes rom")
 	}
 
+	romMapper.SetSram(header.ChrROMSize == 0)
+
 	// Calculate ROM size and read it
 	trainerSize := header.Trainer * TrainerSize
 	prgROMSize := header.PrgROMSize * mapper.PrgROMPageSize

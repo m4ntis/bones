@@ -242,7 +242,7 @@ func CPX(cpu *CPU, op Operand) (extraCycles int) {
 	res := cpu.Reg.X - d
 
 	setNZ(cpu, res)
-	if d <= cpu.Reg.A {
+	if d <= cpu.Reg.X {
 		cpu.Reg.C = Set
 	} else {
 		cpu.Reg.C = Clear
@@ -256,7 +256,7 @@ func CPY(cpu *CPU, op Operand) (extraCycles int) {
 	res := cpu.Reg.Y - d
 
 	setNZ(cpu, res)
-	if d <= cpu.Reg.A {
+	if d <= cpu.Reg.Y {
 		cpu.Reg.C = Set
 	} else {
 		cpu.Reg.C = Clear

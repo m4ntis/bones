@@ -1,8 +1,6 @@
 // Package cpu provides an api for the mos 6502
 package cpu
 
-import "github.com/m4ntis/bones/ines"
-
 // CPU implements the mos 6502.
 //
 // CPU should be loaded with a ROM, and can then execute the programme opcode by
@@ -36,21 +34,10 @@ func New(ram *RAM) *CPU {
 	}
 }
 
-// LoadROM loads a parsed ROM to CPU memory, and initialized the PC register to
-// the reset vector.
-func (cpu *CPU) LoadROM(rom *ines.ROM) {
-	if len(rom.PrgROM) == 1 {
-		// If there is only one page of prg rom, load it to $c000 ~ $ffff
-		copy(cpu.RAM.data[0x8000+ines.PrgROMPageSize:0x8000+2*ines.PrgROMPageSize],
-			rom.PrgROM[0][:])
-	} else {
-		// Load first 2 pages of PrgROM (not supporting mappers as of yet)
-		copy(cpu.RAM.data[0x8000:0x8000+ines.PrgROMPageSize], rom.PrgROM[0][:])
-		copy(cpu.RAM.data[0x8000+ines.PrgROMPageSize:0x8000+2*ines.PrgROMPageSize],
-			rom.PrgROM[1][:])
-	}
-
-	// Init pc to the reset handler addr
+// ResetPC sets the pc to the reset handler addr
+//
+// TODO: Make sure ram is initialized before reseting PC
+func (cpu *CPU) ResetPC() {
 	cpu.Reg.PC = int(cpu.RAM.Read(0xfffc)) | int(cpu.RAM.Read(0xfffd))<<8
 }
 

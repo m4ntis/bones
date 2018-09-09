@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"io"
 
+	"github.com/m4ntis/bones/ines/mapper"
 	"github.com/pkg/errors"
 )
 
@@ -103,7 +104,7 @@ func parseHeader(headerBuff []byte) (header INESHeader, err error) {
 	}, nil
 }
 
-// Parse reads an ines file from r and populates a ROM struct with its data or
+// Parse reads an ines rom from r and populates a ROM struct with its data or
 // returns an error.
 func Parse(r io.Reader) (rom *ROM, err error) {
 	// Read and parse header
@@ -116,10 +117,17 @@ func Parse(r io.Reader) (rom *ROM, err error) {
 		return nil, errors.Wrap(err, "Error while parsing iNes header")
 	}
 
+	romMapper, err := mapper.New(header.MapperNumber)
+	if err != nil {
+		return nil, errors.Wrap(err, "Error while parsing iNes rom")
+	}
+
+	romMapper.SetSram(header.ChrROMSize == 0)
+
 	// Calculate ROM size and read it
 	trainerSize := header.Trainer * TrainerSize
-	prgROMSize := header.PrgROMSize * PrgROMPageSize
-	chrROMSize := header.ChrROMSize * ChrROMPageSize
+	prgROMSize := header.PrgROMSize * mapper.PrgROMPageSize
+	chrROMSize := header.ChrROMSize * mapper.ChrROMPageSize
 	romSize := trainerSize + prgROMSize + chrROMSize
 
 	romBuff := make([]byte, romSize)
@@ -134,19 +142,21 @@ func Parse(r io.Reader) (rom *ROM, err error) {
 	var trainer Trainer
 	copy(trainer[:], romBuff[:trainerSize])
 
-	prgROM := make([]PrgROMPage, header.PrgROMSize)
+	prgROM := make([]mapper.PrgROMPage, header.PrgROMSize)
 	for i := range prgROM {
-		startIndex := trainerSize + i*PrgROMPageSize
+		startIndex := trainerSize + i*mapper.PrgROMPageSize
 		copy(prgROM[i][:],
-			romBuff[startIndex:startIndex+PrgROMPageSize])
+			romBuff[startIndex:startIndex+mapper.PrgROMPageSize])
 	}
 
-	chrROM := make([]ChrROMPage, header.ChrROMSize)
+	chrROM := make([]mapper.ChrROMPage, header.ChrROMSize)
 	for i := range chrROM {
-		startIndex := trainerSize + prgROMSize + i*ChrROMPageSize
+		startIndex := trainerSize + prgROMSize + i*mapper.ChrROMPageSize
 		copy(chrROM[i][:],
-			romBuff[startIndex:startIndex+ChrROMPageSize])
+			romBuff[startIndex:startIndex+mapper.ChrROMPageSize])
 	}
 
-	return &ROM{Header: header, Trainer: trainer, PrgROM: prgROM, ChrROM: chrROM}, nil
+	romMapper.Populate(prgROM, chrROM)
+
+	return &ROM{Header: header, Trainer: trainer, Mapper: romMapper}, nil
 }

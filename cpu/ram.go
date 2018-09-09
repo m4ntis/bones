@@ -2,6 +2,7 @@ package cpu
 
 import (
 	"github.com/m4ntis/bones/controller"
+	"github.com/m4ntis/bones/ines/mapper"
 	"github.com/m4ntis/bones/ppu"
 )
 
@@ -14,7 +15,7 @@ const (
 	LowerIORegMirrorBeginIdx = 0x2008
 	UpperIORegBeginIdx       = 0x4000
 	ExpansionRomBeginIdx     = 0x4020
-	SramBeginIdx             = 0x4000
+	SramBeginIdx             = 0x6000
 	PrgRomLowerBeginIdx      = 0x8000
 	PrgRomUpperBeginIdx      = 0xc000
 	RamSize                  = 0x10000
@@ -49,6 +50,8 @@ type RAM struct {
 	CPU  *CPU
 	PPU  *ppu.PPU
 	Ctrl *controller.Controller
+
+	Mapper mapper.Mapper
 }
 
 // getAddr returns the underlying address after mapping.
@@ -69,6 +72,10 @@ func getAddr(addr int) int {
 // Read returns the byte in the address specified.
 func (r *RAM) Read(addr int) byte {
 	addr = getAddr(addr)
+
+	if addr >= SramBeginIdx {
+		return r.Mapper.Read(addr)
+	}
 
 	var d byte
 
@@ -109,6 +116,10 @@ func (r *RAM) Read(addr int) byte {
 // operations may block the cpu and take up cycles, such as DMA.
 func (r *RAM) Write(addr int, d byte) (cycles int) {
 	addr = getAddr(addr)
+
+	if addr >= SramBeginIdx {
+		return r.Mapper.Write(addr, d)
+	}
 
 	switch addr {
 	case PPUCtrl:
@@ -153,5 +164,10 @@ func (r *RAM) Write(addr int, d byte) (cycles int) {
 // to these locations.
 func (r *RAM) Observe(addr int) byte {
 	addr = getAddr(addr)
+
+	if addr >= SramBeginIdx {
+		return r.Mapper.Observe(addr)
+	}
+
 	return r.data[addr]
 }

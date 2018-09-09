@@ -35,4 +35,5 @@ func New(num int) (mapper Mapper, err error) {
 
 var mappers = map[int]Mapper{
 	0: &Mapper000{},
+	1: &Mapper001{},
 }

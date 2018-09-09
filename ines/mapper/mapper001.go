@@ -125,23 +125,43 @@ func (m *Mapper001) readPrgROM(addr int) byte {
 	}
 
 	addr -= 0x8000
-	return m.prgROM[addr/PrgROMPageSize][addr%PrgROMPageSize]
+	page, index := m.decodePrgROMAddr(addr)
+	return m.prgROM[page][index]
+}
+
+func (m *Mapper001) decodePrgROMAddr(addr int) (page, index int) {
+	// Test 32kb prg mode
+	if m.ctrl&2 == 0 {
+		index = addr % PrgROMPageSize
+
+		page = (int(flip_reg(m.prg)) & 7) / 2
+		page += addr / PrgROMPageSize
+	} else {
+		index = addr % PrgROMPageSize
+
+		// Test if the accessed bank is swappable
+		if (addr < PrgROMPageSize && m.ctrl&4 == 4) || (addr > PrgROMPageSize && m.ctrl&4 == 0) {
+			page = int(flip_reg(m.prg)) & 15
+		}
+	}
+
+	return page, index
 }
 
 func (m *Mapper001) decodeChrROMAddr(addr int) (page, index int) {
 	// Test 8kb chr mode
 	if m.ctrl&1 == 0 {
 		// Ignoring MSB of page num (bit 5) in 8kb mode
-		page = int(flip_byte(m.chr0)>>3) & 0xf
+		page = int(flip_reg(m.chr0)) & 0xf
 		index = addr % ChrROMPageSize
 	} else {
 		index = addr % (ChrROMPageSize / 2)
 
 		// Test for first or second chr 4k bank access
 		if addr < 0x1000 {
-			page = int(flip_byte(m.chr0) >> 3)
+			page = int(flip_reg(m.chr0))
 		} else {
-			page = int(flip_byte(m.chr1) >> 3)
+			page = int(flip_reg(m.chr1))
 		}
 
 		index += (page % 2) * (ChrROMPageSize / 2)
@@ -151,9 +171,9 @@ func (m *Mapper001) decodeChrROMAddr(addr int) (page, index int) {
 	return page, index
 }
 
-func flip_byte(d byte) byte {
+func flip_reg(d byte) byte {
 	d = ((d >> 1) & 0x55) | ((d & 0x55) << 1)
 	d = ((d >> 2) & 0x33) | ((d & 0x33) << 2)
 	d = ((d >> 4) & 0x0F) | ((d & 0x0F) << 4)
-	return d
+	return d >> 3
 }

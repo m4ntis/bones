@@ -1,6 +1,8 @@
 // Package cpu provides an api for the mos 6502
 package cpu
 
+import "fmt"
+
 // CPU implements the mos 6502.
 //
 // CPU should be loaded with a ROM, and can then execute the programme opcode by
@@ -46,7 +48,13 @@ func (cpu *CPU) ResetPC() {
 func (cpu *CPU) ExecNext() (cycles int) {
 	defer cpu.handleInterrupts()
 
-	op := OpCodes[cpu.RAM.Read(cpu.Reg.PC)]
+	code := cpu.RAM.Read(cpu.Reg.PC)
+	op, ok := OpCodes[code]
+	if !ok {
+		// TODO: Don't panic
+		panic(fmt.Sprintf("Invalid opcode to execute: %02x, PC: %04x", code,
+			cpu.Reg.PC))
+	}
 
 	// We are doing this manually cus there are only 3 posibilities and writing
 	// logic to describe this would be ugly IMO

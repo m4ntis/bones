@@ -17,6 +17,8 @@ type Mapper001 struct {
 	chr0 byte
 	chr1 byte
 	prg  byte
+
+	booted bool
 }
 
 func (m *Mapper001) SetSram(b bool) {
@@ -77,6 +79,7 @@ func (m *Mapper001) Write(addr int, d byte) int {
 
 				switch regN {
 				case 0:
+					m.booted = true
 					m.ctrl = m.sr
 				case 1:
 					m.chr0 = m.sr
@@ -130,18 +133,24 @@ func (m *Mapper001) readPrgROM(addr int) byte {
 }
 
 func (m *Mapper001) decodePrgROMAddr(addr int) (page, index int) {
+	// Default to upper bank fixed
+	if !m.booted && addr > PrgROMPageSize {
+		return len(m.prgROM) - 1, addr % PrgROMPageSize
+	}
+
+	index = addr % PrgROMPageSize
+
 	// Test 32kb prg mode
 	if m.ctrl&2 == 0 {
-		index = addr % PrgROMPageSize
-
 		page = (int(flip_reg(m.prg)) & 7) / 2
 		page += addr / PrgROMPageSize
 	} else {
-		index = addr % PrgROMPageSize
-
 		// Test if the accessed bank is swappable
 		if (addr < PrgROMPageSize && m.ctrl&4 == 4) || (addr > PrgROMPageSize && m.ctrl&4 == 0) {
 			page = int(flip_reg(m.prg)) & 15
+		} else if addr > PrgROMPageSize {
+			// If upper bank is fixed, fix it to last page
+			page = len(m.prgROM) - 1
 		}
 	}
 

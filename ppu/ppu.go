@@ -119,7 +119,7 @@ func (ppu *PPU) Cycle() {
 				x: ppu.x,
 				y: ppu.scanline,
 
-				color: ppu.visibleFrameCycle(),
+				color: ppu.visiblePixelCycle(),
 			})
 		}
 
@@ -252,7 +252,7 @@ func (ppu *PPU) incCoords() {
 	}
 }
 
-func (ppu *PPU) visibleFrameCycle() color.RGBA {
+func (ppu *PPU) visiblePixelCycle() color.RGBA {
 	pt := ppu.getPTAddr()
 	nt := (ppu.scanline/8)*32 + ppu.x/8
 	at := (ppu.scanline/32)*8 + ppu.x/32

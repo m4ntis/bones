@@ -58,7 +58,8 @@ type PPU struct {
 	oamAddr byte
 
 	scrollFirstWrite bool
-	ppuScroll        int
+	xScroll          int
+	yScroll          int
 
 	addrFirstWrite bool
 	ppuAddr        int
@@ -158,9 +159,10 @@ func (ppu *PPU) PPUStatusRead() byte {
 		ppu.ppuStatus &= 0x7f
 
 		ppu.scrollFirstWrite = true
-		ppu.ppuScroll &= 0
+		ppu.xScroll = 0
+		ppu.yScroll = 0
 
-		ppu.ppuAddr &= 0
+		ppu.ppuAddr = 0
 	}()
 
 	return ppu.ppuStatus
@@ -187,11 +189,11 @@ func (ppu *PPU) PPUScrollWrite(data byte) {
 	defer func() { ppu.scrollFirstWrite = !ppu.scrollFirstWrite }()
 
 	if ppu.scrollFirstWrite {
-		ppu.ppuScroll = int(data)
+		ppu.xScroll = int(data)
 		return
 	}
 
-	ppu.ppuScroll |= int(data) << 8
+	ppu.yScroll = int(data)
 }
 
 func (ppu *PPU) PPUAddrWrite(data byte) {

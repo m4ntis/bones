@@ -253,16 +253,19 @@ func (ppu *PPU) incCoords() {
 }
 
 func (ppu *PPU) visiblePixelCycle() color.RGBA {
-	pt := ppu.getPTAddr()
-	nt := (ppu.scanline/8)*32 + ppu.x/8
-	at := (ppu.scanline/32)*8 + ppu.x/32
+	scrolledX := ppu.x + ppu.xScroll
 
-	ntBase := getNTAddr(ppu.ppuCtrl&3, ppu.mirror)
+	// Select Pattern Table, Name Table and Attribute Table
+	pt := ppu.getPTAddr()
+	nt := (ppu.scanline/8)*32 + scrolledX%256/8
+	at := (ppu.scanline/32)*8 + scrolledX%256/32
+
+	ntBase := getNTAddr(int(ppu.ppuCtrl)&3+scrolledX/256, ppu.mirror)
 	ntByte := ppu.VRAM.Read(ntBase + nt)
 
 	patternAddr := pt + int(ntByte)*16
 
-	ptx := ppu.x % 8
+	ptx := scrolledX % 8
 	pty := ppu.scanline % 8
 	ptLowByte := ppu.VRAM.Read(patternAddr + pty)
 	ptHighByte := ppu.VRAM.Read(patternAddr + pty + 8)
@@ -271,7 +274,7 @@ func (ppu *PPU) visiblePixelCycle() color.RGBA {
 
 	bgLo := ptLowBit + ptHighBit<<1
 
-	atQuarter := ppu.x%32/16 + ppu.scanline%32/16<<1
+	atQuarter := scrolledX%32/16 + ppu.scanline%32/16<<1
 
 	atBase := getATAddr(ntBase)
 	atByte := ppu.VRAM.Read(atBase + at)
@@ -292,7 +295,7 @@ func (ppu *PPU) getPTAddr() int {
 	}
 }
 
-func getNTAddr(nt byte, mirroring int) int {
+func getNTAddr(nt int, mirroring int) int {
 	// Assuming either horizontal or vertical mirroring
 	if mirroring == ines.HorizontalMirroring {
 		if nt == 0 || nt == 1 {

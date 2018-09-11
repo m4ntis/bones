@@ -8,7 +8,8 @@ type Mapper001 struct {
 	prgROM []PrgROMPage
 	chrROM []ChrROMPage
 
-	prgRAM [0x2000]byte
+	prgRAM [PrgRAMSize]byte
+	chrRAM [ChrRAMSize]byte
 
 	sr         byte
 	writeCount int
@@ -28,7 +29,7 @@ func (m *Mapper001) SetSram(b bool) {
 func (m *Mapper001) Read(addr int) byte {
 	if addr >= 0 && addr < 0x2000 {
 		if m.sram {
-			return m.prgRAM[addr]
+			return m.chrRAM[addr]
 		}
 
 		page, index := m.decodeChrROMAddr(addr)
@@ -52,6 +53,10 @@ func (m *Mapper001) Write(addr int, d byte) int {
 	if addr >= 0x6000 && addr < 0x8000 {
 		addr -= 0x6000
 		m.prgRAM[addr] = d
+	}
+
+	if addr < 0x2000 {
+		m.chrRAM[addr] = d
 	}
 
 	if addr >= 0x8000 && addr < 0x10000 {

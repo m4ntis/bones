@@ -7,6 +7,9 @@ import (
 const (
 	PrgROMPageSize = 16384 // 16k, 0x4000
 	ChrROMPageSize = 8192  // 8K, 0x2000
+
+	PrgRAMSize = 8192 // 8k, 0x2000
+	ChrRAMSize = 8192 // 8K, 0x2000
 )
 
 type PrgROMPage [PrgROMPageSize]byte

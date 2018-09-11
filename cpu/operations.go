@@ -266,9 +266,7 @@ func CPY(cpu *CPU, op Operand) (extraCycles int) {
 
 func DEC(cpu *CPU, op Operand) (extraCycles int) {
 	d := op.Read() - 1
-
 	setNZ(cpu, d)
-
 	extraCycles += op.Write(d)
 	return
 }
@@ -439,7 +437,7 @@ func SBC(cpu *CPU, op Operand) (extraCycles int) {
 	arg2 := int8(op.Read())
 
 	var res byte
-	if cpu.Reg.C == 0 {
+	if cpu.Reg.C == Clear {
 		res = byte(arg1-arg2) - 1
 	} else {
 		res = byte(arg1 - arg2)

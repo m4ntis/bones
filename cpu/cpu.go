@@ -112,7 +112,7 @@ func (cpu *CPU) interrupt(handlerAddr int) {
 	// push P
 	cpu.push(cpu.Reg.GetP())
 
-	cpu.Reg.I = 1
+	cpu.Reg.I = Set
 
 	cpu.Reg.PC = int(cpu.RAM.Read(handlerAddr)) |
 		int(cpu.RAM.Read(handlerAddr+1))<<8

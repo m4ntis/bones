@@ -151,9 +151,9 @@ func (m *Mapper001) decodePrgROMAddr(addr int) (page, index int) {
 		page += addr / PrgROMPageSize
 	} else {
 		// Test if the accessed bank is swappable
-		if (addr < PrgROMPageSize && m.ctrl&4 == 4) || (addr > PrgROMPageSize && m.ctrl&4 == 0) {
+		if (addr < PrgROMPageSize && m.ctrl&4 == 4) || (addr >= PrgROMPageSize && m.ctrl&4 == 0) {
 			page = int(flip_reg(m.prg)) & 15
-		} else if addr > PrgROMPageSize {
+		} else if addr >= PrgROMPageSize {
 			// If upper bank is fixed, fix it to last page
 			page = len(m.prgROM) - 1
 		}

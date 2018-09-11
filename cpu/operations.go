@@ -523,7 +523,6 @@ func TYA(cpu *CPU, op Operand) (extraCycles int) {
 
 func TXS(cpu *CPU, op Operand) (extraCycles int) {
 	cpu.Reg.SP = cpu.Reg.X
-	setNZ(cpu, cpu.Reg.SP)
 	return
 }
 

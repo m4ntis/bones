@@ -38,8 +38,12 @@ as explained the language's installation instructions.
 BoNES still currently implements only basic hardware features and basic
 rendering functionality, meaning that harder to emulate games such as the ones
 listed [here](https://wiki.nesdev.com/w/index.php/Tricky-to-emulate_games)
-aren't yet fully supported. BoNES has been currently tested and found to work
-propperly only with a Donkey Kong rom.
+aren't yet fully supported.
+
+Currently being implemented:
+- [Sprite 0 detection](https://wiki.nesdev.com/w/index.php?title=PPU_OAM&redirect=no#Sprite_zero_hits)
+- Additional mappers (You can request a specific one with an issue)
+
 
 ## Build Status
 [![Build Status](https://travis-ci.org/m4ntis/bones.svg?branch=master)](https://travis-ci.org/m4ntis/bones)

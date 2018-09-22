@@ -57,6 +57,7 @@ type RAM struct {
 // getAddr returns the underlying address after mapping.
 func getAddr(addr int) int {
 	if addr < 0 || addr > RamSize {
+		// TODO: don't panic
 		panic("RAM accessing addr out of range")
 	}
 

@@ -38,10 +38,10 @@ func (reg *Regs) GetP() byte {
 // bits it contains.
 func (reg *Regs) SetP(p byte) {
 	reg.C = p & 1
-	reg.Z = p & 2
-	reg.I = p & 4
-	reg.D = p & 8
-	reg.B = p & 16
-	reg.V = p & 64
-	reg.N = p & 128
+	reg.Z = (p >> 1) & 1
+	reg.I = (p >> 2) & 1
+	reg.D = (p >> 3) & 1
+	reg.B = (p >> 4) & 1
+	reg.V = (p >> 6) & 1
+	reg.N = (p >> 7) & 1
 }

@@ -92,13 +92,13 @@ func (cpu *CPU) IRQ() {
 	}
 }
 
-// NMi causes the IRQ handler to be executed right after the current opcode
+// NMi causes the NMI handler to be executed right after the current opcode
 // finished execution.
 func (cpu *CPU) NMI() {
 	cpu.nmi = true
 }
 
-// Reset causes the IRQ handler to be executed right after the current opcode
+// Reset causes the reset handler to be executed right after the current opcode
 // finished execution.
 func (cpu *CPU) Reset() {
 	cpu.reset = true

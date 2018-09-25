@@ -34,10 +34,10 @@ type Displayer interface {
 // Before starting to run the PPU, it should first be initialized with a parsed
 // NES ROM, containing graphic data for the PPU (CHR ROM).
 //
-// The ppu exports its VRAM which can be read and written to.
+// The PPU exports its VRAM which can be read and written to.
 //
 // The PPU also contains methods for reading and writing to it's registers, as
-// they are interfaces via memory mapped i/o.
+// they are interfaces via memory mapped i/o on the CPU RAM.
 type PPU struct {
 	VRAM *VRAM
 
@@ -76,7 +76,7 @@ type PPU struct {
 	disp  Displayer
 }
 
-// New initialized a PPU instance and returns it.
+// New initializes a PPU instance and returns it.
 //
 // nmi is the channel on which the PPU publishes NMIs.
 //
@@ -133,6 +133,7 @@ func (ppu *PPU) Cycle() {
 
 		ppu.disp.Display(ppu.frame.create())
 	} else if ppu.scanline == 261 && ppu.x == 1 {
+		// Pre-render line dot 1, clear ppu status and end vblank
 		ppu.ppuStatus = 0
 		ppu.vblank = false
 	}

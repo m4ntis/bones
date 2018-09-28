@@ -16,9 +16,9 @@ type PrgROMPage [PrgROMPageSize]byte
 type ChrROMPage [ChrROMPageSize]byte
 
 type Mapper interface {
-	Read(addr int) byte
-	Write(addr int, d byte) int
-	Observe(addr int) byte
+	Read(addr int) (byte, error)
+	Write(addr int, d byte) error
+	Observe(addr int) (byte, error)
 
 	Populate([]PrgROMPage, []ChrROMPage)
 

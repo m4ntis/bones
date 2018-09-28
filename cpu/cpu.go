@@ -1,7 +1,7 @@
 // Package cpu provides an api for the mos 6502
 package cpu
 
-import "fmt"
+import "github.com/pkg/errors"
 
 // CPU implements the mos 6502.
 //
@@ -40,37 +40,58 @@ func New(ram *RAM) *CPU {
 //
 // TODO: Make sure ram is initialized before reseting PC
 func (cpu *CPU) ResetPC() {
-	cpu.Reg.PC = int(cpu.RAM.Read(0xfffc)) | int(cpu.RAM.Read(0xfffd))<<8
+	cpu.Reg.PC = int(cpu.RAM.MustRead(0xfffc)) | int(cpu.RAM.MustRead(0xfffd))<<8
 }
 
-// ExecNext reads the next opcode from RAM, executes it and returns the cycle
-// count.
-func (cpu *CPU) ExecNext() (cycles int) {
+// TODO: You'd think that cycles should be internal to the CPU... I should
+// probably think about it.
+
+// ExecNext fetches the next opcode from RAM and executes it.
+//
+// ExecNext returns cycle count the whole operation took and an error if one
+// occured.
+func (cpu *CPU) ExecNext() (cycles int, err error) {
 	defer cpu.handleInterrupts()
 
-	code := cpu.RAM.Read(cpu.Reg.PC)
+	code, err := cpu.RAM.Read(cpu.Reg.PC)
+	if err != nil {
+		return 0, errors.Wrap(err, "Failed to read opcode from memory")
+	}
+
 	op, ok := OpCodes[code]
 	if !ok {
-		// TODO: Don't panic
-		panic(fmt.Sprintf("Invalid opcode to execute: %02x, PC: %04x", code,
-			cpu.Reg.PC))
+		return 0, errors.Errorf("Invalid opcode to execute: %02x, PC: %04x",
+			code, cpu.Reg.PC)
 	}
 
 	// We are doing this manually cus there are only 3 posibilities and writing
 	// logic to describe this would be ugly IMO
 	if op.Mode.OpsLen == 1 {
-		cycles = op.Exec(cpu, cpu.RAM.Read(cpu.Reg.PC+1))
+		d, err := cpu.RAM.Read(cpu.Reg.PC + 1)
+		if err != nil {
+			return 0, errors.Wrap(err, "Failed to read operand from memory")
+		}
+
+		cycles = op.Exec(cpu, d)
 	} else if op.Mode.OpsLen == 2 {
-		cycles = op.Exec(cpu, cpu.RAM.Read(cpu.Reg.PC+1), cpu.RAM.Read(cpu.Reg.PC+2))
+		op1, err := cpu.RAM.Read(cpu.Reg.PC + 1)
+		op2, err := cpu.RAM.Read(cpu.Reg.PC + 2)
+		if err != nil {
+			return 0, errors.Wrap(err, "Failed to read operands from memory")
+		}
+
+		cycles = op.Exec(cpu, op1, op2)
 	} else {
 		cycles = op.Exec(cpu)
 	}
 
-	// TODO: decrement cycles after 1786830 cycles
+	// TODO: decrement cycles after 1786830 cycles, as of now there's a
+	// potential overflow
 	cpu.cycles += cycles
-	return cycles
+	return cycles, nil
 }
 
+// TODO: Make interrupt handlers constant
 func (cpu *CPU) handleInterrupts() {
 	if cpu.reset {
 		cpu.interrupt(0xfffc)
@@ -112,10 +133,12 @@ func (cpu *CPU) interrupt(handlerAddr int) {
 	// push P
 	cpu.push(cpu.Reg.GetP())
 
+	// TODO: Find appropriate place for this outside the interrupt function so
+	// the CPU can call it when initiating PC in the beginning.
 	cpu.Reg.I = Set
 
-	cpu.Reg.PC = int(cpu.RAM.Read(handlerAddr)) |
-		int(cpu.RAM.Read(handlerAddr+1))<<8
+	cpu.Reg.PC = int(cpu.RAM.MustRead(handlerAddr)) |
+		int(cpu.RAM.MustRead(handlerAddr+1))<<8
 	return
 }
 
@@ -127,7 +150,7 @@ func (cpu *CPU) push(d byte) {
 
 func (cpu *CPU) pull() byte {
 	cpu.Reg.SP++
-	return cpu.RAM.Read(cpu.getStackAddr())
+	return cpu.RAM.MustRead(cpu.getStackAddr())
 }
 
 func (cpu *CPU) getStackAddr() int {

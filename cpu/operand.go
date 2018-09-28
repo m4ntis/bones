@@ -25,7 +25,10 @@ type RAMOperand struct {
 }
 
 func (op RAMOperand) Read() byte {
-	return op.RAM.Read(op.Addr)
+	// TODO: To keep the current API without error checking, MustRead is used
+	// instead of Read.  This should probably change in order to handle errors
+	// propperly in operations.
+	return op.RAM.MustRead(op.Addr)
 }
 
 func (op RAMOperand) Write(d byte) (cycles int) {

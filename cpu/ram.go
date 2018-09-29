@@ -202,7 +202,7 @@ func (r *RAM) Write(addr int, d byte) (cycles int, err error) {
 
 // MustWrite calls Write but panics instead of returning an error.
 func (r *RAM) MustWrite(addr int, d byte) (cycles int) {
-	cycles, err := r.write(addr, d)
+	cycles, err := r.Write(addr, d)
 	if err != nil {
 		panic(err)
 	}
@@ -229,7 +229,7 @@ func (r *RAM) Observe(addr int) (d byte, err error) {
 	}
 
 	// Read from internal RAM
-	return r.data[addr]
+	return r.data[addr], nil
 }
 
 // TODO: Consider changing api to a single "access" method (maybe internally)

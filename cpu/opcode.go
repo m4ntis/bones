@@ -26,6 +26,6 @@ type OpCode struct {
 // It runs it's addressing mode, which in turn fetches operands if necessary and
 // calls the operation.
 func (op OpCode) Exec(cpu *CPU, ops ...byte) (cycles int, err error) {
-	cycles, err := op.Mode.Address(cpu, op.Oper, op.pageBoundryCheck, ops...)
+	cycles, err = op.Mode.Address(cpu, op.Oper, op.pageBoundryCheck, ops...)
 	return cycles + op.cycles, err
 }

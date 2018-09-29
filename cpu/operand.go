@@ -32,7 +32,8 @@ func (op RAMOperand) Read() byte {
 }
 
 func (op RAMOperand) Write(d byte) (cycles int) {
-	return op.RAM.Write(op.Addr, d)
+	// TODO: Note the todo above
+	return op.RAM.MustWrite(op.Addr, d)
 }
 
 // RegOperand is an Operand containing a reference to a single CPU register,

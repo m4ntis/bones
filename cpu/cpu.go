@@ -72,7 +72,10 @@ func (cpu *CPU) ExecNext() (cycles int, err error) {
 			return 0, errors.Wrap(err, "Failed to read operand from memory")
 		}
 
-		cycles = op.Exec(cpu, d)
+		cycles, err = op.Exec(cpu, d)
+		if err != nil {
+			return 0, errors.Wrap(err, "Failed to execute opcode")
+		}
 	} else if op.Mode.OpsLen == 2 {
 		op1, err := cpu.RAM.Read(cpu.Reg.PC + 1)
 		op2, err := cpu.RAM.Read(cpu.Reg.PC + 2)
@@ -80,9 +83,15 @@ func (cpu *CPU) ExecNext() (cycles int, err error) {
 			return 0, errors.Wrap(err, "Failed to read operands from memory")
 		}
 
-		cycles = op.Exec(cpu, op1, op2)
+		cycles, err = op.Exec(cpu, op1, op2)
+		if err != nil {
+			return 0, errors.Wrap(err, "Failed to execute opcode")
+		}
 	} else {
-		cycles = op.Exec(cpu)
+		cycles, err = op.Exec(cpu)
+		if err != nil {
+			return 0, errors.Wrap(err, "Failed to execute opcode")
+		}
 	}
 
 	// TODO: decrement cycles after 1786830 cycles, as of now there's a

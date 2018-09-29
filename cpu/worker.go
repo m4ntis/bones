@@ -63,7 +63,11 @@ func (w *Worker) handleNmi() {
 }
 
 func (w *Worker) execNext() {
-	cycles := w.c.ExecNext()
+	cycles, err := w.c.ExecNext()
+	if err != nil {
+		panic(err)
+	}
+
 	for i := 0; i < cycles*3; i++ {
 		w.p.Cycle()
 	}

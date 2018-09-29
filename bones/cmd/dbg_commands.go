@@ -197,12 +197,15 @@ func createCommands() map[string]*dbgCommand {
 				}
 
 				addr, err := strconv.ParseInt(args[0], 16, 32)
-				if err != nil || addr > cpu.RamSize {
-					fmt.Printf("print command only takes a numeric value between 0 and 0x%x\n", cpu.RamSize)
+				if err != nil || addr < 0 || addr >= cpu.RAMSize {
+					fmt.Printf("print command only takes a numeric value between 0 and 0x%x\n", cpu.RAMSize)
 					return false
 				}
 
-				fmt.Printf("$%04x: 0x%02x\n", int(addr), data.RAM.Observe(int(addr)))
+				// An error check is guranteed to be unnecessary as we checked
+				// bounds earlier
+				d, _ := data.RAM.Observe(int(addr))
+				fmt.Printf("$%04x: 0x%02x\n", int(addr), d)
 				return false
 			},
 
@@ -221,8 +224,8 @@ func createCommands() map[string]*dbgCommand {
 				}
 
 				addr, err := strconv.ParseInt(args[0], 16, 32)
-				if err != nil || addr > ppu.RamSize {
-					fmt.Printf("vprint command only takes a numeric value between 0 and 0x%x\n", cpu.RamSize)
+				if err != nil || addr > ppu.RAMSize {
+					fmt.Printf("vprint command only takes a numeric value between 0 and 0x%x\n", cpu.RAMSize)
 					return false
 				}
 

@@ -8,6 +8,7 @@ import (
 	"github.com/m4ntis/bones/disass"
 	"github.com/m4ntis/bones/ines"
 	"github.com/m4ntis/bones/ppu"
+	"github.com/pkg/errors"
 )
 
 type breakPoints map[int]bool
@@ -20,6 +21,8 @@ type BreakState struct {
 	VRAM *ppu.VRAM
 
 	Disass disass.Disassembly
+
+	Err error
 }
 
 // Worker runs the NES and provides an api for all basic debugging
@@ -45,8 +48,8 @@ type Worker struct {
 //
 // ctrl will be read by the cpu the worker runs and is expected to be controlled
 // by the caller.
-func NewWorker(rom *ines.ROM, vals chan<- BreakState, disp ppu.Displayer,
-	ctrl *controller.Controller) *Worker {
+func NewWorker(rom *ines.ROM, disp ppu.Displayer, ctrl *controller.Controller,
+	vals chan<- BreakState) *Worker {
 	nmi := make(chan bool)
 
 	p := ppu.New(rom.Header.Mirroring, rom.Mapper, nmi, disp)
@@ -86,7 +89,7 @@ func (w *Worker) Start() {
 
 	for {
 		w.handleBps()
-		w.execNext()
+		w.handleError(w.execNext())
 	}
 }
 
@@ -140,11 +143,11 @@ func (w *Worker) handleBps() {
 	_, ok := w.bps[w.c.Reg.PC]
 
 	if ok {
-		w.breakOper()
+		w.breakOper(nil)
 	}
 }
 
-func (w *Worker) breakOper() {
+func (w *Worker) breakOper(err error) {
 	for {
 		w.vals <- BreakState{
 			Reg:  w.c.Reg,
@@ -152,13 +155,15 @@ func (w *Worker) breakOper() {
 			VRAM: w.p.VRAM,
 
 			Disass: w.d,
+
+			Err: err,
 		}
 
 		select {
 		case <-w.continuec:
 			return
 		case <-w.nextc:
-			w.execNext()
+			w.handleError(w.execNext())
 			continue
 		}
 	}
@@ -170,9 +175,21 @@ func (w *Worker) handleNmi() {
 	}
 }
 
-func (w *Worker) execNext() {
-	cycles := w.c.ExecNext()
+func (w *Worker) execNext() error {
+	cycles, err := w.c.ExecNext()
+	if err != nil {
+		return errors.Wrap(err, "Failed to execute next opcode")
+	}
+
 	for i := 0; i < cycles*3; i++ {
 		w.p.Cycle()
+	}
+
+	return nil
+}
+
+func (w *Worker) handleError(err error) {
+	if err != nil {
+		w.breakOper(err)
 	}
 }

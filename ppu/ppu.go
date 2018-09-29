@@ -211,7 +211,7 @@ func (ppu *PPU) PPUDataRead() byte {
 	defer ppu.incAddr()
 
 	// If the read is from palette data, it is immediatelly put on the data bus
-	if getAddr(ppu.ppuAddr) >= BgrPaletteIdx {
+	if stripMirror(ppu.ppuAddr) >= BgrPaletteAddr {
 		// TODO: Reading the palettes still updates the internal buffer though,
 		// but the data placed in it is the mirrored nametable data that would
 		// appear "underneath" the palette.
@@ -283,16 +283,16 @@ func (ppu *PPU) visiblePixelCycle() color.RGBA {
 	bgHi := atByte >> uint(2*atQuarter) & 3
 
 	sprLo, sprHi, sprPriority := ppu.calcSprForPixel()
-	pIdx := ppu.calcPaletteIdx(bgLo, bgHi, sprLo, sprHi, sprPriority)
+	pAddr := ppu.calcPaletteAddr(bgLo, bgHi, sprLo, sprHi, sprPriority)
 
-	return Palette[pIdx]
+	return Palette[pAddr]
 }
 
 func (ppu *PPU) getPTAddr() int {
 	if int(ppu.ppuCtrl>>4&1) == 0 {
-		return PT0Idx
+		return PT0Addr
 	} else {
-		return PT1Idx
+		return PT1Addr
 	}
 }
 
@@ -300,15 +300,15 @@ func getNTAddr(nt int, mirroring int) int {
 	// Assuming either horizontal or vertical mirroring
 	if mirroring == ines.HorizontalMirroring {
 		if nt == 0 || nt == 1 {
-			return NT0Idx
+			return NT0Addr
 		} else {
-			return NT2Idx
+			return NT2Addr
 		}
 	} else {
 		if nt == 0 || nt == 2 {
-			return NT0Idx
+			return NT0Addr
 		} else {
-			return NT1Idx
+			return NT1Addr
 		}
 	}
 }
@@ -317,14 +317,14 @@ func getATAddr(nt int) int {
 	return nt + 0x3c0
 }
 
-func (ppu *PPU) calcPaletteIdx(bgLo, bgHi, sprLo, sprHi, sprPriority byte) (pIdx byte) {
+func (ppu *PPU) calcPaletteAddr(bgLo, bgHi, sprLo, sprHi, sprPriority byte) (pAddr byte) {
 	// sprPriority == 255 when a sprite wasn't found for the scanline
 	// bg 0 or sprite not opaque and with front priority
 	if sprPriority != 255 && (bgLo == 0 || (sprLo != 0 && sprPriority == FrontPriority)) {
-		return ppu.VRAM.Read(SprPaletteIdx + int(sprLo+sprHi<<2))
+		return ppu.VRAM.Read(SprPaletteAddr + int(sprLo+sprHi<<2))
 	}
 
-	return ppu.VRAM.Read(BgrPaletteIdx + int(bgLo) + int(bgHi<<2))
+	return ppu.VRAM.Read(BgrPaletteAddr + int(bgLo) + int(bgHi<<2))
 }
 
 func (ppu *PPU) spriteEval() {
@@ -400,7 +400,7 @@ func (ppu *PPU) spriteEval() {
 }
 
 // shiftSprites is implemented in a duff machine fashion for optimization
-// purposes
+// purposes.
 func (ppu *PPU) shiftSprites() {
 	if ppu.sprites[0].shifted < 8 {
 		if ppu.sprites[0].x > 0 {
@@ -476,6 +476,8 @@ func (ppu *PPU) shiftSprites() {
 	}
 }
 
+// calcSprForPixel is implemented in a duff machine fashion for optimization
+// purposes.
 func (ppu *PPU) calcSprForPixel() (sprLo, sprHi, priority byte) {
 	if ppu.sprites[0].x == 0 && ppu.sprites[0].shifted < 8 {
 		sprLo := ppu.sprites[0].dataLo&1 + ppu.sprites[0].dataHi&1<<1

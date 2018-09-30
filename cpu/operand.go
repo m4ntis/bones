@@ -25,11 +25,15 @@ type RAMOperand struct {
 }
 
 func (op RAMOperand) Read() byte {
-	return op.RAM.Read(op.Addr)
+	// TODO: To keep the current API without error checking, MustRead is used
+	// instead of Read.  This should probably change in order to handle errors
+	// propperly in operations.
+	return op.RAM.MustRead(op.Addr)
 }
 
 func (op RAMOperand) Write(d byte) (cycles int) {
-	return op.RAM.Write(op.Addr, d)
+	// TODO: Note the todo above
+	return op.RAM.MustWrite(op.Addr, d)
 }
 
 // RegOperand is an Operand containing a reference to a single CPU register,

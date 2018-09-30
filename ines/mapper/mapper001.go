@@ -1,6 +1,6 @@
 package mapper
 
-import "fmt"
+import "github.com/pkg/errors"
 
 type Mapper001 struct {
 	sram bool
@@ -26,20 +26,19 @@ func (m *Mapper001) SetSram(b bool) {
 	m.sram = b
 }
 
-func (m *Mapper001) Read(addr int) byte {
+func (m *Mapper001) Read(addr int) (d byte, err error) {
 	if addr >= 0 && addr < 0x2000 {
 		if m.sram {
-			return m.chrRAM[addr]
+			return m.chrRAM[addr], nil
 		}
 
 		page, index := m.decodeChrROMAddr(addr)
-		return m.chrROM[page][index]
+		return m.chrROM[page][index], nil
 	} else if addr >= 0x6000 && addr < 0x10000 {
-		return m.readPrgROM(addr)
+		return m.readPrgROM(addr), nil
 	}
 
-	// TODO: don't panic
-	panic(fmt.Sprintf("invalid mapper accessing addr %04x", addr))
+	return 0, errors.Errorf("invalid mapper reading addr %04x", addr)
 }
 
 // Write handles writing to an address mapped by the mapper.
@@ -47,8 +46,9 @@ func (m *Mapper001) Read(addr int) byte {
 // Writing to a mapper address is used for writing to RAM areas,
 // as well as writing to registers controlling the mapper.
 //
-// TODO: Ignore consecutive writes to the mapper.
-func (m *Mapper001) Write(addr int, d byte) int {
+// TODO: Ignore consecutive writes to the mapper, a cycle immediately the
+// the previous.
+func (m *Mapper001) Write(addr int, d byte) error {
 	// Write to prg ram
 	if addr >= 0x6000 && addr < 0x8000 {
 		addr -= 0x6000
@@ -101,10 +101,10 @@ func (m *Mapper001) Write(addr int, d byte) int {
 		}
 	}
 
-	return 0
+	return nil
 }
 
-func (m *Mapper001) Observe(addr int) byte {
+func (m *Mapper001) Observe(addr int) (d byte, err error) {
 	// There is no side effect to reading from mapper 001
 	return m.Read(addr)
 }

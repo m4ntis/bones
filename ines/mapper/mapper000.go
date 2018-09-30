@@ -1,6 +1,6 @@
 package mapper
 
-import "fmt"
+import "github.com/pkg/errors"
 
 type Mapper000 struct {
 	prgROM []PrgROMPage
@@ -11,23 +11,21 @@ func (m *Mapper000) SetSram(b bool) {
 	// No sram in ines mapper 000
 }
 
-func (m *Mapper000) Read(addr int) byte {
+func (m *Mapper000) Read(addr int) (d byte, err error) {
 	if addr >= 0 && addr < 0x2000 {
-		return m.readChrROM(addr)
+		return m.readChrROM(addr), nil
 	} else if addr >= 0x6000 && addr < 0x10000 {
-		return m.readPrgROM(addr)
+		return m.readPrgROM(addr), nil
 	}
 
-	// TODO: don't panic
-	panic(fmt.Sprintf("invalid mapper accessing addr %04x", addr))
+	return 0, errors.Errorf("Invalid mapper reading addr %04x", addr)
 }
 
-func (m *Mapper000) Write(addr int, d byte) int {
-	// ROM, no writing
-	return 0
+func (m *Mapper000) Write(addr int, d byte) error {
+	return nil
 }
 
-func (m *Mapper000) Observe(addr int) byte {
+func (m *Mapper000) Observe(addr int) (d byte, err error) {
 	// There is no side effect to reading from mapper 000
 	return m.Read(addr)
 }

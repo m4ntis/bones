@@ -48,7 +48,8 @@ debugger.
 			d := display.New(ctrl)
 			rom := openRom(args)
 			breakVals = make(chan dbg.BreakState)
-			dw = dbg.NewWorker(rom, breakVals, d, ctrl)
+
+			dw = dbg.NewWorker(rom, d, ctrl, breakVals)
 
 			go dw.Start()
 			go startInteractiveDbg()
@@ -109,6 +110,10 @@ func displayBreak(data dbg.BreakState) {
 			continue
 		}
 		fmt.Printf("   %04x: %s\n", inst.Addr, inst.Text)
+	}
+
+	if data.Err != nil {
+		fmt.Println(data.Err)
 	}
 }
 

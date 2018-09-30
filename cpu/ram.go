@@ -4,39 +4,33 @@ import (
 	"github.com/m4ntis/bones/controller"
 	"github.com/m4ntis/bones/ines/mapper"
 	"github.com/m4ntis/bones/ppu"
+	"github.com/pkg/errors"
 )
 
 const (
-	ZeroPageBeginIdx         = 0x0
-	StackBeginIdx            = 0x100
-	RamBeginIdx              = 0x200
-	RamMirrorBeginIdx        = 0x800
-	LowerIORegBeginIdx       = 0x2000
-	LowerIORegMirrorBeginIdx = 0x2008
-	UpperIORegBeginIdx       = 0x4000
-	ExpansionRomBeginIdx     = 0x4020
-	SramBeginIdx             = 0x6000
-	PrgRomLowerBeginIdx      = 0x8000
-	PrgRomUpperBeginIdx      = 0xc000
-	RamSize                  = 0x10000
+	ZeroPageAddr       = 0x0
+	StackAddr          = 0x100
+	RAMAddr            = 0x200
+	RAMMirrorAddr      = 0x800
+	PPURegAddr         = 0x2000
+	PPURegMirrorAddr   = 0x2008
+	IORegAddr          = 0x4000
+	CartridgeSpaceAddr = 0x4020
+	RAMSize            = 0x10000
 )
 
 const (
-	PPUCtrl   = 0x2000
-	PPUMask   = 0x2001
-	PPUStatus = 0x2002
-	OAMAddr   = 0x2003
-	OAMData   = 0x2004
-	PPUScroll = 0x2005
-	PPUAddr   = 0x2006
-	PPUData   = 0x2007
-	OAMDMA    = 0x4014
-	Ctrl1     = 0x4016
+	PPUCtrlAddr   = 0x2000
+	PPUMaskAddr   = 0x2001
+	PPUStatusAddr = 0x2002
+	OAMAddrAddr   = 0x2003
+	OAMDataAddr   = 0x2004
+	PPUScrollAddr = 0x2005
+	PPUAddrAddr   = 0x2006
+	PPUDataAddr   = 0x2007
+	OAMDMAAddr    = 0x4014
+	Ctrl1Addr     = 0x4016
 )
-
-// TODO: should consider whethere the ram should know all of it's memory
-// mappings or where there should be some sort of part to manage it (motherboard
-// or something of the sort).
 
 // RAM holds the mos 6502's 16k (64 when mirrored) of on chip memory.
 //
@@ -45,101 +39,85 @@ const (
 //
 // All RAM accessing methods contain logic for mirrored address translation.
 type RAM struct {
-	data [RamSize]byte
+	data [RAMSize]byte
+
+	Mapper mapper.Mapper
 
 	CPU  *CPU
 	PPU  *ppu.PPU
 	Ctrl *controller.Controller
-
-	Mapper mapper.Mapper
 }
 
-// getAddr returns the underlying address after mapping.
-func getAddr(addr int) int {
-	if addr < 0 || addr > RamSize {
-		// TODO: don't panic
-		panic("RAM accessing addr out of range")
-	}
-
-	if addr >= RamMirrorBeginIdx && addr < LowerIORegBeginIdx {
+// stripMirror returns the underlying address after mirroring.
+func stripMirror(addr int) int {
+	// Internal RAM mirroring
+	if addr >= RAMMirrorAddr && addr < PPURegAddr {
 		return addr % 0x800
 	}
-	if addr >= LowerIORegMirrorBeginIdx && addr < UpperIORegBeginIdx {
-		return (addr-LowerIORegBeginIdx)%0x8 + LowerIORegBeginIdx
+
+	// PPU i/o register mirroring
+	if addr >= PPURegMirrorAddr && addr < IORegAddr {
+		return (addr-PPURegAddr)%0x8 + PPURegAddr
 	}
+
 	return addr
 }
 
-// Read returns the byte in the address specified.
-func (r *RAM) Read(addr int) byte {
-	addr = getAddr(addr)
-
-	if addr >= SramBeginIdx {
-		return r.Mapper.Read(addr)
-	}
-
-	var d byte
-
+func (r *RAM) readMMIO(addr int) (d byte, err error) {
 	switch addr {
-	case PPUCtrl:
-		panic("Invalid read from PPUCtrl")
-	case PPUMask:
-		panic("Invalid read from PPUMask")
-	case PPUStatus:
+	case PPUCtrlAddr:
+		return 0, errors.New("Invalid read from PPUCtrl")
+	case PPUMaskAddr:
+		return 0, errors.New("Invalid read from PPUMask")
+	case PPUStatusAddr:
 		d = r.PPU.PPUStatusRead()
-	case OAMAddr:
-		panic("Invalid read from OAMAddr")
-	case OAMData:
+	case OAMAddrAddr:
+		return 0, errors.New("Invalid read from OAMAddr")
+	case OAMDataAddr:
 		d = r.PPU.OAMDataRead()
-	case PPUScroll:
-		panic("Invalid read from PPUScroll")
-	case PPUAddr:
-		panic("Invalid read from PPUAddr")
-	case PPUData:
+	case PPUScrollAddr:
+		return 0, errors.New("Invalid read from PPUScroll")
+	case PPUAddrAddr:
+		return 0, errors.New("Invalid read from PPUAddr")
+	case PPUDataAddr:
 		d = r.PPU.PPUDataRead()
-	case OAMDMA:
-		panic("Invalid read from OAMDMA")
-	case Ctrl1:
+	case OAMDMAAddr:
+		return 0, errors.New("Invalid read from OAMDMA")
+	case Ctrl1Addr:
 		d = r.Ctrl.Read()
 	default:
-		d = r.data[addr]
+		// TODO: Consider returning an error of a not implemented mmio
+		return 0, nil
 	}
 
 	// We keep the read at the ram location for observe to be able to see the
 	// last i/o operation
 	r.data[addr] = d
-	return d
+	return d, nil
 }
 
-// Write writes a value to the specified address.
-//
-// Write returns a cycle count the memory access took, as some memory mapped i/o
-// operations may block the cpu and take up cycles, such as DMA.
-func (r *RAM) Write(addr int, d byte) (cycles int) {
-	addr = getAddr(addr)
-
-	if addr >= SramBeginIdx {
-		return r.Mapper.Write(addr, d)
-	}
-
+func (r *RAM) writeMMIO(addr int, d byte) (cycles int, err error) {
 	switch addr {
-	case PPUCtrl:
+	case PPUCtrlAddr:
 		r.PPU.PPUCtrlWrite(d)
-	case PPUMask:
+	case PPUMaskAddr:
 		r.PPU.PPUMaskWrite(d)
-	case PPUStatus:
-		panic("Invalid write to PPUStatus")
-	case OAMAddr:
+	case PPUStatusAddr:
+		return 0, errors.New("Invalid write to PPUStatus")
+	case OAMAddrAddr:
 		r.PPU.OAMAddrWrite(d)
-	case OAMData:
+	case OAMDataAddr:
 		r.PPU.OAMDataWrite(d)
-	case PPUScroll:
+	case PPUScrollAddr:
 		r.PPU.PPUScrollWrite(d)
-	case PPUAddr:
+	case PPUAddrAddr:
 		r.PPU.PPUAddrWrite(d)
-	case PPUData:
+	case PPUDataAddr:
 		r.PPU.PPUDataWrite(d)
-	case OAMDMA:
+	case OAMDMAAddr:
+		// TODO: Move DMA to CPU struct. Incrementing the cycles in that method
+		// will allow to remove the cycles from ram and operand api
+
 		var oamData [256]byte
 		copy(oamData[:], r.data[int(d)<<8:int(d+1)<<8])
 		r.PPU.DMA(oamData)
@@ -149,26 +127,110 @@ func (r *RAM) Write(addr int, d byte) (cycles int) {
 		if r.CPU.cycles%2 == 1 {
 			cycles++
 		}
-	case Ctrl1:
+	case Ctrl1Addr:
 		r.Ctrl.Strobe(d & 1)
 	}
 
-	// We write it anyway, even if mapped i/o, so RAM.Observe can see the value
+	// r.data is updated regardless of i/o reg write in order to be able to
+	// "observe" the value later
 	r.data[addr] = d
-	return
+
+	return cycles, nil
+}
+
+// Read fetches a byte from memory, cartridge or i/o register, specified by addr.
+func (r *RAM) Read(addr int) (d byte, err error) {
+	if addr < 0 || addr > RAMSize {
+		return 0, errors.Errorf("Invalid RAM reading addr $%04x",
+			addr)
+	}
+
+	addr = stripMirror(addr)
+
+	// Read from cartridge
+	if addr >= CartridgeSpaceAddr {
+		return r.Mapper.Read(addr)
+	}
+
+	// Read from MMIO
+	if addr >= PPURegAddr {
+		return r.readMMIO(addr)
+	}
+
+	// Read from internal RAM
+	return r.data[addr], nil
+}
+
+// TODO: Consider inlining the Must fucntions
+
+// MustRead calls Read but panics instead of returning an error.
+func (r *RAM) MustRead(addr int) byte {
+	d, err := r.Read(addr)
+	if err != nil {
+		panic(err)
+	}
+
+	return d
+}
+
+// Write puts a value to memory, PRG-RAM or i/o register, specified by addr.
+//
+// Write returns a cycle count the memory access took, as writing to some i/o
+// registers may block the cpu and take up cycles, such as DMA.
+func (r *RAM) Write(addr int, d byte) (cycles int, err error) {
+	if addr < 0 || addr > RAMSize {
+		return 0, errors.Errorf("Invalid RAM writing addr $%04x",
+			addr)
+	}
+
+	addr = stripMirror(addr)
+
+	// Write to cartridge
+	if addr >= CartridgeSpaceAddr {
+		return 0, r.Mapper.Write(addr, d)
+	}
+
+	// Write to MMIO
+	if addr >= PPURegAddr {
+		return r.writeMMIO(addr, d)
+	}
+
+	// Write to internal RAM
+	r.data[addr] = d
+	return 0, nil
+}
+
+// MustWrite calls Write but panics instead of returning an error.
+func (r *RAM) MustWrite(addr int, d byte) (cycles int) {
+	cycles, err := r.Write(addr, d)
+	if err != nil {
+		panic(err)
+	}
+
+	return cycles
 }
 
 // Observe is used as an api for debuggers, letting the caller read the value in
 // RAM without triggering memory mapped i/o operations.
 //
 // Reading from memory mapped i/o locations will return the last value written
-// to these locations.
-func (r *RAM) Observe(addr int) byte {
-	addr = getAddr(addr)
+// to them.
+func (r *RAM) Observe(addr int) (d byte, err error) {
+	if addr < 0 || addr > RAMSize {
+		return 0, errors.Errorf("Invalid RAM observing addr $%04x",
+			addr)
+	}
 
-	if addr >= SramBeginIdx {
+	addr = stripMirror(addr)
+
+	// Read from cartridge
+	if addr >= CartridgeSpaceAddr {
 		return r.Mapper.Observe(addr)
 	}
 
-	return r.data[addr]
+	// Read from internal RAM
+	return r.data[addr], nil
 }
+
+// TODO: Consider changing api to a single "access" method (maybe internally)
+// to avoid all code duplication between read and write methods

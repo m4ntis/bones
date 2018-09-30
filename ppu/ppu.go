@@ -114,6 +114,8 @@ func New(mirror int, romMapper mapper.Mapper, nmi chan bool, disp Displayer) *PP
 // Cycle may cause the ppu to generate an NMI or output a frame to the display.
 func (ppu *PPU) Cycle() {
 	if ppu.scanline >= 0 && ppu.scanline < 240 {
+		ppu.spriteEval()
+
 		if ppu.x < 256 {
 			ppu.frame.push(pixel{
 				x: ppu.x,
@@ -122,8 +124,6 @@ func (ppu *PPU) Cycle() {
 				color: ppu.visiblePixelCycle(),
 			})
 		}
-
-		ppu.spriteEval()
 	} else if ppu.scanline == 241 && ppu.x == 1 {
 		ppu.vblank = true
 		ppu.ppuStatus |= 1 << 7

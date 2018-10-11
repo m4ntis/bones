@@ -66,6 +66,20 @@ func DisassembleROM(rom *ines.ROM) Disassembly {
 	}
 }
 
+// DisassembleRAM disassembles a few instructions, starting from a point in RAM
+//
+// The disassembly starts from addr and disassembles count instructions
+func DisassembleRAM(ram *cpu.RAM, addr, count int) Code {
+	code := Code(make([]Instruction, count))
+
+	for i := 0; i < count; i++ {
+		code[i] = disassOne(ram, addr)
+		addr += len(code[i].Code)
+	}
+
+	return code
+}
+
 func genContiguousAsm(prgROM []mapper.PrgROMPage) []byte {
 	asm := make([]byte, 0)
 
@@ -109,6 +123,36 @@ func disassemble(asm []byte) Code {
 	}
 
 	return code
+}
+
+func disassOne(ram *cpu.RAM, addr int) Instruction {
+	op, ok := cpu.OpCodes[ram.MustRead(addr)]
+
+	if !ok {
+		code := readSliceFromRAM(ram, addr, 1)
+		return Instruction{
+			Addr: addr,
+			Code: code,
+			Text: fmt.Sprintf(".byte %02x", code[0]),
+		}
+	}
+
+	code := readSliceFromRAM(ram, addr, op.Mode.OpsLen+1)
+	return Instruction{
+		Addr: addr,
+		Code: code,
+		Text: fmt.Sprintf("%s %s", op.Name,
+			op.Mode.Format(code[1:])),
+	}
+}
+
+func readSliceFromRAM(ram *cpu.RAM, addr, n int) []byte {
+	d := make([]byte, n)
+	for i := 0; i < n; i++ {
+		d[i] = ram.MustRead(addr + i)
+	}
+
+	return d
 }
 
 func genAddrTable(code Code) addrTable {

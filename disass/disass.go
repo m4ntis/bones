@@ -51,9 +51,8 @@ func (d Disassembly) IndexOf(addr int) int {
 	return -1
 }
 
-// Disassemble is the main method of this package, taking the program and
-// returning the disassembled code.
-func Disassemble(rom *ines.ROM) Disassembly {
+// DisassembleROM takes a ROM and returnes it's disassembled code
+func DisassembleROM(rom *ines.ROM) Disassembly {
 	prgROM := rom.Mapper.GetPRGRom()
 
 	asm := genContiguousAsm(prgROM)

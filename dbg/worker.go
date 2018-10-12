@@ -11,6 +11,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	instHistorySize = 5
+	instFutureSize  = 5
+)
+
 type breakPoints map[int]bool
 
 // BreakState describes the state of the NES and the running programme when the
@@ -20,7 +25,8 @@ type BreakState struct {
 	RAM  *cpu.RAM
 	VRAM *ppu.VRAM
 
-	Disass disass.Disassembly
+	Code  disass.Code
+	PCIdx int
 
 	Err error
 }
@@ -31,10 +37,10 @@ type Worker struct {
 	c *cpu.CPU
 	p *ppu.PPU
 
-	d   disass.Disassembly
-	bps breakPoints
-
 	nmi chan bool
+
+	bps   breakPoints
+	instQ disass.Code
 
 	continuec chan bool
 	nextc     chan bool
@@ -68,7 +74,6 @@ func NewWorker(rom *ines.ROM, disp ppu.Displayer, ctrl *controller.Controller,
 		c: c,
 		p: p,
 
-		d: disass.Disassemble(rom),
 		bps: breakPoints{
 			c.Reg.PC: true,
 		},
@@ -81,9 +86,9 @@ func NewWorker(rom *ines.ROM, disp ppu.Displayer, ctrl *controller.Controller,
 	}
 }
 
-// Start makes the worker start running the NES.
+// Start starts running the NES.
 //
-// Start should be run in a goroutine.
+// Start is blocking and should be run in a goroutine of it's own.
 func (w *Worker) Start() {
 	go w.handleNmi()
 
@@ -103,15 +108,9 @@ func (w *Worker) Next() {
 	w.nextc <- true
 }
 
-// Break adds a breakpoint at an address, and returns whether the address is a
-// valid breaking address (the start of a new instruction).
-func (w *Worker) Break(addr int) (success bool) {
-	if w.d.IndexOf(addr) == -1 {
-		return false
-	}
-
+// Break adds a breakpoint at addr.
+func (w *Worker) Break(addr int) {
 	w.bps[addr] = true
-	return true
 }
 
 // Delete attempts to delete an existing breakpoint at an address, returning
@@ -154,7 +153,9 @@ func (w *Worker) breakOper(err error) {
 			RAM:  w.c.RAM,
 			VRAM: w.p.VRAM,
 
-			Disass: w.d,
+			Code: append(w.instQ,
+				disass.DisassembleRAM(w.c.RAM, w.c.Reg.PC, instFutureSize+1)...),
+			PCIdx: len(w.instQ),
 
 			Err: err,
 		}
@@ -176,6 +177,12 @@ func (w *Worker) handleNmi() {
 }
 
 func (w *Worker) execNext() error {
+	// Add the next instruction to be executed immediately to queue. This is so
+	// the queue will be updated before PC is incremented to next instruction.
+	//
+	// TODO: This might be an issue if the instruction fails to execute.
+	w.addInstToQ()
+
 	cycles, err := w.c.ExecNext()
 	if err != nil {
 		return errors.Wrap(err, "Failed to execute next opcode")
@@ -191,5 +198,14 @@ func (w *Worker) execNext() error {
 func (w *Worker) handleError(err error) {
 	if err != nil {
 		w.breakOper(err)
+	}
+}
+
+func (w *Worker) addInstToQ() {
+	// TODO: This is extremly inefficient
+	w.instQ = append(w.instQ, disass.DisassembleRAM(w.c.RAM, w.c.Reg.PC, 1)[0])
+
+	if len(w.instQ) > instHistorySize {
+		w.instQ = w.instQ[1:]
 	}
 }

@@ -48,6 +48,8 @@ func NewWorker(rom *ines.ROM, disp ppu.Displayer, ctrl *controller.Controller) *
 }
 
 // Start starts running the NES.
+//
+// Start is blocking and should be run in a goroutine of it's own.
 func (w *Worker) Start() {
 	go w.handleNmi()
 

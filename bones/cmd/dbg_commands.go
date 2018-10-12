@@ -46,13 +46,9 @@ func createCommands() map[string]*dbgCommand {
 					return false
 				}
 
-				ok := dw.Break(int(addr))
-				if !ok {
-					fmt.Printf("$%04x isn't a valid break address\n", addr)
-					return false
-				}
-
+				dw.Break(int(addr))
 				fmt.Printf("Breakpoint set at $%04x\n", addr)
+
 				return false
 			},
 

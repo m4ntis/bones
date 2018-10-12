@@ -89,23 +89,8 @@ func startInteractiveDbg() {
 }
 
 func displayBreak(data dbg.BreakState) {
-	var startIdx int
-	var endIdx int
-
-	instIdx := data.Disass.IndexOf(data.Reg.PC)
-
-	if instIdx > 5 {
-		startIdx = instIdx - 5
-	}
-
-	if instIdx+5 < len(data.Disass.Code) {
-		endIdx = instIdx + 5
-	}
-
-	for i := startIdx; i <= endIdx; i++ {
-		inst := data.Disass.Code[i]
-
-		if i == instIdx {
+	for i, inst := range data.Code {
+		if i == data.PCIdx {
 			fmt.Printf("=> %04x: %s\n", inst.Addr, inst.Text)
 			continue
 		}

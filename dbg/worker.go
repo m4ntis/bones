@@ -37,8 +37,6 @@ type Worker struct {
 	c *cpu.CPU
 	p *ppu.PPU
 
-	nmi chan bool
-
 	bps   breakPoints
 	instQ disass.Code
 
@@ -56,9 +54,8 @@ type Worker struct {
 // by the caller.
 func NewWorker(rom *ines.ROM, disp ppu.Displayer, ctrl *controller.Controller,
 	vals chan<- BreakState) *Worker {
-	nmi := make(chan bool)
 
-	p := ppu.New(rom.Header.Mirroring, rom.Mapper, nmi, disp)
+	p := ppu.New(rom.Header.Mirroring, rom.Mapper, disp)
 
 	ram := cpu.RAM{}
 	c := cpu.New(&ram)
@@ -77,8 +74,6 @@ func NewWorker(rom *ines.ROM, disp ppu.Displayer, ctrl *controller.Controller,
 		bps: breakPoints{
 			c.Reg.PC: true,
 		},
-
-		nmi: nmi,
 
 		continuec: make(chan bool),
 		nextc:     make(chan bool),
@@ -171,7 +166,7 @@ func (w *Worker) breakOper(err error) {
 }
 
 func (w *Worker) handleNmi() {
-	for <-w.nmi {
+	for <-w.p.NMI {
 		w.c.NMI()
 	}
 }

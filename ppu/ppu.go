@@ -234,37 +234,40 @@ func (ppu *PPU) evaluateSprite() {
 // renderSprite fetches the colours and data of a sprite to be displayed on
 // the next frame.
 func (ppu *PPU) renderSprite() {
-	// Determine which sprite is being rendered
+	// Determine which sprite is being rendered (zero indexed)
 	renderedSprNum := (ppu.x - 256) / 8
+	sprData := ppu.sOAM[renderedSprNum*sprDataSize : (renderedSprNum+1)*sprDataSize]
 
 	// Check whether the sprite is in range of the displayed sprites. If not,
 	// all it's data will be 0xff.
 	if ppu.foundSprCount >= renderedSprNum+1 {
-		// Determine pattern table
+		// Determine pattern table number and address to fetch sprite data from
 		pt := int(ppu.Regs.ppuCtrl >> 3 & 1)
-		patternAddr := 0x1000*pt + int(ppu.sOAM[renderedSprNum*4+1])*16
+		ptAddr := pt*PTSize + int(sprData[1])*16
 
-		// Line of the sprite to be displayed on the scanline
-		sprLine := ppu.scanline - int(ppu.sOAM[renderedSprNum*4])
+		// Calculate line of the sprite to be displayed on the scanline
+		sprLine := ppu.scanline - int(sprData[0])
 
-		// TODO: Might gotta invert this
-		sprDataLo := ppu.VRAM.Read(patternAddr + sprLine)
-		sprDataHi := ppu.VRAM.Read(patternAddr + sprLine + 8)
+		// Fetch sprite data
+		sprDataLo := ppu.VRAM.Read(ptAddr + sprLine)
+		sprDataHi := ppu.VRAM.Read(ptAddr + sprLine + 8)
 
-		attr := ppu.sOAM[renderedSprNum*4+2]
-		// Check horizontal invert bit off
+		// Fetch sprite attribute byte
+		attr := sprData[2]
+
+		// Invert sprite if horizontal invert bit is off
 		if attr>>6&1 == 0 {
 			sprDataLo = flip_byte(sprDataLo)
 			sprDataHi = flip_byte(sprDataHi)
 		}
 
 		ppu.sprites[renderedSprNum] = sprite{
-			attr: ppu.sOAM[renderedSprNum*4+2],
+			attr: attr,
 
 			dataHi: sprDataHi,
 			dataLo: sprDataLo,
 
-			x: ppu.sOAM[renderedSprNum*4+3],
+			x: sprData[3],
 		}
 	} else {
 		ppu.sprites[renderedSprNum] = sprite{

@@ -115,8 +115,12 @@ func (ppu *PPU) Cycle() {
 	}
 
 	ppu.incCoords()
+
+	// TODO: What about sprite evaluation on last scanline for scanline 0?
 }
 
+// visibleScanlineCycle executes the ppu's logic for scanlines between 0 and
+// 239, the visible scanlines.
 func (ppu *PPU) visibleScanlineCycle() {
 	ppu.evaluateSprites()
 
@@ -125,67 +129,102 @@ func (ppu *PPU) visibleScanlineCycle() {
 			x: ppu.x,
 			y: ppu.scanline,
 
-			color: ppu.visiblePixelCycle(),
+			color: ppu.calculatePixelValue(),
 		})
 	}
 }
 
+// vblankBegin sets vblank flags, publishes an NMI if nmi is enabled in PPUCTRL
+// and pushes a frame to display.
 func (ppu *PPU) vblankBegin() {
+	// Set vblank flag internally
 	ppu.Regs.vblank = true
+
+	// Set bit 7 of PPUSTATUS - vblank flag
 	ppu.Regs.ppuStatus |= 1 << 7
+
+	// Check nmi enable flag in PPUCTRL and publish NMI
 	if ppu.Regs.ppuCtrl>>7 == 1 {
 		ppu.NMI <- true
 	}
 
+	// Push frame to display
 	ppu.disp.Display(ppu.frame.create())
 }
 
+// vblankEnd clears the internal vblank flag and PPUSTATUS.
 func (ppu *PPU) vblankEnd() {
-	ppu.Regs.ppuStatus = 0
 	ppu.Regs.vblank = false
+	ppu.Regs.ppuStatus = 0
 }
 
+// incCoords increments ppu's coordinate parameters for next cycle.
+func (ppu *PPU) incCoords() {
+	// TODO: skip cycle (0, 0) on odd frames
+
+	ppu.x++
+	if ppu.x > 340 {
+		ppu.x = 0
+
+		ppu.scanline++
+		if ppu.scanline > 261 {
+			ppu.scanline = 0
+		}
+	}
+}
+
+// evaluateSprites fetches sprite date for next scanline's sprites during
+// visible scanlines.
+//
+// During each ppu cycle, a small bit of the evaluation happens, depending on
+// the cycle's x coordinate.
 func (ppu *PPU) evaluateSprites() {
 	if ppu.x >= 1 && ppu.x <= 256 {
 		if ppu.x == 1 {
 			ppu.resetEvaluatedSprites()
 		}
 
-		if ppu.evaluatedSprNum < 64 {
+		// Evaluate a sprite every 4 cycles (total 64)
+		if ppu.x%4 == 0 {
 			ppu.evaluateSprite()
 			ppu.evaluatedSprNum++
 		}
 
 		ppu.shiftSprites()
 	} else if ppu.x >= 257 && ppu.x <= 320 {
-		// Once every 8 cycles
+		// Once every 8 cycles, colour and data is fetched for one out of the 8
+		// sprites to be displayed next frame.
 		if ppu.x%8 == 1 {
 			ppu.renderSprite()
 		}
 	}
 }
 
+// resetEvaluatedSprites resets secondary OAM and evaluated sprite counters.
 func (ppu *PPU) resetEvaluatedSprites() {
 	ppu.evaluatedSprNum = 0
 	ppu.foundSprCount = 0
 	ppu.spriteZeroPresent = false
+
 	ppu.sOAM = &secondaryOAM{}
 }
 
-// evaluateSprite checks if the evaluated
+// evaluateSprite checks if the currently evaluated sprite matches the next
+// frame, and copies it to secondary OAM if so.
 func (ppu *PPU) evaluateSprite() {
 	sprData := ppu.OAM[ppu.evaluatedSprNum*sprDataSize : (ppu.evaluatedSprNum+1)*sprDataSize]
+	sprY := int(sprData[0])
 
 	// Check sprite in range of next scanline
-	if ppu.scanline >= int(sprData[0]) && ppu.scanline < int(sprData[0])+8 {
-		if ppu.foundSprCount >= 8 {
-			// Set overflow flag
-			ppu.Regs.ppuStatus &= 1 << 5
-		} else {
+	if ppu.scanline >= sprY && ppu.scanline < sprY+8 {
+		if ppu.foundSprCount < 8 {
 			// Copy sprite data from OAM to secondary OAM
 			copy(ppu.sOAM[ppu.foundSprCount*sprDataSize:(ppu.foundSprCount+1)*sprDataSize],
 				sprData)
 			ppu.spriteZeroPresent = true
+		} else {
+			// Set overflow flag
+			ppu.Regs.ppuStatus &= 1 << 5
 		}
 
 		ppu.foundSprCount++
@@ -193,7 +232,7 @@ func (ppu *PPU) evaluateSprite() {
 }
 
 // renderSprite fetches the colours and data of a sprite to be displayed on
-// the next frame
+// the next frame.
 func (ppu *PPU) renderSprite() {
 	// Determine which sprite is being rendered
 	renderedSprNum := (ppu.x - 256) / 8
@@ -239,20 +278,7 @@ func (ppu *PPU) renderSprite() {
 	}
 }
 
-// TODO: skip cycle (0, 0) on odd frames
-func (ppu *PPU) incCoords() {
-	ppu.x++
-	if ppu.x > 340 {
-		ppu.x = 0
-
-		ppu.scanline++
-		if ppu.scanline > 261 {
-			ppu.scanline = 0
-		}
-	}
-}
-
-func (ppu *PPU) visiblePixelCycle() color.RGBA {
+func (ppu *PPU) calculatePixelValue() color.RGBA {
 	scrolledX := ppu.x + ppu.Regs.xScroll
 
 	// Select Pattern Table, Name Table and Attribute Table

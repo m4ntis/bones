@@ -21,7 +21,7 @@ type breakPoints map[int]bool
 // BreakState describes the state of the NES and the running programme when the
 // cpu breaks.
 type BreakState struct {
-	Reg  *cpu.Regs
+	Reg  *cpu.Registers
 	RAM  *cpu.RAM
 	VRAM *ppu.VRAM
 

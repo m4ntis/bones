@@ -70,17 +70,17 @@ func (r *RAM) readMMIO(addr int) (d byte, err error) {
 	case PPUMaskAddr:
 		return 0, errors.New("Invalid read from PPUMask")
 	case PPUStatusAddr:
-		d = r.PPU.PPUStatusRead()
+		d = r.PPU.Regs.PPUStatusRead()
 	case OAMAddrAddr:
 		return 0, errors.New("Invalid read from OAMAddr")
 	case OAMDataAddr:
-		d = r.PPU.OAMDataRead()
+		d = r.PPU.Regs.OAMDataRead()
 	case PPUScrollAddr:
 		return 0, errors.New("Invalid read from PPUScroll")
 	case PPUAddrAddr:
 		return 0, errors.New("Invalid read from PPUAddr")
 	case PPUDataAddr:
-		d = r.PPU.PPUDataRead()
+		d = r.PPU.Regs.PPUDataRead()
 	case OAMDMAAddr:
 		return 0, errors.New("Invalid read from OAMDMA")
 	case Ctrl1Addr:
@@ -99,21 +99,21 @@ func (r *RAM) readMMIO(addr int) (d byte, err error) {
 func (r *RAM) writeMMIO(addr int, d byte) (cycles int, err error) {
 	switch addr {
 	case PPUCtrlAddr:
-		r.PPU.PPUCtrlWrite(d)
+		r.PPU.Regs.PPUCtrlWrite(d)
 	case PPUMaskAddr:
-		r.PPU.PPUMaskWrite(d)
+		r.PPU.Regs.PPUMaskWrite(d)
 	case PPUStatusAddr:
 		return 0, errors.New("Invalid write to PPUStatus")
 	case OAMAddrAddr:
-		r.PPU.OAMAddrWrite(d)
+		r.PPU.Regs.OAMAddrWrite(d)
 	case OAMDataAddr:
-		r.PPU.OAMDataWrite(d)
+		r.PPU.Regs.OAMDataWrite(d)
 	case PPUScrollAddr:
-		r.PPU.PPUScrollWrite(d)
+		r.PPU.Regs.PPUScrollWrite(d)
 	case PPUAddrAddr:
-		r.PPU.PPUAddrWrite(d)
+		r.PPU.Regs.PPUAddrWrite(d)
 	case PPUDataAddr:
-		r.PPU.PPUDataWrite(d)
+		r.PPU.Regs.PPUDataWrite(d)
 	case OAMDMAAddr:
 		// TODO: Move DMA to CPU struct. Incrementing the cycles in that method
 		// will allow to remove the cycles from ram and operand api

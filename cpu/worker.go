@@ -16,8 +16,6 @@ import (
 type Worker struct {
 	c *CPU
 	p *ppu.PPU
-
-	nmi chan bool
 }
 
 // NewWorker initializes an instance of a worker, returning the instance.
@@ -25,9 +23,7 @@ type Worker struct {
 // The controller passed to the worker is only read fby the worker, and expected
 // to be controlled by the caller.
 func NewWorker(rom *ines.ROM, disp ppu.Displayer, ctrl *controller.Controller) *Worker {
-	nmi := make(chan bool)
-
-	p := ppu.New(rom.Header.Mirroring, rom.Mapper, nmi, disp)
+	p := ppu.New(rom.Header.Mirroring, rom.Mapper, disp)
 
 	ram := RAM{}
 	c := New(&ram)
@@ -42,8 +38,6 @@ func NewWorker(rom *ines.ROM, disp ppu.Displayer, ctrl *controller.Controller) *
 	return &Worker{
 		c: c,
 		p: p,
-
-		nmi: nmi,
 	}
 }
 
@@ -59,7 +53,7 @@ func (w *Worker) Start() {
 }
 
 func (w *Worker) handleNmi() {
-	for <-w.nmi {
+	for <-w.p.NMI {
 		w.c.NMI()
 	}
 }

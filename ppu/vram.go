@@ -18,7 +18,9 @@ const (
 	SprPaletteAddr    = 0x3f10
 	PaletteMirrorAddr = 0x3f20
 	RAMMirrorAddr     = 0x4000
-	RAMSize           = 0x10000
+
+	PTSize  = 0x1000
+	RAMSize = 0x10000
 )
 
 // VRAM holds the Ricoh 2A03's 16kb (64 when mirrored) of on board memory.

@@ -11,7 +11,7 @@ import "github.com/pkg/errors"
 // CPU exports its RAM and registers which can both be read and written to.
 type CPU struct {
 	RAM *RAM
-	Reg *Regs
+	Reg *Registers
 
 	cycles int
 
@@ -28,7 +28,7 @@ type CPU struct {
 func New(ram *RAM) *CPU {
 	return &CPU{
 		RAM: ram,
-		Reg: &Regs{},
+		Reg: &Registers{},
 
 		irq:   false,
 		nmi:   false,

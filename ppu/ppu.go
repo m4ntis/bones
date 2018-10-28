@@ -13,15 +13,40 @@ const (
 	FrontPriority = byte(0)
 )
 
+var (
+	nilSprite = sprite{
+		low:     0xff,
+		high:    0xff,
+		palette: 0xff,
+
+		x:       0xff,
+		shifted: 0xff,
+
+		priority:   false,
+		spriteZero: false,
+	}
+)
+
+// sprite is data structure internal to the ppu, holding data about a loaded
+// sprite.
 type sprite struct {
-	dataLo byte
-	dataHi byte
+	low     byte
+	high    byte
+	palette byte
 
-	attr byte
-
-	x byte
-
+	x       byte
 	shifted int
+
+	priority   bool
+	spriteZero bool
+}
+
+func (spr sprite) getColor() byte {
+	return spr.low&1 + (spr.high&1)<<1
+}
+
+func (spr sprite) getData() int {
+	return int(spr.getColor() + spr.palette<<2)
 }
 
 // Displayer describes a place that the PPU outputs its frames to.
@@ -221,10 +246,14 @@ func (ppu *PPU) evaluateSprite() {
 			// Copy sprite data from OAM to secondary OAM
 			copy(ppu.sOAM[ppu.foundSprCount*sprDataSize:(ppu.foundSprCount+1)*sprDataSize],
 				sprData)
-			ppu.spriteZeroPresent = true
+
+			// On x == 4 the ppu evaluates sprite zero. If so, set the flag
+			if ppu.x == 4 {
+				ppu.spriteZeroPresent = true
+			}
 		} else {
 			// Set overflow flag
-			ppu.Regs.ppuStatus &= 1 << 5
+			ppu.Regs.ppuStatus |= (1 << 5)
 		}
 
 		ppu.foundSprCount++
@@ -234,111 +263,110 @@ func (ppu *PPU) evaluateSprite() {
 // renderSprite fetches the colours and data of a sprite to be displayed on
 // the next frame.
 func (ppu *PPU) renderSprite() {
-	// Determine which sprite is being rendered (zero indexed)
+	// Determine which sprite is being rendered (zero indexed, 0 ~ 7)
 	renderedSprNum := (ppu.x - 256) / 8
 	sprData := ppu.sOAM[renderedSprNum*sprDataSize : (renderedSprNum+1)*sprDataSize]
 
-	// Check whether the sprite is in range of the displayed sprites. If not,
-	// all it's data will be 0xff.
+	// Check whether this sprite slot is used for next frame
 	if ppu.foundSprCount >= renderedSprNum+1 {
 		// Determine pattern table number and address to fetch sprite data from
-		pt := int(ppu.Regs.ppuCtrl >> 3 & 1)
+		pt := int((ppu.Regs.ppuCtrl >> 3) & 1)
 		ptAddr := pt*PTSize + int(sprData[1])*16
 
 		// Calculate line of the sprite to be displayed on the scanline
 		sprLine := ppu.scanline - int(sprData[0])
 
 		// Fetch sprite data
-		sprDataLo := ppu.VRAM.Read(ptAddr + sprLine)
-		sprDataHi := ppu.VRAM.Read(ptAddr + sprLine + 8)
+		dataLow := ppu.VRAM.Read(ptAddr + sprLine)
+		dataHigh := ppu.VRAM.Read(ptAddr + sprLine + 8)
 
-		// Fetch sprite attribute byte
-		attr := sprData[2]
-
-		// Invert sprite if horizontal invert bit is off
-		if attr>>6&1 == 0 {
-			sprDataLo = flip_byte(sprDataLo)
-			sprDataHi = flip_byte(sprDataHi)
+		// Invert sprite if horizontal invert bit of attribute byte is off
+		if (sprData[2]>>6)&1 == 0 {
+			dataLow = flip_byte(dataLow)
+			dataHigh = flip_byte(dataHigh)
 		}
 
+		// Fill sprite slot with sprite data
 		ppu.sprites[renderedSprNum] = sprite{
-			attr: attr,
+			low:     dataLow,
+			high:    dataHigh,
+			palette: sprData[2] & 3,
 
-			dataHi: sprDataHi,
-			dataLo: sprDataLo,
+			x:       sprData[3],
+			shifted: 0,
 
-			x: sprData[3],
+			priority:   (sprData[2]>>5)&1 == FrontPriority,
+			spriteZero: renderedSprNum == 0 && ppu.spriteZeroPresent,
 		}
 	} else {
-		ppu.sprites[renderedSprNum] = sprite{
-			attr: 0xff,
-
-			dataHi: 0xff,
-			dataLo: 0xff,
-
-			x: 0xff,
-		}
+		ppu.sprites[renderedSprNum] = nilSprite
 	}
 }
 
 func (ppu *PPU) calculatePixelValue() color.RGBA {
+	bgr := ppu.calcBackground()
+	spr := ppu.matchSprite()
+
+	paletteAddr := ppu.muxPixel(bgr, spr)
+
+	if spr.spriteZero && spr.getColor() != 0 && bgr&3 != 0 {
+		// Set sprite 0 hit flag
+		ppu.Regs.ppuStatus |= (1 << 6)
+	}
+
+	return Palette[paletteAddr]
+}
+
+func (ppu *PPU) calcBackground() (bgr int) {
+	// Add x fine scroll to ppu.x
 	scrolledX := ppu.x + ppu.Regs.xScroll
 
-	// Select Pattern Table, Name Table and Attribute Table
-	pt := ppu.getPTAddr()
-	nt := (ppu.scanline/8)*32 + scrolledX%256/8
-	at := (ppu.scanline/32)*8 + scrolledX%256/32
+	// Fetch byte from NT
+	baseNTAddr := getNTAddr(int(ppu.Regs.ppuCtrl)&3+scrolledX/256, ppu.mirror)
+	ntIdx := (ppu.scanline/8)*32 + scrolledX%0x100/8
+	byteFromNT := ppu.VRAM.Read(baseNTAddr + ntIdx)
 
-	ntBase := getNTAddr(int(ppu.Regs.ppuCtrl)&3+scrolledX/256, ppu.mirror)
-	ntByte := ppu.VRAM.Read(ntBase + nt)
+	// Fetch pattern table address
+	basePTAddr := ppu.getPTAddr()
+	patternAddr := basePTAddr + int(byteFromNT)*16
 
-	patternAddr := pt + int(ntByte)*16
-
-	ptx := scrolledX % 8
+	// Fetch pattern line from PT (Y coordinate)
 	pty := ppu.scanline % 8
 	ptLowByte := ppu.VRAM.Read(patternAddr + pty)
 	ptHighByte := ppu.VRAM.Read(patternAddr + pty + 8)
-	ptLowBit := ptLowByte >> uint(7-ptx) & 1
-	ptHighBit := ptHighByte >> uint(7-ptx) & 1
 
-	bgLo := ptLowBit + ptHighBit<<1
+	// Fetch pixel data from pattern line (X coordinate)
+	ptx := scrolledX % 8
+	ptLowBit := (ptLowByte >> uint(7-ptx)) & 1
+	ptHighBit := (ptHighByte >> uint(7-ptx)) & 1
 
+	// BGR low 2 bits are added together (the pattern bits)
+	bgrLow := ptLowBit + ptHighBit<<1
+
+	// Fetch byte from AT
+	baseATAddr := getATAddr(baseNTAddr)
+	atIdx := (ppu.scanline/32)*8 + scrolledX%0x100/32
+	byteFromAT := ppu.VRAM.Read(baseATAddr + atIdx)
+
+	// Calculate which 2 bits of the byte from AT are relevant
 	atQuarter := scrolledX%32/16 + ppu.scanline%32/16<<1
 
-	atBase := getATAddr(ntBase)
-	atByte := ppu.VRAM.Read(atBase + at)
+	// Fetch BGR high 2 bits from the byte from AT
+	bgrHigh := (byteFromAT >> uint(2*atQuarter)) & 3
 
-	bgHi := atByte >> uint(2*atQuarter) & 3
-
-	sprLo, sprHi, sprPriority, sprN := ppu.calcSprForPixel()
-	pAddr := ppu.calcPaletteAddr(bgLo, bgHi, sprLo, sprHi, sprPriority)
-
-	if ppu.spriteZeroPresent && sprN == 0 && int(sprLo+sprHi<<2) != 0 && int(bgLo+bgHi<<2) != 0 {
-		// Set sprite 0 hit flag
-		ppu.Regs.ppuStatus |= 1 << 6
-	}
-
-	return Palette[pAddr]
+	return int(bgrLow + (bgrHigh&3)<<2)
 }
 
-func (ppu *PPU) getPTAddr() int {
-	if int(ppu.Regs.ppuCtrl>>4&1) == 0 {
-		return PT0Addr
-	} else {
-		return PT1Addr
-	}
-}
-
-func getNTAddr(nt int, mirroring int) int {
+func getNTAddr(ntNum int, mirroring int) int {
 	// Assuming either horizontal or vertical mirroring
 	if mirroring == ines.HorizontalMirroring {
-		if nt == 0 || nt == 1 {
+		if ntNum == 0 || ntNum == 1 {
 			return NT0Addr
 		} else {
 			return NT2Addr
 		}
 	} else {
-		if nt == 0 || nt == 2 {
+		if ntNum == 0 || ntNum == 2 {
 			return NT0Addr
 		} else {
 			return NT1Addr
@@ -346,18 +374,36 @@ func getNTAddr(nt int, mirroring int) int {
 	}
 }
 
-func getATAddr(nt int) int {
-	return nt + 0x3c0
+func (ppu *PPU) getPTAddr() int {
+	if int((ppu.Regs.ppuCtrl>>4)&1) == 0 {
+		return PT0Addr
+	} else {
+		return PT1Addr
+	}
 }
 
-func (ppu *PPU) calcPaletteAddr(bgLo, bgHi, sprLo, sprHi, sprPriority byte) (pAddr byte) {
-	// sprPriority == 255 when a sprite wasn't found for the scanline
-	// bg 0 or sprite not opaque and with front priority
-	if sprPriority != 255 && (bgLo == 0 || (sprLo != 0 && sprPriority == FrontPriority)) {
-		return ppu.VRAM.Read(SprPaletteAddr + int(sprLo+sprHi<<2))
+func getATAddr(ntAddr int) int {
+	return ntAddr + 0x3c0
+}
+
+func (ppu *PPU) muxPixel(bgr int, spr sprite) (paletteAddr byte) {
+	// No sprite was found for current pixel, display background
+	if spr == nilSprite {
+		return ppu.VRAM.Read(BgrPaletteAddr + bgr)
 	}
 
-	return ppu.VRAM.Read(BgrPaletteAddr + int(bgLo) + int(bgHi<<2))
+	// Background clear, display sprite
+	if bgr&3 == 0 {
+		return ppu.VRAM.Read(SprPaletteAddr + spr.getData())
+	}
+
+	// Sprite isn't clear and with priority, display sprite
+	if spr.getColor() != 0 && spr.priority {
+		return ppu.VRAM.Read(SprPaletteAddr + spr.getData())
+	}
+
+	// Display background
+	return ppu.VRAM.Read(BgrPaletteAddr + bgr)
 }
 
 // shiftSprites is implemented in a duff machine fashion for optimization
@@ -367,8 +413,8 @@ func (ppu *PPU) shiftSprites() {
 		if ppu.sprites[0].x > 0 {
 			ppu.sprites[0].x--
 		} else {
-			ppu.sprites[0].dataHi >>= 1
-			ppu.sprites[0].dataLo >>= 1
+			ppu.sprites[0].high >>= 1
+			ppu.sprites[0].low >>= 1
 			ppu.sprites[0].shifted++
 		}
 	}
@@ -376,8 +422,8 @@ func (ppu *PPU) shiftSprites() {
 		if ppu.sprites[1].x > 0 {
 			ppu.sprites[1].x--
 		} else {
-			ppu.sprites[1].dataHi >>= 1
-			ppu.sprites[1].dataLo >>= 1
+			ppu.sprites[1].high >>= 1
+			ppu.sprites[1].low >>= 1
 			ppu.sprites[1].shifted++
 		}
 	}
@@ -385,8 +431,8 @@ func (ppu *PPU) shiftSprites() {
 		if ppu.sprites[2].x > 0 {
 			ppu.sprites[2].x--
 		} else {
-			ppu.sprites[2].dataHi >>= 1
-			ppu.sprites[2].dataLo >>= 1
+			ppu.sprites[2].high >>= 1
+			ppu.sprites[2].low >>= 1
 			ppu.sprites[2].shifted++
 		}
 	}
@@ -394,8 +440,8 @@ func (ppu *PPU) shiftSprites() {
 		if ppu.sprites[3].x > 0 {
 			ppu.sprites[3].x--
 		} else {
-			ppu.sprites[3].dataHi >>= 1
-			ppu.sprites[3].dataLo >>= 1
+			ppu.sprites[3].high >>= 1
+			ppu.sprites[3].low >>= 1
 			ppu.sprites[3].shifted++
 		}
 	}
@@ -403,8 +449,8 @@ func (ppu *PPU) shiftSprites() {
 		if ppu.sprites[4].x > 0 {
 			ppu.sprites[4].x--
 		} else {
-			ppu.sprites[4].dataHi >>= 1
-			ppu.sprites[4].dataLo >>= 1
+			ppu.sprites[4].high >>= 1
+			ppu.sprites[4].low >>= 1
 			ppu.sprites[4].shifted++
 		}
 	}
@@ -412,8 +458,8 @@ func (ppu *PPU) shiftSprites() {
 		if ppu.sprites[5].x > 0 {
 			ppu.sprites[5].x--
 		} else {
-			ppu.sprites[5].dataHi >>= 1
-			ppu.sprites[5].dataLo >>= 1
+			ppu.sprites[5].high >>= 1
+			ppu.sprites[5].low >>= 1
 			ppu.sprites[5].shifted++
 		}
 	}
@@ -421,8 +467,8 @@ func (ppu *PPU) shiftSprites() {
 		if ppu.sprites[6].x > 0 {
 			ppu.sprites[6].x--
 		} else {
-			ppu.sprites[6].dataHi >>= 1
-			ppu.sprites[6].dataLo >>= 1
+			ppu.sprites[6].high >>= 1
+			ppu.sprites[6].low >>= 1
 			ppu.sprites[6].shifted++
 		}
 	}
@@ -430,65 +476,61 @@ func (ppu *PPU) shiftSprites() {
 		if ppu.sprites[7].x > 0 {
 			ppu.sprites[7].x--
 		} else {
-			ppu.sprites[7].dataHi >>= 1
-			ppu.sprites[7].dataLo >>= 1
+			ppu.sprites[7].high >>= 1
+			ppu.sprites[7].low >>= 1
 			ppu.sprites[7].shifted++
 		}
 	}
 }
 
-// calcSprForPixel is implemented in a duff machine fashion for optimization
+// matchSprite goes over the ppu spries to be loaded this frame and returns the
+// the first non-clear sprite in x coordinate range.
+//
+// matchSprite is implemented in a duff machine fashion for optimization
 // purposes.
-func (ppu *PPU) calcSprForPixel() (sprLo, sprHi, priority byte, sprN int) {
+func (ppu *PPU) matchSprite() sprite {
 	if ppu.sprites[0].x == 0 && ppu.sprites[0].shifted < 8 {
-		sprLo := ppu.sprites[0].dataLo&1 + ppu.sprites[0].dataHi&1<<1
-		if sprLo != 0 {
-			return sprLo, ppu.sprites[0].attr & 3, ppu.sprites[0].attr >> 5 & 1, 0
+		if ppu.sprites[0].getColor() != 0 {
+			return ppu.sprites[0]
 		}
 	}
 	if ppu.sprites[1].x == 0 && ppu.sprites[1].shifted < 8 {
-		sprLo := ppu.sprites[1].dataLo&1 + ppu.sprites[1].dataHi&1<<1
-		if sprLo != 0 {
-			return sprLo, ppu.sprites[1].attr & 3, ppu.sprites[1].attr >> 5 & 1, 1
+		if ppu.sprites[1].getColor() != 0 {
+			return ppu.sprites[1]
 		}
 	}
 	if ppu.sprites[2].x == 0 && ppu.sprites[2].shifted < 8 {
-		sprLo := ppu.sprites[2].dataLo&1 + ppu.sprites[2].dataHi&1<<1
-		if sprLo != 0 {
-			return sprLo, ppu.sprites[2].attr & 3, ppu.sprites[2].attr >> 5 & 1, 2
+		if ppu.sprites[2].getColor() != 0 {
+			return ppu.sprites[2]
 		}
 	}
 	if ppu.sprites[3].x == 0 && ppu.sprites[3].shifted < 8 {
-		sprLo := ppu.sprites[3].dataLo&1 + ppu.sprites[3].dataHi&1<<1
-		if sprLo != 0 {
-			return sprLo, ppu.sprites[3].attr & 3, ppu.sprites[3].attr >> 5 & 1, 3
+		if ppu.sprites[3].getColor() != 0 {
+			return ppu.sprites[3]
 		}
 	}
 	if ppu.sprites[4].x == 0 && ppu.sprites[4].shifted < 8 {
-		sprLo := ppu.sprites[4].dataLo&1 + ppu.sprites[4].dataHi&1<<1
-		if sprLo != 0 {
-			return sprLo, ppu.sprites[4].attr & 3, ppu.sprites[4].attr >> 5 & 1, 4
+		if ppu.sprites[4].getColor() != 0 {
+			return ppu.sprites[4]
 		}
 	}
 	if ppu.sprites[5].x == 0 && ppu.sprites[5].shifted < 8 {
-		sprLo := ppu.sprites[5].dataLo&1 + ppu.sprites[5].dataHi&1<<1
-		if sprLo != 0 {
-			return sprLo, ppu.sprites[5].attr & 3, ppu.sprites[5].attr >> 5 & 1, 5
+		if ppu.sprites[5].getColor() != 0 {
+			return ppu.sprites[5]
 		}
 	}
 	if ppu.sprites[6].x == 0 && ppu.sprites[6].shifted < 8 {
-		sprLo := ppu.sprites[6].dataLo&1 + ppu.sprites[6].dataHi&1<<1
-		if sprLo != 0 {
-			return sprLo, ppu.sprites[6].attr & 3, ppu.sprites[6].attr >> 5 & 1, 6
+		if ppu.sprites[6].getColor() != 0 {
+			return ppu.sprites[6]
 		}
 	}
 	if ppu.sprites[7].x == 0 && ppu.sprites[7].shifted < 8 {
-		sprLo := ppu.sprites[7].dataLo&1 + ppu.sprites[7].dataHi&1<<1
-		if sprLo != 0 {
-			return sprLo, ppu.sprites[7].attr & 3, ppu.sprites[7].attr >> 5 & 1, 7
+		if ppu.sprites[7].getColor() != 0 {
+			return ppu.sprites[7]
 		}
 	}
-	return 0, 0, 255, -1
+
+	return nilSprite
 }
 
 func flip_byte(d byte) byte {

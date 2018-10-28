@@ -1,7 +1,7 @@
 package ppu
 
 const (
-	FrontPriority = byte(0)
+	frontPriority = byte(0)
 )
 
 var (

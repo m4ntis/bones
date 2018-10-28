@@ -260,7 +260,7 @@ func (ppu *PPU) renderSprite() {
 			x:       sprData[3],
 			shifted: 0,
 
-			priority:   (sprData[2]>>5)&1 == FrontPriority,
+			priority:   (sprData[2]>>5)&1 == frontPriority,
 			spriteZero: renderedSprNum == 0 && ppu.spriteZeroPresent,
 		}
 	} else {

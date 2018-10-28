@@ -1,11 +1,11 @@
 package ppu
 
 const (
-	OamSize          = 0x100
+	oamSize          = 0x100
 	secondaryOamSize = 0x20
 
 	sprDataSize = 0x4
 )
 
-type OAM [OamSize]byte
+type OAM [oamSize]byte
 type secondaryOAM [secondaryOamSize]byte

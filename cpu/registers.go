@@ -1,8 +1,8 @@
 package cpu
 
 const (
-	Set   = 1
-	Clear = 0
+	set   = 1
+	clear = 0
 )
 
 // Registers is a simple struct containing all the CPU's registers.

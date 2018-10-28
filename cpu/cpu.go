@@ -117,7 +117,7 @@ func (cpu *CPU) handleInterrupts() {
 // IRQ causes the IRQ handler to be executed right after the current opcode
 // finished execution, as long as the 'I' bit of the status register is reset.
 func (cpu *CPU) IRQ() {
-	if cpu.Reg.I == Clear {
+	if cpu.Reg.I == clear {
 		cpu.irq = true
 	}
 }
@@ -144,7 +144,7 @@ func (cpu *CPU) interrupt(handlerAddr int) {
 
 	// TODO: Find appropriate place for this outside the interrupt function so
 	// the CPU can call it when initiating PC in the beginning.
-	cpu.Reg.I = Set
+	cpu.Reg.I = set
 
 	cpu.Reg.PC = int(cpu.RAM.MustRead(handlerAddr)) |
 		int(cpu.RAM.MustRead(handlerAddr+1))<<8

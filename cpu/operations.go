@@ -38,16 +38,16 @@ func ADC(cpu *CPU, op Operand) (extraCycles int) {
 	signed_arg3 := int8(arg3)
 	if int(signed_arg1+signed_arg2+signed_arg3) != int(signed_arg1)+
 		int(signed_arg2)+int(signed_arg3) {
-		cpu.Reg.V = Set
+		cpu.Reg.V = set
 	} else {
-		cpu.Reg.V = Clear
+		cpu.Reg.V = clear
 	}
 
 	// Carry
 	if int(arg1)+int(arg2)+int(arg3) > 255 {
-		cpu.Reg.C = Set
+		cpu.Reg.C = set
 	} else {
-		cpu.Reg.C = Clear
+		cpu.Reg.C = clear
 	}
 	return
 }
@@ -73,7 +73,7 @@ func ASL(cpu *CPU, op Operand) (extraCycles int) {
 func BCC(cpu *CPU, op Operand) (extraCycles int) {
 	initPC := cpu.Reg.PC
 
-	if cpu.Reg.C == Clear {
+	if cpu.Reg.C == clear {
 		extraCycles++
 		cpu.Reg.PC += int(int8(op.Read()))
 
@@ -87,7 +87,7 @@ func BCC(cpu *CPU, op Operand) (extraCycles int) {
 func BCS(cpu *CPU, op Operand) (extraCycles int) {
 	initPC := cpu.Reg.PC
 
-	if cpu.Reg.C == Set {
+	if cpu.Reg.C == set {
 		extraCycles++
 		cpu.Reg.PC += int(int8(op.Read()))
 
@@ -101,7 +101,7 @@ func BCS(cpu *CPU, op Operand) (extraCycles int) {
 func BEQ(cpu *CPU, op Operand) (extraCycles int) {
 	initPC := cpu.Reg.PC
 
-	if cpu.Reg.Z == Set {
+	if cpu.Reg.Z == set {
 		extraCycles++
 		cpu.Reg.PC += int(int8(op.Read()))
 
@@ -120,17 +120,17 @@ func BIT(cpu *CPU, op Operand) (extraCycles int) {
 
 	res := cpu.Reg.A & d
 	if res == 0x0 {
-		cpu.Reg.Z = Set
+		cpu.Reg.Z = set
 		return
 	}
-	cpu.Reg.Z = Clear
+	cpu.Reg.Z = clear
 	return
 }
 
 func BMI(cpu *CPU, op Operand) (extraCycles int) {
 	initPC := cpu.Reg.PC
 
-	if cpu.Reg.N == Set {
+	if cpu.Reg.N == set {
 		extraCycles++
 		cpu.Reg.PC += int(int8(op.Read()))
 
@@ -144,7 +144,7 @@ func BMI(cpu *CPU, op Operand) (extraCycles int) {
 func BNE(cpu *CPU, op Operand) (extraCycles int) {
 	initPC := cpu.Reg.PC
 
-	if cpu.Reg.Z == Clear {
+	if cpu.Reg.Z == clear {
 		extraCycles++
 		cpu.Reg.PC += int(int8(op.Read()))
 
@@ -158,7 +158,7 @@ func BNE(cpu *CPU, op Operand) (extraCycles int) {
 func BPL(cpu *CPU, op Operand) (extraCycles int) {
 	initPC := cpu.Reg.PC
 
-	if cpu.Reg.N == Clear {
+	if cpu.Reg.N == clear {
 		extraCycles++
 		cpu.Reg.PC += int(int8(op.Read()))
 
@@ -177,7 +177,7 @@ func BRK(cpu *CPU, op Operand) (extraCycles int) {
 func BVC(cpu *CPU, op Operand) (extraCycles int) {
 	initPC := cpu.Reg.PC
 
-	if cpu.Reg.V == Clear {
+	if cpu.Reg.V == clear {
 		extraCycles++
 		cpu.Reg.PC += int(int8(op.Read()))
 
@@ -191,7 +191,7 @@ func BVC(cpu *CPU, op Operand) (extraCycles int) {
 func BVS(cpu *CPU, op Operand) (extraCycles int) {
 	initPC := cpu.Reg.PC
 
-	if cpu.Reg.V == Set {
+	if cpu.Reg.V == set {
 		extraCycles++
 		cpu.Reg.PC += int(int8(op.Read()))
 
@@ -203,22 +203,22 @@ func BVS(cpu *CPU, op Operand) (extraCycles int) {
 }
 
 func CLC(cpu *CPU, op Operand) (extraCycles int) {
-	cpu.Reg.C = Clear
+	cpu.Reg.C = clear
 	return
 }
 
 func CLD(cpu *CPU, op Operand) (extraCycles int) {
-	cpu.Reg.D = Clear
+	cpu.Reg.D = clear
 	return
 }
 
 func CLI(cpu *CPU, op Operand) (extraCycles int) {
-	cpu.Reg.I = Clear
+	cpu.Reg.I = clear
 	return
 }
 
 func CLV(cpu *CPU, op Operand) (extraCycles int) {
-	cpu.Reg.V = Clear
+	cpu.Reg.V = clear
 	return
 }
 
@@ -229,9 +229,9 @@ func CMP(cpu *CPU, op Operand) (extraCycles int) {
 
 	setNZ(cpu, res)
 	if d <= cpu.Reg.A {
-		cpu.Reg.C = Set
+		cpu.Reg.C = set
 	} else {
-		cpu.Reg.C = Clear
+		cpu.Reg.C = clear
 	}
 	return
 }
@@ -243,9 +243,9 @@ func CPX(cpu *CPU, op Operand) (extraCycles int) {
 
 	setNZ(cpu, res)
 	if d <= cpu.Reg.X {
-		cpu.Reg.C = Set
+		cpu.Reg.C = set
 	} else {
-		cpu.Reg.C = Clear
+		cpu.Reg.C = clear
 	}
 	return
 }
@@ -257,9 +257,9 @@ func CPY(cpu *CPU, op Operand) (extraCycles int) {
 
 	setNZ(cpu, res)
 	if d <= cpu.Reg.Y {
-		cpu.Reg.C = Set
+		cpu.Reg.C = set
 	} else {
-		cpu.Reg.C = Clear
+		cpu.Reg.C = clear
 	}
 	return
 }
@@ -437,7 +437,7 @@ func SBC(cpu *CPU, op Operand) (extraCycles int) {
 	arg2 := int8(op.Read())
 
 	var res byte
-	if cpu.Reg.C == Clear {
+	if cpu.Reg.C == clear {
 		res = byte(arg1-arg2) - 1
 	} else {
 		res = byte(arg1 - arg2)
@@ -452,25 +452,25 @@ func SBC(cpu *CPU, op Operand) (extraCycles int) {
 
 	// Overflow
 	if math.Abs(float64(arg1)-float64(arg2)) > 127 {
-		cpu.Reg.V = Set
+		cpu.Reg.V = set
 	} else {
-		cpu.Reg.V = Clear
+		cpu.Reg.V = clear
 	}
 	return
 }
 
 func SEC(cpu *CPU, op Operand) (extraCycles int) {
-	cpu.Reg.C = Set
+	cpu.Reg.C = set
 	return
 }
 
 func SED(cpu *CPU, op Operand) (extraCycles int) {
-	cpu.Reg.D = Set
+	cpu.Reg.D = set
 	return
 }
 
 func SEI(cpu *CPU, op Operand) (extraCycles int) {
-	cpu.Reg.I = Set
+	cpu.Reg.I = set
 	return
 }
 
@@ -528,8 +528,8 @@ func setNZ(cpu *CPU, d byte) {
 	cpu.Reg.N = d >> 7
 
 	if d == 0x0 {
-		cpu.Reg.Z = Set
+		cpu.Reg.Z = set
 		return
 	}
-	cpu.Reg.Z = Clear
+	cpu.Reg.Z = clear
 }

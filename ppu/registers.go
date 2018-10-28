@@ -107,7 +107,7 @@ func (r *Registers) PPUDataRead() byte {
 	defer r.incAddr()
 
 	// If the read is from palette data, it is immediatelly put on the data bus
-	if stripMirror(r.ppuAddr) >= BgrPaletteAddr {
+	if stripMirror(r.ppuAddr) >= bgrPaletteAddr {
 		// TODO: Reading the palettes still updates the internal buffer though,
 		// but the data placed in it is the mirrored nametable data that would
 		// appear "underneath" the palette.

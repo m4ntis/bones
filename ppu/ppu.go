@@ -236,7 +236,7 @@ func (ppu *PPU) renderSprite() {
 	if ppu.foundSprCount >= renderedSprNum+1 {
 		// Determine pattern table number and address to fetch sprite data from
 		pt := int((ppu.Regs.ppuCtrl >> 3) & 1)
-		ptAddr := pt*PTSize + int(sprData[1])*16
+		ptAddr := pt*ptSize + int(sprData[1])*16
 
 		// Calculate line of the sprite to be displayed on the scanline
 		sprLine := ppu.scanline - int(sprData[0])
@@ -335,15 +335,15 @@ func getNTAddr(ntNum int, mirroring int) int {
 	// Assuming either horizontal or vertical mirroring
 	if mirroring == ines.HorizontalMirroring {
 		if ntNum == 0 || ntNum == 1 {
-			return NT0Addr
+			return nt0Addr
 		} else {
-			return NT2Addr
+			return nt2Addr
 		}
 	} else {
 		if ntNum == 0 || ntNum == 2 {
-			return NT0Addr
+			return nt0Addr
 		} else {
-			return NT1Addr
+			return nt1Addr
 		}
 	}
 }
@@ -352,9 +352,9 @@ func getNTAddr(ntNum int, mirroring int) int {
 // PPUCTRL.
 func (ppu *PPU) getPTAddr() int {
 	if int((ppu.Regs.ppuCtrl>>4)&1) == 0 {
-		return PT0Addr
+		return pt0Addr
 	} else {
-		return PT1Addr
+		return pt1Addr
 	}
 }
 
@@ -369,21 +369,21 @@ func getATAddr(ntAddr int) int {
 func (ppu *PPU) muxPixel(bgr int, spr sprite) (paletteAddr byte) {
 	// No sprite was found for current pixel, display background
 	if spr == nilSprite {
-		return ppu.VRAM.Read(BgrPaletteAddr + bgr)
+		return ppu.VRAM.Read(bgrPaletteAddr + bgr)
 	}
 
 	// Background clear, display sprite
 	if bgr&3 == 0 {
-		return ppu.VRAM.Read(SprPaletteAddr + spr.getData())
+		return ppu.VRAM.Read(sprPaletteAddr + spr.getData())
 	}
 
 	// Sprite isn't clear and with priority, display sprite
 	if spr.getColor() != 0 && spr.priority {
-		return ppu.VRAM.Read(SprPaletteAddr + spr.getData())
+		return ppu.VRAM.Read(sprPaletteAddr + spr.getData())
 	}
 
 	// Display background
-	return ppu.VRAM.Read(BgrPaletteAddr + bgr)
+	return ppu.VRAM.Read(bgrPaletteAddr + bgr)
 }
 
 // shiftSprites is called once per visible cycle and shifts each sprite's x

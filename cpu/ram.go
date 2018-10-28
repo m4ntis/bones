@@ -8,28 +8,29 @@ import (
 )
 
 const (
-	ZeroPageAddr       = 0x0
-	StackAddr          = 0x100
-	RAMAddr            = 0x200
-	RAMMirrorAddr      = 0x800
-	PPURegAddr         = 0x2000
-	PPURegMirrorAddr   = 0x2008
-	IORegAddr          = 0x4000
-	CartridgeSpaceAddr = 0x4020
-	RAMSize            = 0x10000
+	RAMSize = 0x10000
+
+	zeroPageAddr       = 0x0
+	stackAddr          = 0x100
+	ramAddr            = 0x200
+	ramMirrorAddr      = 0x800
+	ppuRegAddr         = 0x2000
+	ppuRegMirrorAddr   = 0x2008
+	ioRegAddr          = 0x4000
+	cartridgeSpaceAddr = 0x4020
 )
 
 const (
-	PPUCtrlAddr   = 0x2000
-	PPUMaskAddr   = 0x2001
-	PPUStatusAddr = 0x2002
-	OAMAddrAddr   = 0x2003
-	OAMDataAddr   = 0x2004
-	PPUScrollAddr = 0x2005
-	PPUAddrAddr   = 0x2006
-	PPUDataAddr   = 0x2007
-	OAMDMAAddr    = 0x4014
-	Ctrl1Addr     = 0x4016
+	ppuCtrlAddr   = 0x2000
+	ppuMaskAddr   = 0x2001
+	ppuStatusAddr = 0x2002
+	oamAddrAddr   = 0x2003
+	oamDataAddr   = 0x2004
+	ppuScrollAddr = 0x2005
+	ppuAddrAddr   = 0x2006
+	ppuDataAddr   = 0x2007
+	oamDMAAddr    = 0x4014
+	ctrl1Addr     = 0x4016
 )
 
 // RAM holds the mos 6502's 16k (64 when mirrored) of on chip memory.
@@ -51,13 +52,13 @@ type RAM struct {
 // stripMirror returns the underlying address after mirroring.
 func stripMirror(addr int) int {
 	// Internal RAM mirroring
-	if addr >= RAMMirrorAddr && addr < PPURegAddr {
+	if addr >= ramMirrorAddr && addr < ppuRegAddr {
 		return addr % 0x800
 	}
 
 	// PPU i/o register mirroring
-	if addr >= PPURegMirrorAddr && addr < IORegAddr {
-		return (addr-PPURegAddr)%0x8 + PPURegAddr
+	if addr >= ppuRegMirrorAddr && addr < ioRegAddr {
+		return (addr-ppuRegAddr)%0x8 + ppuRegAddr
 	}
 
 	return addr
@@ -65,25 +66,25 @@ func stripMirror(addr int) int {
 
 func (r *RAM) readMMIO(addr int) (d byte, err error) {
 	switch addr {
-	case PPUCtrlAddr:
+	case ppuCtrlAddr:
 		return 0, errors.New("Invalid read from PPUCtrl")
-	case PPUMaskAddr:
+	case ppuMaskAddr:
 		return 0, errors.New("Invalid read from PPUMask")
-	case PPUStatusAddr:
+	case ppuStatusAddr:
 		d = r.PPU.Regs.PPUStatusRead()
-	case OAMAddrAddr:
+	case oamAddrAddr:
 		return 0, errors.New("Invalid read from OAMAddr")
-	case OAMDataAddr:
+	case oamDataAddr:
 		d = r.PPU.Regs.OAMDataRead()
-	case PPUScrollAddr:
+	case ppuScrollAddr:
 		return 0, errors.New("Invalid read from PPUScroll")
-	case PPUAddrAddr:
+	case ppuAddrAddr:
 		return 0, errors.New("Invalid read from PPUAddr")
-	case PPUDataAddr:
+	case ppuDataAddr:
 		d = r.PPU.Regs.PPUDataRead()
-	case OAMDMAAddr:
+	case oamDMAAddr:
 		return 0, errors.New("Invalid read from OAMDMA")
-	case Ctrl1Addr:
+	case ctrl1Addr:
 		d = r.Ctrl.Read()
 	default:
 		// TODO: Consider returning an error of a not implemented mmio
@@ -98,23 +99,23 @@ func (r *RAM) readMMIO(addr int) (d byte, err error) {
 
 func (r *RAM) writeMMIO(addr int, d byte) (cycles int, err error) {
 	switch addr {
-	case PPUCtrlAddr:
+	case ppuCtrlAddr:
 		r.PPU.Regs.PPUCtrlWrite(d)
-	case PPUMaskAddr:
+	case ppuMaskAddr:
 		r.PPU.Regs.PPUMaskWrite(d)
-	case PPUStatusAddr:
+	case ppuStatusAddr:
 		return 0, errors.New("Invalid write to PPUStatus")
-	case OAMAddrAddr:
+	case oamAddrAddr:
 		r.PPU.Regs.OAMAddrWrite(d)
-	case OAMDataAddr:
+	case oamDataAddr:
 		r.PPU.Regs.OAMDataWrite(d)
-	case PPUScrollAddr:
+	case ppuScrollAddr:
 		r.PPU.Regs.PPUScrollWrite(d)
-	case PPUAddrAddr:
+	case ppuAddrAddr:
 		r.PPU.Regs.PPUAddrWrite(d)
-	case PPUDataAddr:
+	case ppuDataAddr:
 		r.PPU.Regs.PPUDataWrite(d)
-	case OAMDMAAddr:
+	case oamDMAAddr:
 		// TODO: Move DMA to CPU struct. Incrementing the cycles in that method
 		// will allow to remove the cycles from ram and operand api
 
@@ -127,7 +128,7 @@ func (r *RAM) writeMMIO(addr int, d byte) (cycles int, err error) {
 		if r.CPU.cycles%2 == 1 {
 			cycles++
 		}
-	case Ctrl1Addr:
+	case ctrl1Addr:
 		r.Ctrl.Strobe(d & 1)
 	}
 
@@ -148,12 +149,12 @@ func (r *RAM) Read(addr int) (d byte, err error) {
 	addr = stripMirror(addr)
 
 	// Read from cartridge
-	if addr >= CartridgeSpaceAddr {
+	if addr >= cartridgeSpaceAddr {
 		return r.Mapper.Read(addr)
 	}
 
 	// Read from MMIO
-	if addr >= PPURegAddr {
+	if addr >= ppuRegAddr {
 		return r.readMMIO(addr)
 	}
 
@@ -186,12 +187,12 @@ func (r *RAM) Write(addr int, d byte) (cycles int, err error) {
 	addr = stripMirror(addr)
 
 	// Write to cartridge
-	if addr >= CartridgeSpaceAddr {
+	if addr >= cartridgeSpaceAddr {
 		return 0, r.Mapper.Write(addr, d)
 	}
 
 	// Write to MMIO
-	if addr >= PPURegAddr {
+	if addr >= ppuRegAddr {
 		return r.writeMMIO(addr, d)
 	}
 
@@ -224,7 +225,7 @@ func (r *RAM) Observe(addr int) (d byte, err error) {
 	addr = stripMirror(addr)
 
 	// Read from cartridge
-	if addr >= CartridgeSpaceAddr {
+	if addr >= cartridgeSpaceAddr {
 		return r.Mapper.Observe(addr)
 	}
 

@@ -31,18 +31,23 @@ type PPU struct {
 
 	NMI chan bool
 
+	// Sprites data for current and next frame
 	sprites [8]sprite
 	sOAM    *secondaryOAM
 
+	// Sprite evaluation counters
 	evaluatedSprNum   int
 	foundSprCount     int
 	spriteZeroPresent bool
 
+	// Current pixel coordinates
 	scanline int
 	x        int
 
+	// Mirroring type
 	mirror int
 
+	// Output
 	frame *frame
 	disp  Displayer
 }
@@ -114,7 +119,7 @@ func (ppu *PPU) visibleScanlineCycle() {
 			x: ppu.x,
 			y: ppu.scanline,
 
-			color: ppu.calculatePixelValue(),
+			color: ppu.calcPixelValue(),
 		})
 	}
 }
@@ -242,8 +247,8 @@ func (ppu *PPU) renderSprite() {
 
 		// Invert sprite if horizontal invert bit of attribute byte is off
 		if (sprData[2]>>6)&1 == 0 {
-			dataLow = flip_byte(dataLow)
-			dataHigh = flip_byte(dataHigh)
+			dataLow = flipByte(dataLow)
+			dataHigh = flipByte(dataHigh)
 		}
 
 		// Fill sprite slot with sprite data
@@ -263,8 +268,10 @@ func (ppu *PPU) renderSprite() {
 	}
 }
 
-func (ppu *PPU) calculatePixelValue() color.RGBA {
-	bgr := ppu.calcBackground()
+// calcPixelValue is called once per visible cycle (0 <= scanline < 240 &&
+// 0 <= x < 256) and calculates the pixel value.
+func (ppu *PPU) calcPixelValue() color.RGBA {
+	bgr := ppu.calcBgrValue()
 	spr := ppu.matchSprite()
 
 	paletteAddr := ppu.muxPixel(bgr, spr)
@@ -277,7 +284,12 @@ func (ppu *PPU) calculatePixelValue() color.RGBA {
 	return Palette[paletteAddr]
 }
 
-func (ppu *PPU) calcBackground() (bgr int) {
+// calcBgrValue calculates bgr value for current pixel.
+//
+// calcBgrValue return a nibble bgr value. The lower 2 bits (pattern) are
+// fetched from a pattern table, and the upper 2 (colour) are fetched from an
+// attribute table.
+func (ppu *PPU) calcBgrValue() (bgr int) {
 	// Add x fine scroll to ppu.x
 	scrolledX := ppu.x + ppu.Regs.xScroll
 
@@ -317,6 +329,8 @@ func (ppu *PPU) calcBackground() (bgr int) {
 	return int(bgrLow + (bgrHigh&3)<<2)
 }
 
+// getATAddr returns the base address for nametable 1~4 based on a nametable
+// number and a number representing mirroring mode.
 func getNTAddr(ntNum int, mirroring int) int {
 	// Assuming either horizontal or vertical mirroring
 	if mirroring == ines.HorizontalMirroring {
@@ -334,6 +348,8 @@ func getNTAddr(ntNum int, mirroring int) int {
 	}
 }
 
+// getPTAddr returns the base address for a pattern table according to bit 4 of
+// PPUCTRL.
 func (ppu *PPU) getPTAddr() int {
 	if int((ppu.Regs.ppuCtrl>>4)&1) == 0 {
 		return PT0Addr
@@ -342,10 +358,14 @@ func (ppu *PPU) getPTAddr() int {
 	}
 }
 
+// getATAddr returns the base address of an attribute table of a nametable,
+// based on the latter's base address.
 func getATAddr(ntAddr int) int {
 	return ntAddr + 0x3c0
 }
 
+// muxPixel multiplexes a background value and a sprite struct and returns the
+// palette address for the pixel.
 func (ppu *PPU) muxPixel(bgr int, spr sprite) (paletteAddr byte) {
 	// No sprite was found for current pixel, display background
 	if spr == nilSprite {
@@ -366,6 +386,9 @@ func (ppu *PPU) muxPixel(bgr int, spr sprite) (paletteAddr byte) {
 	return ppu.VRAM.Read(BgrPaletteAddr + bgr)
 }
 
+// shiftSprites is called once per visible cycle and shifts each sprite's x
+// coordinate by one.
+//
 // shiftSprites is implemented in a duff machine fashion for optimization
 // purposes.
 func (ppu *PPU) shiftSprites() {
@@ -493,7 +516,8 @@ func (ppu *PPU) matchSprite() sprite {
 	return nilSprite
 }
 
-func flip_byte(d byte) byte {
+// flipByte flips a byte. duh?
+func flipByte(d byte) byte {
 	d = ((d >> 1) & 0x55) | ((d & 0x55) << 1)
 	d = ((d >> 2) & 0x33) | ((d & 0x33) << 2)
 	d = ((d >> 4) & 0x0F) | ((d & 0x0F) << 4)

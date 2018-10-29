@@ -32,7 +32,7 @@ type BreakState struct {
 	Err error
 }
 
-// NES runs the CPU and PPU, providing a basic debugging API.
+// NES runs the CPU and PPU, providing a simple debugging API.
 type NES struct {
 	Breaks chan BreakState
 
@@ -42,8 +42,8 @@ type NES struct {
 	bps   breakPoints
 	instQ disass.Code
 
-	continuec chan bool
-	nextc     chan bool
+	continuec chan struct{}
+	nextc     chan struct{}
 }
 
 type Mode int
@@ -81,8 +81,8 @@ func New(rom *ines.ROM,
 
 		bps: bps,
 
-		continuec: make(chan bool),
-		nextc:     make(chan bool),
+		continuec: make(chan struct{}),
+		nextc:     make(chan struct{}),
 	}
 }
 
@@ -100,12 +100,12 @@ func (n *NES) Start() {
 
 // Continue resumes the programme's execution until the next breakpoint is hit.
 func (n *NES) Continue() {
-	n.continuec <- true
+	n.continuec <- struct{}{}
 }
 
 // Next executes the next opcode in the programme and breaks.
 func (n *NES) Next() {
-	n.nextc <- true
+	n.nextc <- struct{}{}
 }
 
 // Break adds a breakpoint at addr.

@@ -1,12 +1,10 @@
 package cmd
 
 import (
-	"net/http"
-	_ "net/http/pprof"
-
 	"github.com/m4ntis/bones/controller"
 	"github.com/m4ntis/bones/cpu"
 	"github.com/m4ntis/bones/display"
+	"github.com/m4ntis/bones/nes"
 	"github.com/spf13/cobra"
 )
 
@@ -19,15 +17,15 @@ var (
 		Short: "Run an iNES program",
 		Long:  "The run command is used to run NES roms, in iNES format.\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			go func() { http.ListenAndServe("localhost:6060", nil) }()
-
-			ctrl := &controller.Controller{}
-			d := display.New(ctrl)
 			rom := openRom(args)
-			w = cpu.NewWorker(rom, d, ctrl)
 
-			go w.Start()
-			d.Run()
+			var ctrl *controller.Controller
+			disp := display.New(ctrl)
+
+			n = nes.New(rom, disp, ctrl, nes.ModeRun)
+
+			go n.Start()
+			disp.Run()
 		},
 	}
 )

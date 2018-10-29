@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/m4ntis/bones/cpu"
-	"github.com/m4ntis/bones/dbg"
+	"github.com/m4ntis/bones/nes"
 	"github.com/m4ntis/bones/ppu"
 )
 
@@ -21,7 +21,7 @@ type dbgCommand struct {
 	name    string
 	aliases []string
 
-	cmd func(data dbg.BreakState, args []string) bool
+	cmd func(data nes.BreakState, args []string) bool
 
 	description string
 	usage       string
@@ -34,7 +34,7 @@ func createCommands() map[string]*dbgCommand {
 			name:    "break",
 			aliases: []string{"b"},
 
-			cmd: func(data dbg.BreakState, args []string) bool {
+			cmd: func(data nes.BreakState, args []string) bool {
 				if len(args) != 1 {
 					fmt.Println("break command takes exactly one argument")
 					return false
@@ -46,7 +46,7 @@ func createCommands() map[string]*dbgCommand {
 					return false
 				}
 
-				dw.Break(int(addr))
+				n.Break(int(addr))
 				fmt.Printf("Breakpoint set at $%04x\n", addr)
 
 				return false
@@ -60,8 +60,8 @@ func createCommands() map[string]*dbgCommand {
 			name:    "breakpoints",
 			aliases: []string{"bps"},
 
-			cmd: func(data dbg.BreakState, args []string) bool {
-				for _, addr := range dw.List() {
+			cmd: func(data nes.BreakState, args []string) bool {
+				for _, addr := range n.List() {
 					fmt.Printf("%04x\n", addr)
 				}
 				return false
@@ -75,7 +75,7 @@ func createCommands() map[string]*dbgCommand {
 			name:    "delete",
 			aliases: []string{"del", "d"},
 
-			cmd: func(data dbg.BreakState, args []string) bool {
+			cmd: func(data nes.BreakState, args []string) bool {
 				if len(args) != 1 {
 					fmt.Println("delete command takes exactly one argument")
 					return false
@@ -87,7 +87,7 @@ func createCommands() map[string]*dbgCommand {
 					return false
 				}
 
-				ok := dw.Delete(int(addr))
+				ok := n.Delete(int(addr))
 				if !ok {
 					fmt.Printf("There is no breakpoint set at $%04x\n", addr)
 					return false
@@ -105,8 +105,8 @@ func createCommands() map[string]*dbgCommand {
 			name:    "deleteall",
 			aliases: []string{"da"},
 
-			cmd: func(data dbg.BreakState, args []string) bool {
-				dw.DeleteAll()
+			cmd: func(data nes.BreakState, args []string) bool {
+				n.DeleteAll()
 				return false
 			},
 
@@ -118,8 +118,8 @@ func createCommands() map[string]*dbgCommand {
 			name:    "continue",
 			aliases: []string{"c"},
 
-			cmd: func(data dbg.BreakState, args []string) bool {
-				dw.Continue()
+			cmd: func(data nes.BreakState, args []string) bool {
+				n.Continue()
 				return true
 			},
 
@@ -131,8 +131,8 @@ func createCommands() map[string]*dbgCommand {
 			name:    "next",
 			aliases: []string{"n"},
 
-			cmd: func(data dbg.BreakState, args []string) bool {
-				dw.Next()
+			cmd: func(data nes.BreakState, args []string) bool {
+				n.Next()
 				return true
 			},
 
@@ -144,7 +144,7 @@ func createCommands() map[string]*dbgCommand {
 			name:    "exit",
 			aliases: []string{"quit", "q"},
 
-			cmd: func(data dbg.BreakState, args []string) bool {
+			cmd: func(data nes.BreakState, args []string) bool {
 				os.Exit(0)
 				return true
 			},
@@ -157,7 +157,7 @@ func createCommands() map[string]*dbgCommand {
 			name:    "help",
 			aliases: []string{"h", "?"},
 
-			cmd: func(data dbg.BreakState, args []string) bool {
+			cmd: func(data nes.BreakState, args []string) bool {
 				printHelp(args)
 				return false
 			},
@@ -170,7 +170,7 @@ func createCommands() map[string]*dbgCommand {
 			name:    "clear",
 			aliases: []string{},
 
-			cmd: func(data dbg.BreakState, args []string) bool {
+			cmd: func(data nes.BreakState, args []string) bool {
 				// TODO: support windows :(
 				cmd := exec.Command("clear")
 				cmd.Stdout = os.Stdout
@@ -186,7 +186,7 @@ func createCommands() map[string]*dbgCommand {
 			name:    "print",
 			aliases: []string{"p"},
 
-			cmd: func(data dbg.BreakState, args []string) bool {
+			cmd: func(data nes.BreakState, args []string) bool {
 				if len(args) != 1 {
 					fmt.Println("print command takes exactly one argument")
 					return false
@@ -213,7 +213,7 @@ func createCommands() map[string]*dbgCommand {
 			name:    "vprint",
 			aliases: []string{"vp"},
 
-			cmd: func(data dbg.BreakState, args []string) bool {
+			cmd: func(data nes.BreakState, args []string) bool {
 				if len(args) != 1 {
 					fmt.Println("vprint command takes exactly one argument")
 					return false
@@ -237,7 +237,7 @@ func createCommands() map[string]*dbgCommand {
 			name:    "regs",
 			aliases: []string{},
 
-			cmd: func(data dbg.BreakState, args []string) bool {
+			cmd: func(data nes.BreakState, args []string) bool {
 				fmt.Println(strings.Trim(fmt.Sprintf("%+v", data.Reg), "&{}"))
 				return false
 			},
@@ -250,7 +250,7 @@ func createCommands() map[string]*dbgCommand {
 			name:    "list",
 			aliases: []string{"ls"},
 
-			cmd: func(data dbg.BreakState, args []string) bool {
+			cmd: func(data nes.BreakState, args []string) bool {
 				displayBreak(data)
 				return false
 			},

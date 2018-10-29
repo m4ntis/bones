@@ -2,15 +2,12 @@ package cmd
 
 import (
 	"github.com/m4ntis/bones/controller"
-	"github.com/m4ntis/bones/cpu"
 	"github.com/m4ntis/bones/display"
 	"github.com/m4ntis/bones/nes"
 	"github.com/spf13/cobra"
 )
 
 var (
-	w *cpu.Worker
-
 	// runCmd represents the run command
 	runCmd = &cobra.Command{
 		Use:   "run",

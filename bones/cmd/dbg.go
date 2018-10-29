@@ -6,17 +6,15 @@ import (
 	"strings"
 
 	"github.com/m4ntis/bones/controller"
-	"github.com/m4ntis/bones/dbg"
 	"github.com/m4ntis/bones/display"
 	"github.com/m4ntis/bones/ines"
+	"github.com/m4ntis/bones/nes"
 	"github.com/peterh/liner"
 	"github.com/spf13/cobra"
 )
 
 var (
-	dw *dbg.Worker
-
-	breakVals chan dbg.BreakState
+	n *nes.NES
 
 	dbgCommands map[string]*dbgCommand
 	help        string
@@ -44,16 +42,16 @@ For full documentation and options run the 'help' command in the interractive
 debugger.
 `,
 		Run: func(cmd *cobra.Command, args []string) {
-			ctrl := &controller.Controller{}
-			d := display.New(ctrl)
 			rom := openRom(args)
-			breakVals = make(chan dbg.BreakState)
 
-			dw = dbg.NewWorker(rom, d, ctrl, breakVals)
+			var ctrl *controller.Controller
+			disp := display.New(ctrl)
 
-			go dw.Start()
+			n = nes.New(rom, disp, ctrl, nes.ModeDebug)
+
+			go n.Start()
 			go startInteractiveDbg()
-			d.Run()
+			disp.Run()
 		},
 	}
 )
@@ -82,13 +80,13 @@ func openRom(args []string) *ines.ROM {
 
 func startInteractiveDbg() {
 	fmt.Println("Type 'help' for list of commands.")
-	for data := range breakVals {
+	for data := range n.Breaks {
 		displayBreak(data)
 		interact(data)
 	}
 }
 
-func displayBreak(data dbg.BreakState) {
+func displayBreak(data nes.BreakState) {
 	for i, inst := range data.Code {
 		if i == data.PCIdx {
 			fmt.Printf("=> %04x: %s\n", inst.Addr, inst.Text)
@@ -102,14 +100,14 @@ func displayBreak(data dbg.BreakState) {
 	}
 }
 
-func interact(data dbg.BreakState) {
+func interact(data nes.BreakState) {
 	finished := false
 	for !finished {
 		finished = handleUserInput(data)
 	}
 }
 
-func handleUserInput(data dbg.BreakState) (finished bool) {
+func handleUserInput(data nes.BreakState) (finished bool) {
 	var input string
 	defer func() { lastInput = input }()
 

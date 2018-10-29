@@ -39,6 +39,8 @@ type NES struct {
 	c *cpu.CPU
 	p *ppu.PPU
 
+	mode Mode
+
 	bps   breakPoints
 	instQ disass.Code
 
@@ -54,6 +56,9 @@ const (
 )
 
 // New creates a runnable instance of an NES.
+//
+// mode determines whether the NES will publish breaks and errors (ModeDebug)
+// or just just run the CPU and panic on error (ModeRun).
 func New(rom *ines.ROM,
 	disp ppu.Displayer,
 	ctrl *controller.Controller,
@@ -66,20 +71,17 @@ func New(rom *ines.ROM,
 	initRAM(ram, c, p, ctrl, rom.Mapper)
 	c.ResetPC()
 
-	var bps breakPoints
-	if mode == ModeDebug {
-		bps = breakPoints{
-			c.Reg.PC: true,
-		}
-	}
-
 	return &NES{
 		Breaks: make(chan BreakState),
 
 		c: c,
 		p: p,
 
-		bps: bps,
+		mode: mode,
+
+		bps: breakPoints{
+			c.Reg.PC: true,
+		},
 
 		continuec: make(chan struct{}),
 		nextc:     make(chan struct{}),
@@ -92,6 +94,14 @@ func New(rom *ines.ROM,
 func (n *NES) Start() {
 	go n.handleNmi()
 
+	// Run without checking breakpoints
+	if n.mode == ModeRun {
+		for {
+			panicOnErr(n.execNext())
+		}
+	}
+
+	// Check for errors and breaks
 	for {
 		n.handleBps()
 		n.handleError(n.execNext())
@@ -115,12 +125,12 @@ func (n *NES) Break(addr int) {
 
 // Delete attempts to delete an existing breakpoint at an address, returning
 // whether there was a breakpoint in that address or not.
-func (n *NES) Delete(addr int) (success bool) {
-	_, success = n.bps[addr]
-	if success {
+func (n *NES) Delete(addr int) (ok bool) {
+	_, ok = n.bps[addr]
+	if ok {
 		delete(n.bps, addr)
 	}
-	return success
+	return ok
 }
 
 // DeleteAll removes all set breakpoints.
@@ -136,6 +146,25 @@ func (n *NES) List() (breaks []int) {
 		breaks = append(breaks, addr)
 	}
 	return breaks
+}
+
+func (n *NES) execNext() error {
+	// Add the next instruction to be executed immediately to queue. This is so
+	// the queue will be updated before PC is incremented to next instruction.
+	//
+	// TODO: This might be an issue if the instruction fails to execute.
+	n.addInstToQ()
+
+	cycles, err := n.c.ExecNext()
+	if err != nil {
+		return errors.Wrap(err, "Failed to execute next opcode")
+	}
+
+	for i := 0; i < cycles*3; i++ {
+		n.p.Cycle()
+	}
+
+	return nil
 }
 
 func (n *NES) handleBps() {
@@ -176,25 +205,6 @@ func (n *NES) handleNmi() {
 	}
 }
 
-func (n *NES) execNext() error {
-	// Add the next instruction to be executed immediately to queue. This is so
-	// the queue will be updated before PC is incremented to next instruction.
-	//
-	// TODO: This might be an issue if the instruction fails to execute.
-	n.addInstToQ()
-
-	cycles, err := n.c.ExecNext()
-	if err != nil {
-		return errors.Wrap(err, "Failed to execute next opcode")
-	}
-
-	for i := 0; i < cycles*3; i++ {
-		n.p.Cycle()
-	}
-
-	return nil
-}
-
 func (n *NES) handleError(err error) {
 	if err != nil {
 		n.breakOper(err)
@@ -215,4 +225,10 @@ func initRAM(ram *cpu.RAM, cpu *cpu.CPU, ppu *ppu.PPU, ctrl *controller.Controll
 	ram.PPU = ppu
 	ram.Ctrl = ctrl
 	ram.Mapper = mapper
+}
+
+func panicOnErr(err error) {
+	if err != nil {
+		panic(err)
+	}
 }

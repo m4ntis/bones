@@ -8,6 +8,11 @@ import (
 )
 
 var (
+	displayFPS bool
+	scale      float64
+)
+
+var (
 	// runCmd represents the run command
 	runCmd = &cobra.Command{
 		Use:   "run",
@@ -16,8 +21,8 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			rom := openRom(args)
 
-			var ctrl *controller.Controller
-			disp := display.New(ctrl)
+			ctrl := new(controller.Controller)
+			disp := display.New(ctrl, displayFPS, scale)
 
 			n = nes.New(rom, disp, ctrl, nes.ModeRun)
 
@@ -29,6 +34,11 @@ var (
 
 func init() {
 	rootCmd.AddCommand(runCmd)
+
+	flags := runCmd.Flags()
+
+	flags.BoolVar(&displayFPS, "display-fps", false, "Display small FPS counter")
+	flags.Float64VarP(&scale, "scale", "s", 4.0, "Set display scaling (240x256 * scale)")
 
 	// Make bones run's usage be 'bones run <romname>.nes'
 	runCmd.SetUsageTemplate(`Usage:
@@ -54,5 +64,4 @@ Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
 
 Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
 `)
-
 }

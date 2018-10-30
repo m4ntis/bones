@@ -44,8 +44,8 @@ debugger.
 		Run: func(cmd *cobra.Command, args []string) {
 			rom := openRom(args)
 
-			var ctrl *controller.Controller
-			disp := display.New(ctrl)
+			ctrl := new(controller.Controller)
+			disp := display.New(ctrl, false, 4.0)
 
 			n = nes.New(rom, disp, ctrl, nes.ModeDebug)
 

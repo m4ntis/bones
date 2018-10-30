@@ -65,7 +65,7 @@ func New(rom *ines.ROM,
 	mode Mode) *NES {
 
 	p := ppu.New(rom.Header.Mirroring, rom.Mapper, disp)
-	var ram *cpu.RAM
+	ram := new(cpu.RAM)
 	c := cpu.New(ram)
 
 	initRAM(ram, c, p, ctrl, rom.Mapper)
@@ -220,9 +220,9 @@ func (n *NES) addInstToQ() {
 	}
 }
 
-func initRAM(ram *cpu.RAM, cpu *cpu.CPU, ppu *ppu.PPU, ctrl *controller.Controller, mapper mapper.Mapper) {
-	ram.CPU = cpu
-	ram.PPU = ppu
+func initRAM(ram *cpu.RAM, c *cpu.CPU, p *ppu.PPU, ctrl *controller.Controller, mapper mapper.Mapper) {
+	ram.CPU = c
+	ram.PPU = p
 	ram.Ctrl = ctrl
 	ram.Mapper = mapper
 }

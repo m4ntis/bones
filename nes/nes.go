@@ -34,12 +34,16 @@ type BreakState struct {
 
 // NES runs the CPU and PPU, providing a simple debugging API.
 type NES struct {
-	Breaks chan BreakState
-
 	c *cpu.CPU
 	p *ppu.PPU
 
+	running bool
+	stopc   chan struct{}
+
 	mode Mode
+
+	// Mode debug related NES state
+	Breaks chan BreakState
 
 	bps   breakPoints
 	instQ disass.Code
@@ -48,6 +52,7 @@ type NES struct {
 	nextc     chan struct{}
 }
 
+// Mode represents CPU running type (run/debug)
 type Mode int
 
 const (
@@ -72,12 +77,14 @@ func New(rom *ines.ROM,
 	c.ResetPC()
 
 	return &NES{
-		Breaks: make(chan BreakState),
-
 		c: c,
 		p: p,
 
+		running: false,
+
 		mode: mode,
+
+		Breaks: make(chan BreakState),
 
 		bps: breakPoints{
 			c.Reg.PC: true,
@@ -88,23 +95,53 @@ func New(rom *ines.ROM,
 	}
 }
 
-// Start starts running the NES.
+// Start starts running the NES until Stop is called.
 //
 // Start is blocking and should be run in a goroutine of it's own.
 func (n *NES) Start() {
+	n.stopc = make(chan struct{})
+	n.running = true
+
 	go n.handleNmi()
 
-	// Run without checking breakpoints
 	if n.mode == ModeRun {
-		for {
+		n.startRun()
+		return
+	}
+
+	n.startDebug()
+}
+
+// Stop sends a signal to stop the cpu on the next cycle.
+func (n *NES) Stop() {
+	if n.running {
+		close(n.stopc)
+		n.running = false
+	}
+}
+
+// startRun runs the CPU without checking breakpoints or errors.
+func (n *NES) startRun() {
+	for {
+		select {
+		case <-n.stopc:
+			return
+		default:
 			panicOnErr(n.execNext())
 		}
 	}
+}
 
-	// Check for errors and breaks
+// startDebug checks for breakpoints and publishes errors after each cycle.
+func (n *NES) startDebug() {
 	for {
-		n.handleBps()
-		n.handleError(n.execNext())
+		select {
+		case <-n.stopc:
+			return
+		default:
+			n.handleBps()
+			n.handleError(n.execNext())
+		}
 	}
 }
 
@@ -119,6 +156,8 @@ func (n *NES) Next() {
 }
 
 // Break adds a breakpoint at addr.
+//
+// Note that breakpoint hitting won't be checked if the NES was run in ModeRun.
 func (n *NES) Break(addr int) {
 	n.bps[addr] = true
 }
@@ -200,8 +239,13 @@ func (n *NES) breakOper(err error) {
 }
 
 func (n *NES) handleNmi() {
-	for <-n.p.NMI {
-		n.c.NMI()
+	for {
+		select {
+		case <-n.p.NMI:
+			n.c.NMI()
+		case <-n.stopc:
+			return
+		}
 	}
 }
 

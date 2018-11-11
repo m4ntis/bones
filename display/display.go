@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/faiface/pixel"
+	"github.com/faiface/pixel/imdraw"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/faiface/pixel/text"
 	"github.com/m4ntis/bones/controller"
@@ -86,11 +87,12 @@ func (d *Display) run() {
 
 func (d *Display) runWithFPS(win *pixelgl.Window, center pixel.Vec) {
 	fpsTxt := initTxt()
+	fpsTxtBgr := initTxtRect()
 
 	for !win.Closed() {
 		d.updateFPS(fpsTxt)
 		d.updateCtrl(win)
-		d.displayNextFrameWithFPS(win, center, fpsTxt)
+		d.displayNextFrameWithFPS(win, center, fpsTxt, fpsTxtBgr)
 	}
 }
 
@@ -167,7 +169,7 @@ func (d *Display) displayNextFrame(win *pixelgl.Window, center pixel.Vec) {
 }
 
 func (d *Display) displayNextFrameWithFPS(win *pixelgl.Window, center pixel.Vec,
-	fpsTxt *text.Text) {
+	fpsTxt *text.Text, fpsTxtBgr *imdraw.IMDraw) {
 
 	img := <-d.imgc
 
@@ -175,8 +177,11 @@ func (d *Display) displayNextFrameWithFPS(win *pixelgl.Window, center pixel.Vec,
 	s := pixel.NewSprite(p, p.Bounds())
 
 	win.Clear(colornames.White)
+
 	s.Draw(win, pixel.IM.Moved(center).Scaled(center, d.scale))
+	fpsTxtBgr.Draw(win)
 	fpsTxt.Draw(win, pixel.IM)
+
 	win.Update()
 }
 
@@ -196,9 +201,19 @@ func (d *Display) createWindow() *pixelgl.Window {
 }
 
 func initTxt() *text.Text {
-	txt := text.New(pixel.V(20, 20),
+	txt := text.New(pixel.V(3, 5),
 		text.NewAtlas(basicfont.Face7x13, text.ASCII))
 	txt.Color = pixel.RGB(200, 0, 0)
 
 	return txt
+}
+
+func initTxtRect() *imdraw.IMDraw {
+	fpsTxtBgr := imdraw.New(nil)
+	fpsTxtBgr.Push(pixel.V(0, 0))
+	fpsTxtBgr.Push(pixel.V(20, 20))
+	fpsTxtBgr.Color = pixel.RGB(1, 1, 1)
+	fpsTxtBgr.Rectangle(0)
+
+	return fpsTxtBgr
 }

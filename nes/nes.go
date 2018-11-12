@@ -7,7 +7,6 @@ import (
 	"github.com/m4ntis/bones/cpu"
 	"github.com/m4ntis/bones/disass"
 	"github.com/m4ntis/bones/ines"
-	"github.com/m4ntis/bones/ines/mapper"
 	"github.com/m4ntis/bones/ppu"
 	"github.com/pkg/errors"
 )
@@ -64,17 +63,9 @@ const (
 //
 // mode determines whether the NES will publish breaks and errors (ModeDebug)
 // or just just run the CPU and panic on error (ModeRun).
-func New(rom *ines.ROM,
-	disp ppu.Displayer,
-	ctrl *controller.Controller,
-	mode Mode) *NES {
-
-	p := ppu.New(rom.Header.Mirroring, rom.Mapper, disp)
-	ram := new(cpu.RAM)
-	c := cpu.New(ram)
-
-	initRAM(ram, c, p, ctrl, rom.Mapper)
-	c.ResetPC()
+func New(disp ppu.Displayer, ctrl *controller.Controller, mode Mode) *NES {
+	p := ppu.New(disp)
+	c := cpu.New(p, ctrl)
 
 	return &NES{
 		c: c,
@@ -98,7 +89,10 @@ func New(rom *ines.ROM,
 // Start starts running the NES until Stop is called.
 //
 // Start is blocking and should be run in a goroutine of it's own.
-func (n *NES) Start() {
+func (n *NES) Start(rom *ines.ROM) {
+	n.p.ConnectROM(rom)
+	n.c.ConnectROM(rom)
+
 	n.stopc = make(chan struct{})
 	n.running = true
 
@@ -110,14 +104,6 @@ func (n *NES) Start() {
 	}
 
 	n.startDebug()
-}
-
-// Stop sends a signal to stop the cpu on the next cycle.
-func (n *NES) Stop() {
-	if n.running {
-		close(n.stopc)
-		n.running = false
-	}
 }
 
 // startRun runs the CPU without checking breakpoints or errors.
@@ -142,6 +128,14 @@ func (n *NES) startDebug() {
 			n.handleBps()
 			n.handleError(n.execNext())
 		}
+	}
+}
+
+// Stop sends a signal to stop the cpu on the next cycle.
+func (n *NES) Stop() {
+	if n.running {
+		close(n.stopc)
+		n.running = false
 	}
 }
 
@@ -262,13 +256,6 @@ func (n *NES) addInstToQ() {
 	if len(n.instQ) > instHistorySize {
 		n.instQ = n.instQ[1:]
 	}
-}
-
-func initRAM(ram *cpu.RAM, c *cpu.CPU, p *ppu.PPU, ctrl *controller.Controller, mapper mapper.Mapper) {
-	ram.CPU = c
-	ram.PPU = p
-	ram.Ctrl = ctrl
-	ram.Mapper = mapper
 }
 
 func panicOnErr(err error) {

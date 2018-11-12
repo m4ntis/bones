@@ -24,9 +24,9 @@ var (
 			ctrl := new(controller.Controller)
 			disp := display.New(ctrl, displayFPS, scale)
 
-			n = nes.New(rom, disp, ctrl, nes.ModeRun)
+			n = nes.New(disp, ctrl, nes.ModeRun)
 
-			go n.Start()
+			go n.Start(rom)
 			disp.Run()
 		},
 	}

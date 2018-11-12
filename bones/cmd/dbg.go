@@ -47,9 +47,9 @@ debugger.
 			ctrl := new(controller.Controller)
 			disp := display.New(ctrl, false, 4.0)
 
-			n = nes.New(rom, disp, ctrl, nes.ModeDebug)
+			n = nes.New(disp, ctrl, nes.ModeDebug)
 
-			go n.Start()
+			go n.Start(rom)
 			go startInteractiveDbg()
 			disp.Run()
 		},

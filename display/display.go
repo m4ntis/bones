@@ -21,7 +21,7 @@ var (
 	height = 240
 )
 
-// Display is BoNES' implementation of a simple OpenGL PPU display.
+// Display implements a simple OpenGL PPU display.
 type Display struct {
 	imgc chan image.Image
 
@@ -71,9 +71,6 @@ func (d *Display) Run() {
 }
 
 func (d *Display) run() {
-	d.lastFPSUpdate = time.Now()
-	d.frameCount = 0
-
 	win := d.createWindow()
 	center := win.Bounds().Center()
 
@@ -86,6 +83,9 @@ func (d *Display) run() {
 }
 
 func (d *Display) runWithFPS(win *pixelgl.Window, center pixel.Vec) {
+	d.lastFPSUpdate = time.Now()
+	d.frameCount = 0
+
 	fpsTxt := initTxt()
 	fpsTxtBgr := initTxtRect()
 

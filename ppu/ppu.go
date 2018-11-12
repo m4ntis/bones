@@ -6,7 +6,6 @@ import (
 	"image/color"
 
 	"github.com/m4ntis/bones/ines"
-	"github.com/m4ntis/bones/ines/mapper"
 )
 
 // Displayer describes a place that the PPU outputs its frames to.
@@ -57,11 +56,8 @@ type PPU struct {
 // NMI is the channel on which the PPU publishes NMIs.
 //
 // disp is the where the PPU outputs its frames.
-func New(mirror int, romMapper mapper.Mapper, disp Displayer) *PPU {
-	vram := &VRAM{
-		Mapper: romMapper,
-	}
-
+func New(disp Displayer) *PPU {
+	vram := &VRAM{}
 	oam := &OAM{}
 	soam := &secondaryOAM{}
 
@@ -75,13 +71,18 @@ func New(mirror int, romMapper mapper.Mapper, disp Displayer) *PPU {
 		sOAM:    soam,
 		sprites: [8]sprite{},
 
-		mirror: mirror,
-
 		NMI: nmi,
 
 		frame: newFrame(),
 		disp:  disp,
 	}
+}
+
+// ConnectROM connects a CPU's RAM to a ROM mapper and inits the CPU's PC to the
+// ROM's reset vector.
+func (ppu *PPU) ConnectROM(rom *ines.ROM) {
+	ppu.VRAM.Mapper = rom.Mapper
+	ppu.mirror = rom.Header.Mirroring
 }
 
 //TODO: Take note of oamaddr

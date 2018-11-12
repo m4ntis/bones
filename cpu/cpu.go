@@ -1,7 +1,12 @@
 // Package cpu provides an api for the mos 6502
 package cpu
 
-import "github.com/pkg/errors"
+import (
+	"github.com/m4ntis/bones/controller"
+	"github.com/m4ntis/bones/ines"
+	"github.com/m4ntis/bones/ppu"
+	"github.com/pkg/errors"
+)
 
 // CPU implements the mos 6502.
 //
@@ -25,8 +30,10 @@ type CPU struct {
 // ram is passed to the CPU instead of initialized within, as it is shared with
 // other components via memory mapped i/o. It is the caller's responsibility to
 // initialize and pass it to the other parts of the NES.
-func New(ram *RAM) *CPU {
-	return &CPU{
+func New(p *ppu.PPU, ctrl *controller.Controller) *CPU {
+	ram := &RAM{}
+
+	c := &CPU{
 		RAM: ram,
 		Reg: &Registers{},
 
@@ -34,13 +41,24 @@ func New(ram *RAM) *CPU {
 		nmi:   false,
 		reset: false,
 	}
+
+	ram.CPU = c
+	ram.PPU = p
+	ram.Ctrl = ctrl
+
+	return c
 }
 
-// ResetPC sets the pc to the reset handler addr
-//
-// TODO: Make sure ram is initialized before reseting PC
-func (cpu *CPU) ResetPC() {
-	cpu.Reg.PC = int(cpu.RAM.MustRead(0xfffc)) | int(cpu.RAM.MustRead(0xfffd))<<8
+// ConnectROM connects a CPU's RAM to a ROM mapper and inits the CPU's PC to the
+// ROM's reset vector.
+func (cpu *CPU) ConnectROM(rom *ines.ROM) {
+	cpu.RAM.Mapper = rom.Mapper
+	cpu.resetPC()
+}
+
+func (cpu *CPU) resetPC() {
+	cpu.Reg.PC = int(cpu.RAM.MustRead(0xfffc)) |
+		int(cpu.RAM.MustRead(0xfffd))<<8
 }
 
 // TODO: You'd think that cycles should be internal to the CPU... I should

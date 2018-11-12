@@ -1,39 +1,44 @@
 package cmd
 
 import (
-	"net/http"
-	_ "net/http/pprof"
-
 	"github.com/m4ntis/bones/controller"
-	"github.com/m4ntis/bones/cpu"
 	"github.com/m4ntis/bones/display"
+	"github.com/m4ntis/bones/nes"
 	"github.com/spf13/cobra"
 )
 
 var (
-	w *cpu.Worker
+	displayFPS bool
+	scale      float64
+)
 
+var (
 	// runCmd represents the run command
 	runCmd = &cobra.Command{
 		Use:   "run",
 		Short: "Run an iNES program",
 		Long:  "The run command is used to run NES roms, in iNES format.\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			go func() { http.ListenAndServe("localhost:6060", nil) }()
-
-			ctrl := &controller.Controller{}
-			d := display.New(ctrl)
 			rom := openRom(args)
-			w = cpu.NewWorker(rom, d, ctrl)
 
-			go w.Start()
-			d.Run()
+			ctrl := new(controller.Controller)
+			disp := display.New(ctrl, displayFPS, scale)
+
+			n = nes.New(disp, ctrl, nes.ModeRun)
+
+			go n.Start(rom)
+			disp.Run()
 		},
 	}
 )
 
 func init() {
 	rootCmd.AddCommand(runCmd)
+
+	flags := runCmd.Flags()
+
+	flags.BoolVar(&displayFPS, "display-fps", false, "Display small FPS counter")
+	flags.Float64VarP(&scale, "scale", "s", 4.0, "Set display scaling (240x256 * scale)")
 
 	// Make bones run's usage be 'bones run <romname>.nes'
 	runCmd.SetUsageTemplate(`Usage:
@@ -59,5 +64,4 @@ Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
 
 Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
 `)
-
 }

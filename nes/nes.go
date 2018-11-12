@@ -72,11 +72,9 @@ func New(disp ppu.Displayer, ctrl *controller.Controller, mode Mode) *NES {
 		p: p,
 
 		running: false,
-
-		mode: mode,
+		mode:    mode,
 
 		Breaks: make(chan BreakState),
-
 		bps: breakPoints{
 			c.Reg.PC: true,
 		},

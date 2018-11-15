@@ -2,107 +2,110 @@
 // controlling and reading its state
 package controller
 
+type button byte
+
 const (
-	ButtonReleased = 0
-	ButtonPressed  = 1
+	released button = iota
+	pressed
 )
 
-// Controller can be pressed on the one hand, maintain its state and be strobed
-// and read on the other.
+// Controller implements the NES controller, providing an API both for button
+// manipulation as well as reading it's state by the NES.
 type Controller struct {
-	aState byte
-	bState byte
+	a button
+	b button
 
-	selectState byte
-	startState  byte
+	sel   button
+	start button
 
-	upState    byte
-	downState  byte
-	leftState  byte
-	rightState byte
+	up    button
+	down  button
+	left  button
+	right button
 
 	readCount int
-	strobe    byte
 }
 
+// Strobe is called by the CPU to reset the controller's internal read counter.
 func (c *Controller) Strobe(s byte) {
-	c.strobe = s
 	if s == 0 {
 		c.readCount = 0
 	}
 }
 
+// Read returns buttpon state determined by read count. Each Read increments
+// internal read count by 1.
 func (c *Controller) Read() byte {
 	defer func() { c.readCount++ }()
 
 	if c.readCount == 0 {
-		return c.aState
+		return byte(c.a)
 	} else if c.readCount == 1 {
-		return c.bState
+		return byte(c.b)
 	} else if c.readCount == 2 {
-		return c.selectState
+		return byte(c.sel)
 	} else if c.readCount == 3 {
-		return c.startState
+		return byte(c.start)
 	} else if c.readCount == 4 {
-		return c.upState
+		return byte(c.up)
 	} else if c.readCount == 5 {
-		return c.downState
+		return byte(c.down)
 	} else if c.readCount == 6 {
-		return c.leftState
+		return byte(c.left)
 	} else if c.readCount == 7 {
-		return c.rightState
+		return byte(c.right)
 	}
 
 	return 1
 }
 
 func (c *Controller) PressA() {
-	c.aState = ButtonPressed
+	c.a = pressed
 }
 func (c *Controller) ReleaseA() {
-	c.aState = ButtonReleased
+	c.a = released
 }
 func (c *Controller) PressB() {
-	c.bState = ButtonPressed
+	c.b = pressed
 }
 func (c *Controller) ReleaseB() {
-	c.bState = ButtonReleased
+	c.b = released
 }
 
 func (c *Controller) PressSelect() {
-	c.selectState = ButtonPressed
+	c.sel = pressed
 }
 func (c *Controller) ReleaseSelect() {
-	c.selectState = ButtonReleased
+	c.sel = released
 }
 func (c *Controller) PressStart() {
-	c.startState = ButtonPressed
+	c.start = pressed
 }
 func (c *Controller) ReleaseStart() {
-	c.startState = ButtonReleased
+	c.start = released
 }
 
 func (c *Controller) PressUp() {
-	c.upState = ButtonPressed
+	c.up = pressed
 }
 func (c *Controller) ReleaseUp() {
-	c.upState = ButtonReleased
+	c.up = released
 }
 func (c *Controller) PressDown() {
-	c.downState = ButtonPressed
+	c.down = pressed
 }
 func (c *Controller) ReleaseDown() {
-	c.downState = ButtonReleased
+	c.down = released
 }
 func (c *Controller) PressLeft() {
-	c.leftState = ButtonPressed
+	c.left = pressed
 }
 func (c *Controller) ReleaseLeft() {
-	c.leftState = ButtonReleased
+	c.left = released
 }
 func (c *Controller) PressRight() {
-	c.rightState = ButtonPressed
+	c.right = pressed
 }
 func (c *Controller) ReleaseRight() {
-	c.rightState = ButtonReleased
+	c.right = released
 }

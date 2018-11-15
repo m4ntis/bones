@@ -1,4 +1,4 @@
-package mapper
+package ines
 
 import "github.com/pkg/errors"
 

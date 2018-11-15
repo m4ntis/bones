@@ -1,6 +1,6 @@
 package ppu
 
-import "github.com/m4ntis/bones/ines/mapper"
+import "github.com/m4ntis/bones/ines"
 
 const (
 	RAMSize = 0x10000
@@ -30,7 +30,7 @@ const (
 type VRAM struct {
 	data [RAMSize]byte
 
-	Mapper mapper.Mapper
+	Mapper ines.Mapper
 }
 
 // stripMirror returns the underlying address after mirroring.

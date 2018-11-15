@@ -1,4 +1,4 @@
-package mapper
+package ines
 
 import (
 	"github.com/pkg/errors"
@@ -21,19 +21,18 @@ type Mapper interface {
 	Observe(addr int) (byte, error)
 
 	Populate([]PrgROMPage, []ChrROMPage)
-
 	GetPRGRom() []PrgROMPage
 
 	SetSram(bool)
 }
 
-func New(num int) (mapper Mapper, err error) {
-	mapper, ok := mappers[num]
+func NewMapper(num int) (Mapper, error) {
+	m, ok := mappers[num]
 	if !ok {
-		return nil, errors.Errorf("iNes Mapper %d not implemented yet", num)
+		return nil, errors.Errorf("iNes Mapper %d not yet implemented", num)
 	}
 
-	return mapper, nil
+	return m, nil
 }
 
 var mappers = map[int]Mapper{

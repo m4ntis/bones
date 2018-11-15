@@ -1,7 +1,7 @@
 package cpu
 
 import (
-	"github.com/m4ntis/bones/ines/mapper"
+	"github.com/m4ntis/bones/ines"
 	"github.com/m4ntis/bones/io"
 	"github.com/m4ntis/bones/ppu"
 	"github.com/pkg/errors"
@@ -42,7 +42,7 @@ const (
 type RAM struct {
 	data [RAMSize]byte
 
-	Mapper mapper.Mapper
+	Mapper ines.Mapper
 
 	CPU  *CPU
 	PPU  *ppu.PPU

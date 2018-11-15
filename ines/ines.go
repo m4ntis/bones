@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"io"
 
-	"github.com/m4ntis/bones/ines/mapper"
 	"github.com/pkg/errors"
 )
 
@@ -117,7 +116,7 @@ func Parse(r io.Reader) (rom *ROM, err error) {
 		return nil, errors.Wrap(err, "Error while parsing iNes header")
 	}
 
-	romMapper, err := mapper.New(header.MapperNumber)
+	romMapper, err := NewMapper(header.MapperNumber)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error while parsing iNes rom")
 	}
@@ -126,8 +125,8 @@ func Parse(r io.Reader) (rom *ROM, err error) {
 
 	// Calculate ROM size and read it
 	trainerSize := header.Trainer * TrainerSize
-	prgROMSize := header.PrgROMSize * mapper.PrgROMPageSize
-	chrROMSize := header.ChrROMSize * mapper.ChrROMPageSize
+	prgROMSize := header.PrgROMSize * PrgROMPageSize
+	chrROMSize := header.ChrROMSize * ChrROMPageSize
 	romSize := trainerSize + prgROMSize + chrROMSize
 
 	romBuff := make([]byte, romSize)
@@ -142,18 +141,18 @@ func Parse(r io.Reader) (rom *ROM, err error) {
 	var trainer Trainer
 	copy(trainer[:], romBuff[:trainerSize])
 
-	prgROM := make([]mapper.PrgROMPage, header.PrgROMSize)
+	prgROM := make([]PrgROMPage, header.PrgROMSize)
 	for i := range prgROM {
-		startIndex := trainerSize + i*mapper.PrgROMPageSize
+		startIndex := trainerSize + i*PrgROMPageSize
 		copy(prgROM[i][:],
-			romBuff[startIndex:startIndex+mapper.PrgROMPageSize])
+			romBuff[startIndex:startIndex+PrgROMPageSize])
 	}
 
-	chrROM := make([]mapper.ChrROMPage, header.ChrROMSize)
+	chrROM := make([]ChrROMPage, header.ChrROMSize)
 	for i := range chrROM {
-		startIndex := trainerSize + prgROMSize + i*mapper.ChrROMPageSize
+		startIndex := trainerSize + prgROMSize + i*ChrROMPageSize
 		copy(chrROM[i][:],
-			romBuff[startIndex:startIndex+mapper.ChrROMPageSize])
+			romBuff[startIndex:startIndex+ChrROMPageSize])
 	}
 
 	romMapper.Populate(prgROM, chrROM)

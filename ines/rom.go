@@ -1,7 +1,5 @@
 package ines
 
-import "github.com/m4ntis/bones/ines/mapper"
-
 const (
 	TrainerSize = 512
 )
@@ -14,5 +12,5 @@ type ROM struct {
 	Header INESHeader
 
 	Trainer Trainer
-	Mapper  mapper.Mapper
+	Mapper  Mapper
 }

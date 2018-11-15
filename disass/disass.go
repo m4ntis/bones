@@ -6,7 +6,6 @@ import (
 
 	"github.com/m4ntis/bones/cpu"
 	"github.com/m4ntis/bones/ines"
-	"github.com/m4ntis/bones/ines/mapper"
 )
 
 // Instruction represents a single logical instruction in an NES rom.
@@ -80,7 +79,7 @@ func DisassembleRAM(ram *cpu.RAM, addr, count int) Code {
 	return code
 }
 
-func genContiguousAsm(prgROM []mapper.PrgROMPage) []byte {
+func genContiguousAsm(prgROM []ines.PrgROMPage) []byte {
 	asm := make([]byte, 0)
 
 	for _, page := range prgROM {
@@ -94,7 +93,7 @@ func disassemble(asm []byte) Code {
 
 	// If only single page of prg rom, it is loaded to $c000 instead of the
 	// usual $8000
-	if len(asm) == mapper.PrgROMPageSize {
+	if len(asm) == ines.PrgROMPageSize {
 		loadAddr = 0xc000
 	}
 

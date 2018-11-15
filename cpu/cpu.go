@@ -1,4 +1,4 @@
-// Package cpu provides an api for the mos 6502
+// Package cpu provides an API for executing MOS 6502's instructions
 package cpu
 
 import (
@@ -6,6 +6,12 @@ import (
 	"github.com/m4ntis/bones/ines"
 	"github.com/m4ntis/bones/ppu"
 	"github.com/pkg/errors"
+)
+
+const (
+	NMIVector   = 0xfffa
+	ResetVector = 0xfffc
+	IRQVector   = 0xfffe
 )
 
 // CPU implements the mos 6502.
@@ -54,11 +60,6 @@ func New(p *ppu.PPU, ctrl *controller.Controller) *CPU {
 func (cpu *CPU) ConnectROM(rom *ines.ROM) {
 	cpu.RAM.Mapper = rom.Mapper
 	cpu.resetPC()
-}
-
-func (cpu *CPU) resetPC() {
-	cpu.Reg.PC = int(cpu.RAM.MustRead(0xfffc)) |
-		int(cpu.RAM.MustRead(0xfffd))<<8
 }
 
 // TODO: You'd think that cycles should be internal to the CPU... I should
@@ -118,16 +119,22 @@ func (cpu *CPU) ExecNext() (cycles int, err error) {
 	return cycles, nil
 }
 
+// resetPC sets the cpu's PC to the reset vector.
+func (cpu *CPU) resetPC() {
+	cpu.Reg.PC = int(cpu.RAM.MustRead(ResetVector)) |
+		int(cpu.RAM.MustRead(ResetVector+1))<<8
+}
+
 // TODO: Make interrupt handlers constant
 func (cpu *CPU) handleInterrupts() {
 	if cpu.reset {
-		cpu.interrupt(0xfffc)
+		cpu.interrupt(ResetVector)
 		cpu.reset = false
 	} else if cpu.nmi {
-		cpu.interrupt(0xfffa)
+		cpu.interrupt(NMIVector)
 		cpu.nmi = false
 	} else if cpu.irq {
-		cpu.interrupt(0xfffe)
+		cpu.interrupt(IRQVector)
 		cpu.irq = false
 	}
 }

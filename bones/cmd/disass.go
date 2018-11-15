@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/m4ntis/bones/disass"
+	"github.com/m4ntis/bones/asm"
 	"github.com/m4ntis/bones/ines"
 	"github.com/spf13/cobra"
 )
@@ -33,7 +33,7 @@ var disassCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		d := disass.DisassembleROM(rom)
+		d := asm.DisassembleROM(rom)
 		for _, inst := range d.Code {
 			fmt.Printf("%04x: %s\n", inst.Addr, inst.Text)
 		}

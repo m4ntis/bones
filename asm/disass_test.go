@@ -1,4 +1,4 @@
-package disass
+package asm
 
 import (
 	"fmt"

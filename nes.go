@@ -3,8 +3,8 @@
 package bones
 
 import (
+	"github.com/m4ntis/bones/asm"
 	"github.com/m4ntis/bones/cpu"
-	"github.com/m4ntis/bones/disass"
 	"github.com/m4ntis/bones/ines"
 	"github.com/m4ntis/bones/io"
 	"github.com/m4ntis/bones/ppu"
@@ -25,7 +25,7 @@ type BreakState struct {
 	RAM  *cpu.RAM
 	VRAM *ppu.VRAM
 
-	Code  disass.Code
+	Code  asm.Code
 	PCIdx int
 
 	Err error
@@ -45,7 +45,7 @@ type NES struct {
 	Breaks chan BreakState
 
 	bps   breakPoints
-	instQ disass.Code
+	instQ asm.Code
 
 	continuec chan struct{}
 	nextc     chan struct{}
@@ -215,7 +215,7 @@ func (n *NES) breakOper(err error) {
 			VRAM: n.p.VRAM,
 
 			Code: append(n.instQ,
-				disass.DisassembleRAM(n.c.RAM, n.c.Reg.PC, instFutureSize+1)...),
+				asm.DisassembleRAM(n.c.RAM, n.c.Reg.PC, instFutureSize+1)...),
 			PCIdx: len(n.instQ),
 
 			Err: err,
@@ -250,7 +250,7 @@ func (n *NES) handleError(err error) {
 
 func (n *NES) addInstToQ() {
 	// TODO: This is extremly inefficient
-	n.instQ = append(n.instQ, disass.DisassembleRAM(n.c.RAM, n.c.Reg.PC, 1)[0])
+	n.instQ = append(n.instQ, asm.DisassembleRAM(n.c.RAM, n.c.Reg.PC, 1)[0])
 
 	if len(n.instQ) > instHistorySize {
 		n.instQ = n.instQ[1:]

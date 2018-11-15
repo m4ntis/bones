@@ -1,5 +1,5 @@
-// Package disass provides simple disassembly fucntionality for NES roms
-package disass
+// Package asm provides disassembly fucntionality for NES roms
+package asm
 
 import (
 	"fmt"

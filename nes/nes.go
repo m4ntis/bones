@@ -1,5 +1,5 @@
-// package nes implements a worker that runs the NES and provdes an API for
-// breaking and debugging.
+// Package nes implements a worker that runs the NES and provides an API for
+// breaking and debugging it's CPU.
 package nes
 
 import (
@@ -75,9 +75,6 @@ func New(disp ppu.Displayer, ctrl *controller.Controller, mode Mode) *NES {
 		mode:    mode,
 
 		Breaks: make(chan BreakState),
-		bps: breakPoints{
-			c.Reg.PC: true,
-		},
 
 		continuec: make(chan struct{}),
 		nextc:     make(chan struct{}),
@@ -118,6 +115,10 @@ func (n *NES) startRun() {
 
 // startDebug checks for breakpoints and publishes errors after each cycle.
 func (n *NES) startDebug() {
+	n.bps = breakPoints{
+		n.c.Reg.PC: true,
+	}
+
 	for {
 		select {
 		case <-n.stopc:

@@ -1,9 +1,9 @@
 package cmd
 
 import (
+	"github.com/m4ntis/bones"
 	"github.com/m4ntis/bones/controller"
 	"github.com/m4ntis/bones/display"
-	"github.com/m4ntis/bones/nes"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +24,7 @@ var (
 			ctrl := new(controller.Controller)
 			disp := display.New(ctrl, displayFPS, scale)
 
-			n = nes.New(disp, ctrl, nes.ModeRun)
+			n = bones.New(disp, ctrl, bones.ModeRun)
 
 			go n.Start(rom)
 			disp.Run()
@@ -37,8 +37,10 @@ func init() {
 
 	flags := runCmd.Flags()
 
-	flags.BoolVar(&displayFPS, "display-fps", false, "Display small FPS counter")
-	flags.Float64VarP(&scale, "scale", "s", 4.0, "Set display scaling (240x256 * scale)")
+	flags.BoolVar(&displayFPS, "display-fps",
+		false, "Display small FPS counter")
+	flags.Float64VarP(&scale, "scale", "s", 4.0,
+		"Set display scaling (240x256 * scale)")
 
 	// Make bones run's usage be 'bones run <romname>.nes'
 	runCmd.SetUsageTemplate(`Usage:

@@ -5,16 +5,16 @@ import (
 	"os"
 	"strings"
 
+	"github.com/m4ntis/bones"
 	"github.com/m4ntis/bones/controller"
 	"github.com/m4ntis/bones/display"
 	"github.com/m4ntis/bones/ines"
-	"github.com/m4ntis/bones/nes"
 	"github.com/peterh/liner"
 	"github.com/spf13/cobra"
 )
 
 var (
-	n *nes.NES
+	n *bones.NES
 
 	dbgCommands map[string]*dbgCommand
 	help        string
@@ -47,7 +47,7 @@ debugger.
 			ctrl := new(controller.Controller)
 			disp := display.New(ctrl, false, 4.0)
 
-			n = nes.New(disp, ctrl, nes.ModeDebug)
+			n = bones.New(disp, ctrl, bones.ModeDebug)
 
 			go n.Start(rom)
 			go startInteractiveDbg()
@@ -86,7 +86,7 @@ func startInteractiveDbg() {
 	}
 }
 
-func displayBreak(data nes.BreakState) {
+func displayBreak(data bones.BreakState) {
 	for i, inst := range data.Code {
 		if i == data.PCIdx {
 			fmt.Printf("=> %04x: %s\n", inst.Addr, inst.Text)
@@ -100,14 +100,14 @@ func displayBreak(data nes.BreakState) {
 	}
 }
 
-func interact(data nes.BreakState) {
+func interact(data bones.BreakState) {
 	finished := false
 	for !finished {
 		finished = handleUserInput(data)
 	}
 }
 
-func handleUserInput(data nes.BreakState) (finished bool) {
+func handleUserInput(data bones.BreakState) (finished bool) {
 	var input string
 	defer func() { lastInput = input }()
 

@@ -1,6 +1,6 @@
-// Package nes implements a worker that runs the NES and provides an API for
+// Package bones implements a worker that runs the NES and provides an API for
 // breaking and debugging it's CPU.
-package nes
+package bones
 
 import (
 	"github.com/m4ntis/bones/controller"

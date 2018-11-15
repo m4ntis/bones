@@ -1,8 +1,8 @@
 package cpu
 
 import (
-	"github.com/m4ntis/bones/controller"
 	"github.com/m4ntis/bones/ines/mapper"
+	"github.com/m4ntis/bones/io"
 	"github.com/m4ntis/bones/ppu"
 	"github.com/pkg/errors"
 )
@@ -46,7 +46,7 @@ type RAM struct {
 
 	CPU  *CPU
 	PPU  *ppu.PPU
-	Ctrl *controller.Controller
+	Ctrl *io.Controller
 }
 
 // stripMirror returns the underlying address after mirroring.

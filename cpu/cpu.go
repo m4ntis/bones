@@ -2,8 +2,8 @@
 package cpu
 
 import (
-	"github.com/m4ntis/bones/controller"
 	"github.com/m4ntis/bones/ines"
+	"github.com/m4ntis/bones/io"
 	"github.com/m4ntis/bones/ppu"
 	"github.com/pkg/errors"
 )
@@ -36,7 +36,7 @@ type CPU struct {
 // ram is passed to the CPU instead of initialized within, as it is shared with
 // other components via memory mapped i/o. It is the caller's responsibility to
 // initialize and pass it to the other parts of the NES.
-func New(p *ppu.PPU, ctrl *controller.Controller) *CPU {
+func New(p *ppu.PPU, ctrl *io.Controller) *CPU {
 	ram := &RAM{}
 
 	c := &CPU{

@@ -2,8 +2,7 @@ package cmd
 
 import (
 	"github.com/m4ntis/bones"
-	"github.com/m4ntis/bones/controller"
-	"github.com/m4ntis/bones/display"
+	"github.com/m4ntis/bones/io"
 	"github.com/spf13/cobra"
 )
 
@@ -21,8 +20,8 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			rom := openRom(args)
 
-			ctrl := new(controller.Controller)
-			disp := display.New(ctrl, displayFPS, scale)
+			ctrl := new(io.Controller)
+			disp := io.NewDisplay(ctrl, displayFPS, scale)
 
 			n = bones.New(disp, ctrl, bones.ModeRun)
 

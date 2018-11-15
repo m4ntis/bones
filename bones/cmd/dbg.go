@@ -6,9 +6,8 @@ import (
 	"strings"
 
 	"github.com/m4ntis/bones"
-	"github.com/m4ntis/bones/controller"
-	"github.com/m4ntis/bones/display"
 	"github.com/m4ntis/bones/ines"
+	"github.com/m4ntis/bones/io"
 	"github.com/peterh/liner"
 	"github.com/spf13/cobra"
 )
@@ -44,8 +43,8 @@ debugger.
 		Run: func(cmd *cobra.Command, args []string) {
 			rom := openRom(args)
 
-			ctrl := new(controller.Controller)
-			disp := display.New(ctrl, false, 4.0)
+			ctrl := new(io.Controller)
+			disp := io.NewDisplay(ctrl, false, 4.0)
 
 			n = bones.New(disp, ctrl, bones.ModeDebug)
 

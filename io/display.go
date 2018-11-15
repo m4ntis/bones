@@ -1,5 +1,4 @@
-// Package display implements a simple OpenGL PPU Display.
-package display
+package io
 
 import (
 	"fmt"
@@ -11,7 +10,6 @@ import (
 	"github.com/faiface/pixel/imdraw"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/faiface/pixel/text"
-	"github.com/m4ntis/bones/controller"
 	"golang.org/x/image/colornames"
 	"golang.org/x/image/font/basicfont"
 )
@@ -25,7 +23,7 @@ var (
 type Display struct {
 	imgc chan image.Image
 
-	ctrl *controller.Controller
+	ctrl *Controller
 
 	scale float64
 
@@ -41,7 +39,7 @@ type Display struct {
 //
 // fps determines whether to display a small fps counter in the bottom of the
 // display.
-func New(ctrl *controller.Controller, fps bool, scale float64) *Display {
+func NewDisplay(ctrl *Controller, fps bool, scale float64) *Display {
 	return &Display{
 		imgc: make(chan image.Image),
 

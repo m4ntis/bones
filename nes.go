@@ -3,10 +3,10 @@
 package bones
 
 import (
-	"github.com/m4ntis/bones/controller"
 	"github.com/m4ntis/bones/cpu"
 	"github.com/m4ntis/bones/disass"
 	"github.com/m4ntis/bones/ines"
+	"github.com/m4ntis/bones/io"
 	"github.com/m4ntis/bones/ppu"
 	"github.com/pkg/errors"
 )
@@ -63,7 +63,7 @@ const (
 //
 // mode determines whether the NES will publish breaks and errors (ModeDebug)
 // or just just run the CPU and panic on error (ModeRun).
-func New(disp ppu.Displayer, ctrl *controller.Controller, mode Mode) *NES {
+func New(disp ppu.Displayer, ctrl *io.Controller, mode Mode) *NES {
 	p := ppu.New(disp)
 	c := cpu.New(p, ctrl)
 

@@ -370,6 +370,11 @@ func getATAddr(ntAddr int) int {
 func (ppu *PPU) muxPixel(bgr int, spr sprite) (paletteAddr byte) {
 	// No sprite was found for current pixel, display background
 	if spr == nilSprite {
+		if bgr&3 == 0 {
+			// BGR palette addresses 0x0, 0x4, 0x8, 0xc are mirrored down to 0x0
+			// when rendering
+			bgr = 0
+		}
 		return ppu.VRAM.Read(bgrPaletteAddr + bgr)
 	}
 
@@ -384,6 +389,12 @@ func (ppu *PPU) muxPixel(bgr int, spr sprite) (paletteAddr byte) {
 	}
 
 	// Display background
+
+	if bgr&3 == 0 {
+		// BGR palette addresses 0x0, 0x4, 0x8, 0xc are mirrored down to 0x0
+		// when rendering
+		bgr = 0
+	}
 	return ppu.VRAM.Read(bgrPaletteAddr + bgr)
 }
 

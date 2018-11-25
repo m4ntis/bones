@@ -35,18 +35,21 @@ type VRAM struct {
 
 // stripMirror returns the underlying address after mirroring.
 func stripMirror(addr int) int {
-	// VRAM is mirrored entirely every `RAMMirrorAddr` bytes
-	addr %= ramMirrorAddr
+	// Strip RAM mirorring
+	addr &= ramMirrorAddr - 1
 
+	// Strip table mirroring
 	if addr >= tablesMirrorAddr && addr < bgrPaletteAddr {
 		return addr - 0x1000
 	}
 
-	if addr >= paletteMirrorAddr && addr < ramMirrorAddr {
-		if addr == 0x3f10 || addr == 0x3f14 || addr == 0x3f18 || addr == 0x3f0c {
+	// Strip palette mirroring
+	if addr >= bgrPaletteAddr {
+		addr = addr & 0x3f1f
+
+		if addr >= 0x3f10 && addr%4 == 0 {
 			return addr - 0x10
 		}
-		return (addr-bgrPaletteAddr)%0x20 + bgrPaletteAddr
 	}
 
 	return addr

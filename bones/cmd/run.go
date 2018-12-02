@@ -18,7 +18,7 @@ var (
 		Short: "Run an iNES program",
 		Long:  "The run command is used to run NES roms, in iNES format.\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			rom := openRom(args)
+			rom := openRom(cmd.Use, args)
 
 			ctrl := new(io.Controller)
 			disp := io.NewDisplay(ctrl, displayFPS, scale)

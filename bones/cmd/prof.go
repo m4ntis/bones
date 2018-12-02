@@ -18,7 +18,7 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			go func() { http.ListenAndServe("localhost:6060", nil) }()
 
-			rom := openRom(args)
+			rom := openRom(cmd.Use, args)
 
 			ctrl := new(io.Controller)
 			disp := io.NewDisplay(ctrl, displayFPS, scale)

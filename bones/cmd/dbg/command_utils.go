@@ -45,6 +45,13 @@ func argsAddrValidator(memSize int) func(args []string) (ok bool) {
 			return false
 		}
 
+		// Test if arg is an addr alias
+		_, ok = alias[args[0]]
+		if ok {
+			return true
+		}
+
+		// Try parsing arg into an int in addr space range
 		addr, err := strconv.ParseInt(args[0], 16, 32)
 		if err != nil || addr < 0 || addr >= int64(memSize) {
 			fmt.Printf("Error: This command takes a single hex value between 0 and 0x%x\n",
@@ -54,4 +61,15 @@ func argsAddrValidator(memSize int) func(args []string) (ok bool) {
 
 		return true
 	}
+}
+
+func parseAddr(txt string) int {
+	// Test if argument is an addr alias
+	addr, ok := alias[txt]
+	if ok {
+		return addr
+	}
+
+	addr64, _ := strconv.ParseInt(txt, 16, 32)
+	return int(addr64)
 }

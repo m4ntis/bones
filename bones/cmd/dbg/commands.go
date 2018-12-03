@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strconv"
 	"strings"
 
 	"github.com/m4ntis/bones"
@@ -17,6 +16,8 @@ var (
 	Cmds map[string]*Command
 
 	cmds []Command
+
+	alias = map[string]int{}
 )
 
 func init() {
@@ -47,7 +48,7 @@ func commands() []Command {
 			alias: []string{"b"},
 
 			cmd: func(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
-				addr, _ := strconv.ParseInt(args[0], 16, 32)
+				addr := parseAddr(args[0])
 
 				n.Break(int(addr))
 				fmt.Printf("Breakpoint set at $%04x\n", addr)
@@ -78,7 +79,7 @@ func commands() []Command {
 			alias: []string{"del", "d"},
 
 			cmd: func(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
-				addr, _ := strconv.ParseInt(args[0], 16, 32)
+				addr := parseAddr(args[0])
 
 				ok := n.Delete(int(addr))
 				if !ok {
@@ -105,6 +106,55 @@ func commands() []Command {
 			},
 
 			descr: "Delete all breakpoints",
+		},
+		Command{
+			name:  "alias",
+			alias: []string{},
+
+			cmd: func(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
+				addr := parseAddr(args[0])
+
+				alias[args[1]] = addr
+				fmt.Printf("Alias set for $%04x\n", addr)
+				return false
+			},
+			validArgs: func(args []string) (ok bool) {
+				ok = argsLenValidator([]int{2})(args)
+				if !ok {
+					return false
+				}
+				ok = argsAddrValidator(cpu.RAMSize)(args[:1])
+				if !ok {
+					return false
+				}
+
+				// Return false if alias taken
+				addr, ok := alias[args[1]]
+				if ok {
+					fmt.Printf("Alias '%s' already taken for $%04x\n",
+						args[1], addr)
+					return false
+				}
+
+				return true
+			},
+
+			descr: "Alias an address",
+			usage: "alias <address> <alias>",
+			hstr:  "Alias an address with a name. Aliased addresses are handled like addresses, and can be used to set and delete breakpoints, as well as printing values from RAM.",
+		},
+		Command{
+			name:  "aliases",
+			alias: []string{},
+
+			cmd: func(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
+				for a, addr := range alias {
+					fmt.Printf("%04x: %s\n", addr, a)
+				}
+				return false
+			},
+
+			descr: "List aliases",
 		},
 		Command{
 			name:  "continue",
@@ -175,7 +225,7 @@ func commands() []Command {
 				// An error check is guranteed to be unnecessary as bounds are
 				// checked earlier
 
-				addr, _ := strconv.ParseInt(args[0], 16, 32)
+				addr := parseAddr(args[0])
 				d, _ := b.RAM.Observe(int(addr))
 
 				fmt.Printf("$%04x: 0x%02x\n", int(addr), d)
@@ -192,7 +242,7 @@ func commands() []Command {
 			alias: []string{"vp"},
 
 			cmd: func(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
-				addr, _ := strconv.ParseInt(args[0], 16, 32)
+				addr := parseAddr(args[0])
 
 				fmt.Printf("$%04x: 0x%02x\n", int(addr), b.VRAM.Read(int(addr)))
 				return false

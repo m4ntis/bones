@@ -180,6 +180,10 @@ func (n *NES) List() (breaks []int) {
 	return breaks
 }
 
+func (n *NES) Vectors() [3]int {
+	return n.c.Vectors()
+}
+
 func (n *NES) execNext() error {
 	// Add the next instruction to be executed immediately to queue. This is so
 	// the queue will be updated before PC is incremented to next instruction.

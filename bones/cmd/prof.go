@@ -14,7 +14,7 @@ var (
 	profCmd = &cobra.Command{
 		Use:   "prof",
 		Short: "Run an iNES program with go's profiler",
-		Long:  "The prof command is used to profile bones\n",
+		Long:  "The prof command runs 'bones run' with go's profiler\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			go func() { http.ListenAndServe("localhost:6060", nil) }()
 
@@ -24,8 +24,9 @@ var (
 			disp := io.NewDisplay(ctrl, displayFPS, scale)
 
 			n = bones.New(disp, ctrl, bones.ModeRun)
+			n.Load(rom)
 
-			go n.Start(rom)
+			go n.Start()
 			disp.Run()
 		},
 	}
@@ -33,6 +34,13 @@ var (
 
 func init() {
 	rootCmd.AddCommand(profCmd)
+
+	flags := profCmd.Flags()
+
+	flags.BoolVar(&displayFPS, "display-fps",
+		false, "Display small FPS counter")
+	flags.Float64VarP(&scale, "scale", "s", 4.0,
+		"Set display scaling (240x256 * scale)")
 
 	// Make bones prof's usage be 'bones prof <romname>.nes'
 	profCmd.SetUsageTemplate(`Usage:

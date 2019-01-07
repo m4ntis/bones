@@ -62,6 +62,13 @@ func (cpu *CPU) ConnectROM(rom *ines.ROM) {
 	cpu.resetPC()
 }
 
+func (cpu *CPU) Vectors() [3]int {
+	return [3]int{
+		int(cpu.RAM.MustRead(NMIVector)) | int(cpu.RAM.MustRead(NMIVector+1))<<8,
+		int(cpu.RAM.MustRead(ResetVector)) | int(cpu.RAM.MustRead(ResetVector+1))<<8,
+		int(cpu.RAM.MustRead(IRQVector)) | int(cpu.RAM.MustRead(IRQVector+1))<<8}
+}
+
 // TODO: You'd think that cycles should be internal to the CPU... I should
 // probably think about it.
 

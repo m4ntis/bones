@@ -78,9 +78,9 @@ func New(disp Displayer) *PPU {
 	}
 }
 
-// ConnectROM connects a CPU's RAM to a ROM mapper and inits the CPU's PC to the
+// Load connects a CPU's RAM to a ROM mapper and inits the CPU's PC to the
 // ROM's reset vector.
-func (ppu *PPU) ConnectROM(rom *ines.ROM) {
+func (ppu *PPU) Load(rom *ines.ROM) {
 	ppu.VRAM.Mapper = rom.Mapper
 	ppu.mirror = rom.Header.Mirroring
 }

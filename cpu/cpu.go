@@ -55,9 +55,9 @@ func New(p *ppu.PPU, ctrl *io.Controller) *CPU {
 	return c
 }
 
-// ConnectROM connects a CPU's RAM to a ROM mapper and inits the CPU's PC to the
+// Load connects a CPU's RAM to a ROM mapper and inits the CPU's PC to the
 // ROM's reset vector.
-func (cpu *CPU) ConnectROM(rom *ines.ROM) {
+func (cpu *CPU) Load(rom *ines.ROM) {
 	cpu.RAM.Mapper = rom.Mapper
 	cpu.resetPC()
 }

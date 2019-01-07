@@ -12,7 +12,7 @@ type Command struct {
 	name  string
 	alias []string
 
-	cmd       func(n *bones.NES, b bones.BreakState, args []string) (fin bool)
+	cmd       func(b bones.BreakState, args []string) (fin bool)
 	validArgs func(args []string) (ok bool)
 
 	descr string
@@ -23,7 +23,7 @@ type Command struct {
 // Run runs the command.
 //
 // fin indicates whether user interraction has finished.
-func (c *Command) Run(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
+func (c *Command) Run(b bones.BreakState, args []string) (fin bool) {
 	if c.validArgs != nil {
 		ok := c.validArgs(args)
 		if !ok {
@@ -31,7 +31,7 @@ func (c *Command) Run(n *bones.NES, b bones.BreakState, args []string) (fin bool
 		}
 	}
 
-	return c.cmd(n, b, args)
+	return c.cmd(b, args)
 }
 
 func (c *Command) title() string {

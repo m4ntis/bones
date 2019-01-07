@@ -14,15 +14,25 @@ import (
 var (
 	// Cmds maps a Command to it's name and alias.
 	Cmds map[string]*Command
-
 	cmds []Command
 
-	alias = map[string]int{}
+	alias map[string]int
+
+	n *bones.NES
 )
 
-func init() {
+func Init(nes *bones.NES) {
+	n = nes
+
 	cmds = commands()
 	Cmds = mapCmds(cmds)
+
+	vec := n.Vectors()
+	alias = map[string]int{
+		"NMI":   vec[0],
+		"Reset": vec[1],
+		"IRQ":   vec[2],
+	}
 }
 
 // mapCmds creates a mapping of each command to it's name and alias.
@@ -47,7 +57,7 @@ func commands() []Command {
 			name:  "break",
 			alias: []string{"b"},
 
-			cmd: func(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
+			cmd: func(b bones.BreakState, args []string) (fin bool) {
 				addr := parseAddr(args[0])
 
 				n.Break(int(addr))
@@ -65,7 +75,7 @@ func commands() []Command {
 			name:  "breakpoints",
 			alias: []string{"bps"},
 
-			cmd: func(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
+			cmd: func(b bones.BreakState, args []string) (fin bool) {
 				for _, addr := range n.List() {
 					fmt.Printf("%04x\n", addr)
 				}
@@ -78,7 +88,7 @@ func commands() []Command {
 			name:  "delete",
 			alias: []string{"del", "d"},
 
-			cmd: func(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
+			cmd: func(b bones.BreakState, args []string) (fin bool) {
 				addr := parseAddr(args[0])
 
 				ok := n.Delete(int(addr))
@@ -100,7 +110,7 @@ func commands() []Command {
 			name:  "deleteall",
 			alias: []string{"da"},
 
-			cmd: func(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
+			cmd: func(b bones.BreakState, args []string) (fin bool) {
 				n.DeleteAll()
 				return false
 			},
@@ -111,7 +121,7 @@ func commands() []Command {
 			name:  "alias",
 			alias: []string{},
 
-			cmd: func(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
+			cmd: func(b bones.BreakState, args []string) (fin bool) {
 				addr := parseAddr(args[0])
 
 				alias[args[1]] = addr
@@ -147,7 +157,7 @@ func commands() []Command {
 			name:  "aliases",
 			alias: []string{},
 
-			cmd: func(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
+			cmd: func(b bones.BreakState, args []string) (fin bool) {
 				for a, addr := range alias {
 					fmt.Printf("%04x: %s\n", addr, a)
 				}
@@ -160,7 +170,7 @@ func commands() []Command {
 			name:  "continue",
 			alias: []string{"c"},
 
-			cmd: func(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
+			cmd: func(b bones.BreakState, args []string) (fin bool) {
 				n.Continue()
 				return true
 			},
@@ -171,7 +181,7 @@ func commands() []Command {
 			name:  "next",
 			alias: []string{"n"},
 
-			cmd: func(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
+			cmd: func(b bones.BreakState, args []string) (fin bool) {
 				n.Next()
 				return true
 			},
@@ -182,7 +192,7 @@ func commands() []Command {
 			name:  "exit",
 			alias: []string{"quit", "q"},
 
-			cmd: func(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
+			cmd: func(b bones.BreakState, args []string) (fin bool) {
 				os.Exit(0)
 				return true
 			},
@@ -193,7 +203,7 @@ func commands() []Command {
 			name:  "help",
 			alias: []string{"h", "?"},
 
-			cmd: func(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
+			cmd: func(b bones.BreakState, args []string) (fin bool) {
 				printHelp(args)
 				return false
 			},
@@ -207,7 +217,7 @@ func commands() []Command {
 			name:  "clear",
 			alias: []string{},
 
-			cmd: func(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
+			cmd: func(b bones.BreakState, args []string) (fin bool) {
 				// TODO: support windows :(
 				cmd := exec.Command("clear")
 				cmd.Stdout = os.Stdout
@@ -221,7 +231,7 @@ func commands() []Command {
 			name:  "print",
 			alias: []string{"p"},
 
-			cmd: func(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
+			cmd: func(b bones.BreakState, args []string) (fin bool) {
 				// An error check is guranteed to be unnecessary as bounds are
 				// checked earlier
 
@@ -241,7 +251,7 @@ func commands() []Command {
 			name:  "vprint",
 			alias: []string{"vp"},
 
-			cmd: func(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
+			cmd: func(b bones.BreakState, args []string) (fin bool) {
 				addr := parseAddr(args[0])
 
 				fmt.Printf("$%04x: 0x%02x\n", int(addr), b.VRAM.Read(int(addr)))
@@ -257,7 +267,7 @@ func commands() []Command {
 			name:  "regs",
 			alias: []string{},
 
-			cmd: func(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
+			cmd: func(b bones.BreakState, args []string) (fin bool) {
 				fmt.Println(strings.Trim(fmt.Sprintf("%+v", b.Reg), "&{}"))
 				return false
 			},
@@ -268,7 +278,7 @@ func commands() []Command {
 			name:  "list",
 			alias: []string{"ls"},
 
-			cmd: func(n *bones.NES, b bones.BreakState, args []string) (fin bool) {
+			cmd: func(b bones.BreakState, args []string) (fin bool) {
 				List(b)
 				return false
 			},

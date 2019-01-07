@@ -81,13 +81,15 @@ func New(disp ppu.Displayer, ctrl *io.Controller, mode Mode) *NES {
 	}
 }
 
+func (n *NES) Load(rom *ines.ROM) {
+	n.p.Load(rom)
+	n.c.Load(rom)
+}
+
 // Start starts running the NES until Stop is called.
 //
 // Start is blocking and should be run in a goroutine of it's own.
-func (n *NES) Start(rom *ines.ROM) {
-	n.p.ConnectROM(rom)
-	n.c.ConnectROM(rom)
-
+func (n *NES) Start() {
 	n.stopc = make(chan struct{})
 	n.running = true
 

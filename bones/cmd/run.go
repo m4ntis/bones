@@ -24,8 +24,9 @@ var (
 			disp := io.NewDisplay(ctrl, displayFPS, scale)
 
 			n = bones.New(disp, ctrl, bones.ModeRun)
+			n.Load(rom)
 
-			go n.Start(rom)
+			go n.Start()
 			disp.Run()
 		},
 	}

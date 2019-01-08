@@ -33,6 +33,9 @@ type BreakState struct {
 
 // NES runs the CPU and PPU, providing a simple debugging API.
 type NES struct {
+	// Breaks are published on this channel when run in ModeDebug.
+	Breaks chan BreakState
+
 	c *cpu.CPU
 	p *ppu.PPU
 
@@ -41,9 +44,7 @@ type NES struct {
 
 	mode Mode
 
-	// Mode debug related NES state
-	Breaks chan BreakState
-
+	/* Mode debug related NES state */
 	bps   breakPoints
 	instQ asm.Code
 

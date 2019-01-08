@@ -21,14 +21,14 @@ var (
 
 // Display implements a simple OpenGL PPU display.
 type Display struct {
+	img  image.Image
 	imgc chan image.Image
 
 	ctrl *Controller
 
 	scale float64
 
-	fps bool
-
+	fps           bool
 	frameCount    int
 	lastFPSUpdate time.Time
 }
@@ -40,7 +40,11 @@ type Display struct {
 // fps determines whether to display a small fps counter in the bottom of the
 // display.
 func NewDisplay(ctrl *Controller, fps bool, scale float64) *Display {
+	r := image.Rect(0, 0, width, height)
+	img := image.NewRGBA(r)
+
 	return &Display{
+		img:  img,
 		imgc: make(chan image.Image),
 
 		ctrl: ctrl,
@@ -88,6 +92,7 @@ func (d *Display) runWithFPS(win *pixelgl.Window, center pixel.Vec) {
 	fpsTxtBgr := initTxtRect()
 
 	for !win.Closed() {
+		d.pollImg()
 		d.updateFPS(fpsTxt)
 		d.updateCtrl(win)
 		d.displayNextFrameWithFPS(win, center, fpsTxt, fpsTxtBgr)
@@ -96,8 +101,16 @@ func (d *Display) runWithFPS(win *pixelgl.Window, center pixel.Vec) {
 
 func (d *Display) runWithoutFPS(win *pixelgl.Window, center pixel.Vec) {
 	for !win.Closed() {
+		d.pollImg()
 		d.updateCtrl(win)
 		d.displayNextFrame(win, center)
+	}
+}
+
+func (d *Display) pollImg() {
+	select {
+	case d.img = <-d.imgc:
+	default:
 	}
 }
 
@@ -156,9 +169,7 @@ func (d *Display) updateCtrl(win *pixelgl.Window) {
 }
 
 func (d *Display) displayNextFrame(win *pixelgl.Window, center pixel.Vec) {
-	img := <-d.imgc
-
-	p := pixel.PictureDataFromImage(img)
+	p := pixel.PictureDataFromImage(d.img)
 	s := pixel.NewSprite(p, p.Bounds())
 
 	win.Clear(colornames.White)
@@ -169,9 +180,7 @@ func (d *Display) displayNextFrame(win *pixelgl.Window, center pixel.Vec) {
 func (d *Display) displayNextFrameWithFPS(win *pixelgl.Window, center pixel.Vec,
 	fpsTxt *text.Text, fpsTxtBgr *imdraw.IMDraw) {
 
-	img := <-d.imgc
-
-	p := pixel.PictureDataFromImage(img)
+	p := pixel.PictureDataFromImage(d.img)
 	s := pixel.NewSprite(p, p.Bounds())
 
 	win.Clear(colornames.White)

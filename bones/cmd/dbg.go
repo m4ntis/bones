@@ -42,12 +42,15 @@ debugger.
 			rom := openRom(cmd.Use, args)
 
 			ctrl := new(io.Controller)
-			disp := io.NewDisplay(ctrl, false, 4.0)
+			disp := io.NewDisplay(ctrl, displayFPS, scale)
 
 			n = bones.New(disp, ctrl, bones.ModeDebug)
+			n.Load(rom)
+			dbg.Init(n)
 
-			go n.Start(rom)
+			go n.Start()
 			go startInteractiveDbg()
+
 			disp.Run()
 		},
 	}
@@ -88,11 +91,18 @@ func handleUserInput(b bones.BreakState) (fin bool) {
 		return false
 	}
 
-	return cmd.Run(n, b, args[1:])
+	return cmd.Run(b, args[1:])
 }
 
 func init() {
 	rootCmd.AddCommand(dbgCmd)
+
+	flags := dbgCmd.Flags()
+
+	flags.BoolVar(&displayFPS, "display-fps",
+		false, "Display small FPS counter")
+	flags.Float64VarP(&scale, "scale", "s", 4.0,
+		"Set display scaling (240x256 * scale)")
 
 	// Make bones dbg's usage be 'bones dbg <romname>.nes'
 	dbgCmd.SetUsageTemplate(`Usage:

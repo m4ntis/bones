@@ -18,18 +18,13 @@ const (
 
 type breakPoints map[int]bool
 
-// BreakState describes the state of the NES and the running programme when the
-// cpu breaks.
-type BreakState struct {
-	Reg  *cpu.Registers
-	RAM  *cpu.RAM
-	VRAM *ppu.VRAM
+// Mode represents CPU running type (run/debug)
+type Mode int
 
-	Code  asm.Code
-	PCIdx int
-
-	Err error
-}
+const (
+	ModeRun Mode = iota
+	ModeDebug
+)
 
 // NES runs the CPU and PPU, providing a simple debugging API.
 type NES struct {
@@ -51,14 +46,6 @@ type NES struct {
 	continuec chan struct{}
 	nextc     chan struct{}
 }
-
-// Mode represents CPU running type (run/debug)
-type Mode int
-
-const (
-	ModeRun Mode = iota
-	ModeDebug
-)
 
 // New creates a runnable instance of an NES.
 //

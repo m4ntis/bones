@@ -64,9 +64,13 @@ func (cpu *CPU) Load(rom *ines.ROM) {
 
 func (cpu *CPU) Vectors() [3]int {
 	return [3]int{
-		int(cpu.RAM.MustRead(NMIVector)) | int(cpu.RAM.MustRead(NMIVector+1))<<8,
-		int(cpu.RAM.MustRead(ResetVector)) | int(cpu.RAM.MustRead(ResetVector+1))<<8,
-		int(cpu.RAM.MustRead(IRQVector)) | int(cpu.RAM.MustRead(IRQVector+1))<<8}
+		int(cpu.RAM.MustRead(NMIVector)) |
+			int(cpu.RAM.MustRead(NMIVector+1))<<8,
+		int(cpu.RAM.MustRead(ResetVector)) |
+			int(cpu.RAM.MustRead(ResetVector+1))<<8,
+		int(cpu.RAM.MustRead(IRQVector)) |
+			int(cpu.RAM.MustRead(IRQVector+1))<<8,
+	}
 }
 
 // TODO: You'd think that cycles should be internal to the CPU... I should
@@ -90,19 +94,20 @@ func (cpu *CPU) ExecNext() (cycles int, err error) {
 			code, cpu.Reg.PC)
 	}
 
-	// We are doing this manually cus there are only 3 posibilities and writing
-	// logic to describe this would be ugly IMO
-	if op.Mode.OpsLen == 1 {
-		d, err := cpu.RAM.Read(cpu.Reg.PC + 1)
+	// This is switched instead of iterated because generalizing operand
+	// handling to all 3 cases and iterating would probably turn out uglier.
+	switch op.Mode.OpsLen {
+	case 1:
+		op1, err := cpu.RAM.Read(cpu.Reg.PC + 1)
 		if err != nil {
 			return 0, errors.Wrap(err, "Failed to read operand from memory")
 		}
 
-		cycles, err = op.Exec(cpu, d)
+		cycles, err = op.Exec(cpu, op1)
 		if err != nil {
 			return 0, errors.Wrap(err, "Failed to execute opcode")
 		}
-	} else if op.Mode.OpsLen == 2 {
+	case 2:
 		op1, err := cpu.RAM.Read(cpu.Reg.PC + 1)
 		op2, err := cpu.RAM.Read(cpu.Reg.PC + 2)
 		if err != nil {
@@ -113,7 +118,7 @@ func (cpu *CPU) ExecNext() (cycles int, err error) {
 		if err != nil {
 			return 0, errors.Wrap(err, "Failed to execute opcode")
 		}
-	} else {
+	default:
 		cycles, err = op.Exec(cpu)
 		if err != nil {
 			return 0, errors.Wrap(err, "Failed to execute opcode")

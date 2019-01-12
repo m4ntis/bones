@@ -23,7 +23,7 @@ var (
 			ctrl := new(io.Controller)
 			disp := io.NewDisplay(ctrl, displayFPS, scale)
 
-			n = bones.New(disp, ctrl, bones.ModeRun)
+			n := bones.New(disp, ctrl, bones.ModeRun)
 			n.Load(rom)
 
 			go n.Start()

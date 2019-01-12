@@ -29,7 +29,7 @@ const (
 // NES runs the CPU and PPU, providing a simple debugging API.
 type NES struct {
 	// Breaks are published on this channel when run in ModeDebug.
-	Breaks chan BreakState
+	Breaks chan Break
 
 	c *cpu.CPU
 	p *ppu.PPU
@@ -91,35 +91,6 @@ func (n *NES) Start() {
 	n.startDebug()
 }
 
-// startRun runs the CPU without checking breakpoints or errors.
-func (n *NES) startRun() {
-	for {
-		select {
-		case <-n.stopc:
-			return
-		default:
-			panicOnErr(n.execNext())
-		}
-	}
-}
-
-// startDebug checks for breakpoints and publishes errors after each cycle.
-func (n *NES) startDebug() {
-	n.bps = breakPoints{
-		n.c.Reg.PC: true,
-	}
-
-	for {
-		select {
-		case <-n.stopc:
-			return
-		default:
-			n.handleBps()
-			n.handleError(n.execNext())
-		}
-	}
-}
-
 // Stop sends a signal to stop the cpu on the next cycle.
 func (n *NES) Stop() {
 	if n.running {
@@ -172,6 +143,47 @@ func (n *NES) List() (breaks []int) {
 
 func (n *NES) Vectors() [3]int {
 	return n.c.Vectors()
+}
+
+func (n *NES) Reg() *cpu.Registers {
+	return n.c.Reg
+}
+
+func (n *NES) RAM() *cpu.RAM {
+	return n.c.RAM
+}
+
+func (n *NES) VRAM() *ppu.VRAM {
+	return n.p.VRAM
+}
+
+// startRun runs the CPU without checking breakpoints or errors.
+func (n *NES) startRun() {
+	for {
+		select {
+		case <-n.stopc:
+			return
+		default:
+			panicOnErr(n.execNext())
+		}
+	}
+}
+
+// startDebug checks for breakpoints and publishes errors after each cycle.
+func (n *NES) startDebug() {
+	n.bps = breakPoints{
+		n.c.Reg.PC: true,
+	}
+
+	for {
+		select {
+		case <-n.stopc:
+			return
+		default:
+			n.handleBps()
+			n.handleError(n.execNext())
+		}
+	}
 }
 
 func (n *NES) execNext() error {

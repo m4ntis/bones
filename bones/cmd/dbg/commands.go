@@ -1,71 +1,19 @@
 package dbg
 
 import (
-	"fmt"
-	"os"
-	"os/exec"
-	"strings"
-
-	"github.com/m4ntis/bones"
 	"github.com/m4ntis/bones/cpu"
 	"github.com/m4ntis/bones/ppu"
 )
 
-var (
-	// Cmds maps a Command to it's name and alias.
-	Cmds map[string]*Command
-	cmds []Command
-
-	alias map[string]int
-
-	n *bones.NES
-)
-
-func Init(nes *bones.NES) {
-	n = nes
-
-	cmds = commands()
-	Cmds = mapCmds(cmds)
-
-	vec := n.Vectors()
-	alias = map[string]int{
-		"NMI":   vec[0],
-		"Reset": vec[1],
-		"IRQ":   vec[2],
-	}
-}
-
-// mapCmds creates a mapping of each command to it's name and alias.
-func mapCmds(cmds []Command) map[string]*Command {
-	cmdsMap := map[string]*Command{}
-
-	for i := range cmds {
-		cmdsMap[cmds[i].name] = &cmds[i]
-
-		for _, a := range cmds[i].alias {
-			cmdsMap[a] = &cmds[i]
-		}
-	}
-
-	return cmdsMap
-}
-
 // commands inits all the interractive debugger's commands.
-func commands() []Command {
+func commands(dbg *Debugger) []Command {
 	return []Command{
 		Command{
 			name:  "break",
 			alias: []string{"b"},
 
-			cmd: func(b bones.BreakState, args []string) (fin bool) {
-				addr := parseAddr(args[0])
-
-				n.Break(int(addr))
-				fmt.Printf("Breakpoint set at $%04x\n", addr)
-
-				return false
-			},
-			validArgs: argsAddrValidator(cpu.RAMSize),
+			cmd:       dbg.breakCmd,
+			validArgs: dbg.argsAddrValidator(cpu.RAMSize),
 
 			descr: "Set a breakpoint",
 			usage: "break <address>",
@@ -75,12 +23,7 @@ func commands() []Command {
 			name:  "breakpoints",
 			alias: []string{"bps"},
 
-			cmd: func(b bones.BreakState, args []string) (fin bool) {
-				for _, addr := range n.List() {
-					fmt.Printf("%04x\n", addr)
-				}
-				return false
-			},
+			cmd: dbg.breakpointsCmd,
 
 			descr: "List breakpoints",
 		},
@@ -88,19 +31,8 @@ func commands() []Command {
 			name:  "delete",
 			alias: []string{"del", "d"},
 
-			cmd: func(b bones.BreakState, args []string) (fin bool) {
-				addr := parseAddr(args[0])
-
-				ok := n.Delete(int(addr))
-				if !ok {
-					fmt.Printf("No breakpoint set at $%04x\n", addr)
-					return false
-				}
-
-				fmt.Printf("Deleted breakpoint at $%04x\n", addr)
-				return false
-			},
-			validArgs: argsAddrValidator(cpu.RAMSize),
+			cmd:       dbg.deleteCmd,
+			validArgs: dbg.argsAddrValidator(cpu.RAMSize),
 
 			descr: "Delete a breakpoint",
 			usage: "delete <address>",
@@ -110,10 +42,7 @@ func commands() []Command {
 			name:  "deleteall",
 			alias: []string{"da"},
 
-			cmd: func(b bones.BreakState, args []string) (fin bool) {
-				n.DeleteAll()
-				return false
-			},
+			cmd: dbg.deleteallCmd,
 
 			descr: "Delete all breakpoints",
 		},
@@ -121,33 +50,8 @@ func commands() []Command {
 			name:  "alias",
 			alias: []string{},
 
-			cmd: func(b bones.BreakState, args []string) (fin bool) {
-				addr := parseAddr(args[0])
-
-				alias[args[1]] = addr
-				fmt.Printf("Alias set for $%04x\n", addr)
-				return false
-			},
-			validArgs: func(args []string) (ok bool) {
-				ok = argsLenValidator([]int{2})(args)
-				if !ok {
-					return false
-				}
-				ok = argsAddrValidator(cpu.RAMSize)(args[:1])
-				if !ok {
-					return false
-				}
-
-				// Return false if alias taken
-				addr, ok := alias[args[1]]
-				if ok {
-					fmt.Printf("Alias '%s' already taken for $%04x\n",
-						args[1], addr)
-					return false
-				}
-
-				return true
-			},
+			cmd:       dbg.aliasCmd,
+			validArgs: dbg.validAliasCmd,
 
 			descr: "Alias an address",
 			usage: "alias <address> <alias>",
@@ -157,12 +61,7 @@ func commands() []Command {
 			name:  "aliases",
 			alias: []string{},
 
-			cmd: func(b bones.BreakState, args []string) (fin bool) {
-				for a, addr := range alias {
-					fmt.Printf("%04x: %s\n", addr, a)
-				}
-				return false
-			},
+			cmd: dbg.aliasesCmd,
 
 			descr: "List aliases",
 		},
@@ -170,10 +69,7 @@ func commands() []Command {
 			name:  "continue",
 			alias: []string{"c"},
 
-			cmd: func(b bones.BreakState, args []string) (fin bool) {
-				n.Continue()
-				return true
-			},
+			cmd: dbg.continueCmd,
 
 			descr: "Run the CPU until next break or error",
 		},
@@ -181,10 +77,7 @@ func commands() []Command {
 			name:  "next",
 			alias: []string{"n"},
 
-			cmd: func(b bones.BreakState, args []string) (fin bool) {
-				n.Next()
-				return true
-			},
+			cmd: dbg.nextCmd,
 
 			descr: "Step over to next opcode",
 		},
@@ -192,10 +85,7 @@ func commands() []Command {
 			name:  "exit",
 			alias: []string{"quit", "q"},
 
-			cmd: func(b bones.BreakState, args []string) (fin bool) {
-				os.Exit(0)
-				return true
-			},
+			cmd: dbg.exitCmd,
 
 			descr: "Exit the debugger",
 		},
@@ -203,10 +93,7 @@ func commands() []Command {
 			name:  "help",
 			alias: []string{"h", "?"},
 
-			cmd: func(b bones.BreakState, args []string) (fin bool) {
-				printHelp(args)
-				return false
-			},
+			cmd:       dbg.helpCmd,
 			validArgs: argsLenValidator([]int{0, 1}),
 
 			descr: "Get a list of commands or help on each",
@@ -217,13 +104,7 @@ func commands() []Command {
 			name:  "clear",
 			alias: []string{},
 
-			cmd: func(b bones.BreakState, args []string) (fin bool) {
-				// TODO: support windows :(
-				cmd := exec.Command("clear")
-				cmd.Stdout = os.Stdout
-				cmd.Run()
-				return false
-			},
+			cmd: dbg.clearCmd,
 
 			descr: "Clear the screen",
 		},
@@ -231,17 +112,8 @@ func commands() []Command {
 			name:  "print",
 			alias: []string{"p"},
 
-			cmd: func(b bones.BreakState, args []string) (fin bool) {
-				// An error check is guranteed to be unnecessary as bounds are
-				// checked earlier
-
-				addr := parseAddr(args[0])
-				d, _ := b.RAM.Observe(int(addr))
-
-				fmt.Printf("$%04x: 0x%02x\n", int(addr), d)
-				return false
-			},
-			validArgs: argsAddrValidator(cpu.RAMSize),
+			cmd:       dbg.printCmd,
+			validArgs: dbg.argsAddrValidator(cpu.RAMSize),
 
 			descr: "Print a value from RAM",
 			usage: "print <address>",
@@ -251,13 +123,8 @@ func commands() []Command {
 			name:  "vprint",
 			alias: []string{"vp"},
 
-			cmd: func(b bones.BreakState, args []string) (fin bool) {
-				addr := parseAddr(args[0])
-
-				fmt.Printf("$%04x: 0x%02x\n", int(addr), b.VRAM.Read(int(addr)))
-				return false
-			},
-			validArgs: argsAddrValidator(ppu.RAMSize),
+			cmd:       dbg.vprintCmd,
+			validArgs: dbg.argsAddrValidator(ppu.RAMSize),
 
 			descr: "Print a value from VRAM",
 			usage: "vprint <address>",
@@ -267,10 +134,7 @@ func commands() []Command {
 			name:  "regs",
 			alias: []string{},
 
-			cmd: func(b bones.BreakState, args []string) (fin bool) {
-				fmt.Println(strings.Trim(fmt.Sprintf("%+v", b.Reg), "&{}"))
-				return false
-			},
+			cmd: dbg.regsCmd,
 
 			descr: "Prints the cpu's registers' status",
 		},
@@ -278,10 +142,7 @@ func commands() []Command {
 			name:  "list",
 			alias: []string{"ls"},
 
-			cmd: func(b bones.BreakState, args []string) (fin bool) {
-				List(b)
-				return false
-			},
+			cmd: dbg.listCmd,
 
 			descr: "Display source code and current location",
 		},

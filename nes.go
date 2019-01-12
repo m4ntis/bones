@@ -62,7 +62,7 @@ func New(disp ppu.Displayer, ctrl *io.Controller, mode Mode) *NES {
 		running: false,
 		mode:    mode,
 
-		Breaks: make(chan BreakState),
+		Breaks: make(chan Break),
 
 		continuec: make(chan struct{}),
 		nextc:     make(chan struct{}),
@@ -215,11 +215,7 @@ func (n *NES) handleBps() {
 
 func (n *NES) breakOper(err error) {
 	for {
-		n.Breaks <- BreakState{
-			Reg:  n.c.Reg,
-			RAM:  n.c.RAM,
-			VRAM: n.p.VRAM,
-
+		n.Breaks <- Break{
 			Code: append(n.instQ,
 				asm.DisassembleRAM(n.c.RAM, n.c.Reg.PC, instFutureSize+1)...),
 			PCIdx: len(n.instQ),

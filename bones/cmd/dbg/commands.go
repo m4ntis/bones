@@ -1,150 +1,180 @@
 package dbg
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/m4ntis/bones/cpu"
 	"github.com/m4ntis/bones/ppu"
+	"github.com/m4ntis/swerve"
 )
 
-// commands inits all the interractive debugger's commands.
-func commands(dbg *Debugger) []Command {
-	return []Command{
-		Command{
-			name:  "break",
-			alias: []string{"b"},
+// commands creates all the interractive debugger's commands.
+func commands(dbg *Debugger) []swerve.Command {
+	return []swerve.Command{
+		swerve.Command{
+			Name:    "break",
+			Aliases: []string{"b"},
 
-			cmd:       dbg.breakCmd,
-			validArgs: dbg.argsAddrValidator(cpu.RAMSize),
+			Run: func(p swerve.Prompt, args []string) {
+				addr := dbg.parseAddr(args[0])
 
-			descr: "Set a breakpoint",
-			usage: "break <address>",
-			hstr:  "Sets a breakpoint at the specified address in hex",
+				dbg.n.Break(int(addr))
+				p.Printf("Breakpoint set at $%04x\n", addr)
+			},
+			ValidateArgs: dbg.argsAddrValidator(cpu.RAMSize),
+
+			Desc:  "Set a breakpoint",
+			Usage: "break <address>",
+			Help:  "Sets a breakpoint at the specified address in hex",
 		},
-		Command{
-			name:  "breakpoints",
-			alias: []string{"bps"},
+		swerve.Command{
+			Name:    "breakpoints",
+			Aliases: []string{"bps"},
 
-			cmd: dbg.breakpointsCmd,
+			Run: func(p swerve.Prompt, args []string) {
+				for _, addr := range dbg.n.List() {
+					p.Printf("%04x\n", addr)
+				}
+			},
 
-			descr: "List breakpoints",
+			Desc: "List breakpoints",
 		},
-		Command{
-			name:  "delete",
-			alias: []string{"del", "d"},
+		swerve.Command{
+			Name:    "delete",
+			Aliases: []string{"del", "d"},
 
-			cmd:       dbg.deleteCmd,
-			validArgs: dbg.argsAddrValidator(cpu.RAMSize),
+			Run: func(p swerve.Prompt, args []string) {
+				addr := dbg.parseAddr(args[0])
 
-			descr: "Delete a breakpoint",
-			usage: "delete <address>",
-			hstr:  "Delete a set breakpoint at the specified address in hex",
+				ok := dbg.n.Delete(int(addr))
+				if !ok {
+					p.Printf("No breakpoint set at $%04x\n", addr)
+					return
+				}
+
+				p.Printf("Deleted breakpoint at $%04x\n", addr)
+			},
+			ValidateArgs: dbg.argsAddrValidator(cpu.RAMSize),
+
+			Desc:  "Delete a breakpoint",
+			Usage: "delete <address>",
+			Help:  "Delete a set breakpoint at the specified address in hex",
 		},
-		Command{
-			name:  "deleteall",
-			alias: []string{"da"},
+		swerve.Command{
+			Name:    "deleteall",
+			Aliases: []string{"da"},
 
-			cmd: dbg.deleteallCmd,
+			Run: func(p swerve.Prompt, args []string) {
+				dbg.n.DeleteAll()
+			},
 
-			descr: "Delete all breakpoints",
+			Desc: "Delete all breakpoints",
 		},
-		Command{
-			name:  "alias",
-			alias: []string{},
+		swerve.Command{
+			Name:    "alias",
+			Aliases: []string{},
 
-			cmd:       dbg.aliasCmd,
-			validArgs: dbg.validAliasCmd,
+			Run: func(p swerve.Prompt, args []string) {
+				addr := dbg.parseAddr(args[0])
 
-			descr: "Alias an address",
-			usage: "alias <address> <alias>",
-			hstr:  "Alias an address with a name. Aliased addresses are handled like addresses, and can be used to set and delete breakpoints, as well as printing values from RAM.",
+				dbg.aliases[args[1]] = addr
+				p.Printf("Alias set for $%04x\n", addr)
+			},
+			ValidateArgs: dbg.validAliasCmd,
+
+			Desc:  "Alias an address",
+			Usage: "alias <address> <alias>",
+			Help:  "Alias an address with a name. Aliased addresses are handled like addresses, and can be used to set and delete breakpoints, as well as printing values from RAM.",
 		},
-		Command{
-			name:  "aliases",
-			alias: []string{},
+		swerve.Command{
+			Name:    "aliases",
+			Aliases: []string{},
 
-			cmd: dbg.aliasesCmd,
+			Run: func(p swerve.Prompt, args []string) {
+				for a, addr := range dbg.aliases {
+					p.Printf("%04x: %s\n", addr, a)
+				}
+			},
 
-			descr: "List aliases",
+			Desc: "List aliases",
 		},
-		Command{
-			name:  "continue",
-			alias: []string{"c"},
+		swerve.Command{
+			Name:    "continue",
+			Aliases: []string{"c"},
 
-			cmd: dbg.continueCmd,
+			Run: func(p swerve.Prompt, args []string) {
+				dbg.n.Continue()
+				dbg.waitBreak()
+			},
 
-			descr: "Run the CPU until next break or error",
+			Desc: "Run the CPU until next break or error",
 		},
-		Command{
-			name:  "next",
-			alias: []string{"n"},
+		swerve.Command{
+			Name:    "next",
+			Aliases: []string{"n"},
 
-			cmd: dbg.nextCmd,
+			Run: func(p swerve.Prompt, args []string) {
+				dbg.n.Next()
+				dbg.waitBreak()
+			},
 
-			descr: "Step over to next opcode",
+			Desc: "Step over to next opcode",
 		},
-		Command{
-			name:  "exit",
-			alias: []string{"quit", "q"},
+		swerve.Command{
+			Name:    "print",
+			Aliases: []string{"p"},
 
-			cmd: dbg.exitCmd,
+			Run: func(p swerve.Prompt, args []string) {
+				// An error check is guranteed to be unnecessary as bounds are
+				// checked earlier
 
-			descr: "Exit the debugger",
+				addr := dbg.parseAddr(args[0])
+				d, _ := dbg.n.RAM().Observe(int(addr))
+
+				p.Printf("$%04x: 0x%02x\n", int(addr), d)
+			},
+			ValidateArgs: dbg.argsAddrValidator(cpu.RAMSize),
+
+			Desc:  "Print a value from RAM",
+			Usage: "print <address>",
+			Help:  "Prints the hex value from RAM at a given address in hex",
 		},
-		Command{
-			name:  "help",
-			alias: []string{"h", "?"},
+		swerve.Command{
+			Name:    "vprint",
+			Aliases: []string{"vp"},
 
-			cmd:       dbg.helpCmd,
-			validArgs: argsLenValidator([]int{0, 1}),
+			Run: func(p swerve.Prompt, args []string) {
+				addr := dbg.parseAddr(args[0])
 
-			descr: "Get a list of commands or help on each",
-			usage: "help [command]",
-			hstr:  "Type 'help' to get a list of commands, or help about a specific command by appending it's name",
+				p.Printf("$%04x: 0x%02x\n",
+					int(addr), dbg.n.VRAM().Read(int(addr)))
+			},
+			ValidateArgs: dbg.argsAddrValidator(ppu.RAMSize),
+
+			Desc:  "Print a value from VRAM",
+			Usage: "vprint <address>",
+			Help:  "Prints the hex value from VRAM at a given address in hex",
 		},
-		Command{
-			name:  "clear",
-			alias: []string{},
+		swerve.Command{
+			Name:    "regs",
+			Aliases: []string{},
 
-			cmd: dbg.clearCmd,
+			Run: func(p swerve.Prompt, args []string) {
+				p.Println(strings.Trim(fmt.Sprintf("%+v", dbg.n.Reg()), "&{}"))
+			},
 
-			descr: "Clear the screen",
+			Desc: "Prints the cpu's registers' status",
 		},
-		Command{
-			name:  "print",
-			alias: []string{"p"},
+		swerve.Command{
+			Name:    "list",
+			Aliases: []string{"ls"},
 
-			cmd:       dbg.printCmd,
-			validArgs: dbg.argsAddrValidator(cpu.RAMSize),
+			Run: func(p swerve.Prompt, args []string) {
+				list(dbg.b)
+			},
 
-			descr: "Print a value from RAM",
-			usage: "print <address>",
-			hstr:  "Prints the hex value from RAM at a given address in hex",
-		},
-		Command{
-			name:  "vprint",
-			alias: []string{"vp"},
-
-			cmd:       dbg.vprintCmd,
-			validArgs: dbg.argsAddrValidator(ppu.RAMSize),
-
-			descr: "Print a value from VRAM",
-			usage: "vprint <address>",
-			hstr:  "Prints the hex value from VRAM at a given address in hex",
-		},
-		Command{
-			name:  "regs",
-			alias: []string{},
-
-			cmd: dbg.regsCmd,
-
-			descr: "Prints the cpu's registers' status",
-		},
-		Command{
-			name:  "list",
-			alias: []string{"ls"},
-
-			cmd: dbg.listCmd,
-
-			descr: "Display source code and current location",
+			Desc: "Display source code and current location",
 		},
 	}
 }

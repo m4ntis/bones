@@ -372,7 +372,7 @@ func PHA(cpu *CPU, op Operand) (extraCycles int) {
 }
 
 func PHP(cpu *CPU, op Operand) (extraCycles int) {
-	cpu.push(cpu.Reg.GetP())
+	cpu.push(cpu.Reg.GetP() | 48)
 	return
 }
 

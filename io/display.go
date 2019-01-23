@@ -61,6 +61,8 @@ func (d *Display) Display(img image.Image) {
 	cropped := image.NewRGBA(r)
 	draw.Draw(cropped, r, img, image.ZP, draw.Src)
 	d.imgc <- cropped
+
+	d.frameCount++
 }
 
 // Run starts displaying the set images.
@@ -115,8 +117,6 @@ func (d *Display) pollImg() {
 }
 
 func (d *Display) updateFPS(txt *text.Text) {
-	d.frameCount++
-
 	if time.Now().Sub(d.lastFPSUpdate) >= time.Second {
 		d.lastFPSUpdate = d.lastFPSUpdate.Add(time.Second)
 		txt.Clear()

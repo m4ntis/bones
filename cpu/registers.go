@@ -28,9 +28,9 @@ type Registers struct {
 }
 
 // GetP returns the value of the P register, calculated from all the status
-// bit registers.
+// bit registers. Bits 4 and 5 are hardcoded to be set.
 func (reg *Registers) GetP() byte {
-	return reg.C | reg.Z<<1 | reg.I<<2 | reg.D<<3 | reg.B<<4 | reg.V<<6 |
+	return reg.C | reg.Z<<1 | reg.I<<2 | reg.D<<3 | 1<<4 | 1<<5 | reg.V<<6 |
 		reg.N<<7
 }
 

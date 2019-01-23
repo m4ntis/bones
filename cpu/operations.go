@@ -170,6 +170,7 @@ func BPL(cpu *CPU, op Operand) (extraCycles int) {
 }
 
 func BRK(cpu *CPU, op Operand) (extraCycles int) {
+	cpu.Reg.PC++
 	cpu.IRQ()
 	return
 }

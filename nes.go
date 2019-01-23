@@ -164,7 +164,7 @@ func (n *NES) startRun() {
 		case <-n.stopc:
 			return
 		default:
-			panicOnErr(n.execNext())
+			n.execNext()
 		}
 	}
 }
@@ -181,12 +181,21 @@ func (n *NES) startDebug() {
 			return
 		default:
 			n.handleBps()
-			n.handleError(n.execNext())
+			n.handleError(n.execNextDebug())
 		}
 	}
 }
 
-func (n *NES) execNext() error {
+func (n *NES) execNext() {
+	cycles, err := n.c.ExecNext()
+	panicOnErr(errors.Wrap(err, "Failed to execute next opcode"))
+
+	for i := 0; i < cycles*3; i++ {
+		n.p.Cycle()
+	}
+}
+
+func (n *NES) execNextDebug() error {
 	// Add the next instruction to be executed immediately to queue. This is so
 	// the queue will be updated before PC is incremented to next instruction.
 	//
@@ -227,7 +236,7 @@ func (n *NES) breakOper(err error) {
 		case <-n.continuec:
 			return
 		case <-n.nextc:
-			n.handleError(n.execNext())
+			n.handleError(n.execNextDebug())
 			continue
 		}
 	}

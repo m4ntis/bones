@@ -51,12 +51,13 @@ type RAM struct {
 
 // stripMirror returns the underlying address after mirroring.
 func stripMirror(addr int) int {
+	addr &= 0xffff
+
 	// Internal RAM mirroring
 	if addr >= ramMirrorAddr && addr < ppuRegAddr {
 		return addr % 0x800
 	}
 
-	// PPU i/o register mirroring
 	if addr >= ppuRegMirrorAddr && addr < ioRegAddr {
 		return (addr-ppuRegAddr)%0x8 + ppuRegAddr
 	}
@@ -87,7 +88,8 @@ func (r *RAM) readMMIO(addr int) (d byte, err error) {
 	case ctrl1Addr:
 		d = r.Ctrl.Read()
 	default:
-		// TODO: Consider returning an error of a not implemented mmio
+		// Read from PPU i/o register mirroring
+
 		return 0, nil
 	}
 
@@ -104,7 +106,7 @@ func (r *RAM) writeMMIO(addr int, d byte) (cycles int, err error) {
 	case ppuMaskAddr:
 		r.PPU.Regs.PPUMaskWrite(d)
 	case ppuStatusAddr:
-		return 0, errors.New("Invalid write to PPUStatus")
+		return 0, nil
 	case oamAddrAddr:
 		r.PPU.Regs.OAMAddrWrite(d)
 	case oamDataAddr:
@@ -125,7 +127,7 @@ func (r *RAM) writeMMIO(addr int, d byte) (cycles int, err error) {
 
 		cycles += 513
 		// extra cycle on odd cycles
-		if r.CPU.cycles%2 == 1 {
+		if r.CPU.oddCycle {
 			cycles++
 		}
 	case ctrl1Addr:
@@ -141,11 +143,6 @@ func (r *RAM) writeMMIO(addr int, d byte) (cycles int, err error) {
 
 // Read fetches a byte from memory, cartridge or i/o register, specified by addr.
 func (r *RAM) Read(addr int) (d byte, err error) {
-	if addr < 0 || addr > RAMSize {
-		return 0, errors.Errorf("Invalid RAM reading addr $%04x",
-			addr)
-	}
-
 	addr = stripMirror(addr)
 
 	// Read from cartridge
@@ -179,11 +176,6 @@ func (r *RAM) MustRead(addr int) byte {
 // Write returns a cycle count the memory access took, as writing to some i/o
 // registers may block the cpu and take up cycles, such as DMA.
 func (r *RAM) Write(addr int, d byte) (cycles int, err error) {
-	if addr < 0 || addr > RAMSize {
-		return 0, errors.Errorf("Invalid RAM writing addr $%04x",
-			addr)
-	}
-
 	addr = stripMirror(addr)
 
 	// Write to cartridge

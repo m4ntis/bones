@@ -1,15 +1,16 @@
 package ines
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+)
 
 type Mapper001 struct {
-	sram bool
-
 	prgROM []PrgROMPage
-	chrROM []ChrROMPage
+	sRAM   [SRAMSize]byte
 
-	prgRAM [PrgRAMSize]byte
-	chrRAM [ChrRAMSize]byte
+	chrROM    []ChrROMPage
+	chrRAM    [ChrRAMSize]byte
+	useChrRAM bool
 
 	sr         byte
 	writeCount int
@@ -22,23 +23,25 @@ type Mapper001 struct {
 	booted bool
 }
 
-func (m *Mapper001) SetSram(b bool) {
-	m.sram = b
-}
-
 func (m *Mapper001) Read(addr int) (d byte, err error) {
-	if addr >= 0 && addr < 0x2000 {
-		if m.sram {
+	switch {
+	case addr < 0x2000:
+		if m.useChrRAM {
 			return m.chrRAM[addr], nil
 		}
-
 		page, index := m.decodeChrROMAddr(addr)
 		return m.chrROM[page][index], nil
-	} else if addr >= 0x6000 && addr < 0x10000 {
-		return m.readPrgROM(addr), nil
-	}
 
-	return 0, errors.Errorf("invalid mapper reading addr %04x", addr)
+	case addr >= 0x8000:
+		page, index := m.decodePrgROMAddr(addr - 0x8000)
+		return m.prgROM[page][index], nil
+
+	case addr >= 0x6000:
+		return m.sRAM[addr-0x6000], nil
+
+	default:
+		return 0, errors.Errorf("Invalid mapper reading addr %04x", addr)
+	}
 }
 
 // Write handles writing to an address mapped by the mapper.
@@ -49,14 +52,12 @@ func (m *Mapper001) Read(addr int) (d byte, err error) {
 // TODO: Ignore consecutive writes to the mapper, a cycle immediately the
 // the previous.
 func (m *Mapper001) Write(addr int, d byte) error {
-	// Write to prg ram
-	if addr >= 0x6000 && addr < 0x8000 {
-		addr -= 0x6000
-		m.prgRAM[addr] = d
+	if m.useChrRAM && addr < 0x2000 {
+		m.chrRAM[addr] = d
 	}
 
-	if addr < 0x2000 {
-		m.chrRAM[addr] = d
+	if addr >= 0x6000 && addr < 0x8000 {
+		m.sRAM[addr-0x6000] = d
 	}
 
 	if addr >= 0x8000 && addr < 0x10000 {
@@ -118,23 +119,16 @@ func (m *Mapper001) Populate(prgROM []PrgROMPage, chrROM []ChrROMPage) {
 		prgROM = append(prgROM, pageCopy)
 	}
 
+	if len(chrROM) == 0 {
+		m.useChrRAM = true
+	}
+
 	m.prgROM = prgROM
 	m.chrROM = chrROM
 }
 
 func (m *Mapper001) GetPRGRom() []PrgROMPage {
 	return m.prgROM
-}
-
-func (m *Mapper001) readPrgROM(addr int) byte {
-	if addr >= 0x6000 && addr < 0x8000 {
-		addr -= 0x6000
-		return m.prgRAM[addr]
-	}
-
-	addr -= 0x8000
-	page, index := m.decodePrgROMAddr(addr)
-	return m.prgROM[page][index]
 }
 
 func (m *Mapper001) decodePrgROMAddr(addr int) (page, index int) {

@@ -1,27 +1,45 @@
 package ines
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+)
 
 type Mapper000 struct {
 	prgROM []PrgROMPage
-	chrROM []ChrROMPage
-}
+	sRAM   [SRAMSize]byte
 
-func (m *Mapper000) SetSram(b bool) {
-	// No sram in ines mapper 000
+	chrROM    []ChrROMPage
+	chrRAM    [ChrRAMSize]byte
+	useChrRAM bool
 }
 
 func (m *Mapper000) Read(addr int) (d byte, err error) {
-	if addr >= 0 && addr < 0x2000 {
+	switch {
+	case addr < 0x2000:
+		if m.useChrRAM {
+			return m.chrRAM[addr], nil
+		}
 		return m.readChrROM(addr), nil
-	} else if addr >= 0x6000 && addr < 0x10000 {
-		return m.readPrgROM(addr), nil
+
+	case addr >= 0x8000:
+		return m.readPrgROM(addr - 0x8000), nil
+
+	case addr >= 0x6000:
+		return m.sRAM[addr-0x6000], nil
 	}
 
 	return 0, errors.Errorf("Invalid mapper reading addr %04x", addr)
 }
 
 func (m *Mapper000) Write(addr int, d byte) error {
+	if m.useChrRAM && addr < 0x2000 {
+		m.chrRAM[addr] = d
+	}
+
+	if addr >= 0x6000 && addr < 0x8000 {
+		m.sRAM[addr-0x6000] = d
+	}
+
 	return nil
 }
 
@@ -39,6 +57,10 @@ func (m *Mapper000) Populate(prgROM []PrgROMPage, chrROM []ChrROMPage) {
 		prgROM = append(prgROM, pageCopy)
 	}
 
+	if len(chrROM) == 0 {
+		m.useChrRAM = true
+	}
+
 	m.prgROM = prgROM
 	m.chrROM = chrROM
 }
@@ -48,11 +70,6 @@ func (m *Mapper000) GetPRGRom() []PrgROMPage {
 }
 
 func (m *Mapper000) readPrgROM(addr int) byte {
-	if addr >= 0x6000 && addr < 0x8000 {
-		return 0
-	}
-
-	addr -= 0x8000
 	return m.prgROM[addr/PrgROMPageSize][addr%PrgROMPageSize]
 }
 

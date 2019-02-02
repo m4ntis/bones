@@ -8,7 +8,7 @@ const (
 	PrgROMPageSize = 16384 // 16k, 0x4000
 	ChrROMPageSize = 8192  // 8K, 0x2000
 
-	PrgRAMSize = 8192 // 8k, 0x2000
+	SRAMSize   = 8192 // 8k, 0x2000
 	ChrRAMSize = 8192 // 8K, 0x2000
 )
 
@@ -22,8 +22,6 @@ type Mapper interface {
 
 	Populate([]PrgROMPage, []ChrROMPage)
 	GetPRGRom() []PrgROMPage
-
-	SetSram(bool)
 }
 
 func NewMapper(num int) (Mapper, error) {

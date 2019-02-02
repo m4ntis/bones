@@ -69,14 +69,17 @@ func (r *Registers) OAMAddrWrite(data byte) {
 	r.oamAddr = data
 }
 
+// TODO: Expose internal OAM data bus on read during sprite evaluation and
+// rendering.
+
 func (r *Registers) OAMDataRead() byte {
-	return (*r.oam)[r.oamAddr]
+	return r.oam[r.oamAddr]
 }
 
 func (r *Registers) OAMDataWrite(data byte) {
 	r.oamAddr++
 
-	(*r.oam)[r.oamAddr] = data
+	r.oam[r.oamAddr] = data
 }
 
 // TODO: Changes made to the vertical scroll during rendering will only take

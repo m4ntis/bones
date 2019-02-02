@@ -192,14 +192,13 @@ var (
 
 		Address: func(cpu *CPU, op Operation, pageBoundryCheck bool,
 			ops ...byte) (extraCycles int, err error) {
-			addr := int(ops[0]) + int(ops[1])<<8
 
-			adl, err := cpu.RAM.Read(addr)
+			adl, err := cpu.RAM.Read(int(ops[0]) + int(ops[1])<<8)
 			if err != nil {
 				return 0, errors.Wrap(err, "Couldn't read indirected address")
 			}
 
-			adh, err := cpu.RAM.Read(addr + 1)
+			adh, err := cpu.RAM.Read(int(ops[0]+1) + int(ops[1])<<8)
 			if err != nil {
 				return 0, errors.Wrap(err, "Couldn't read indirected address")
 			}

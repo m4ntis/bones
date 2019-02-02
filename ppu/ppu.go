@@ -491,6 +491,11 @@ func (ppu *PPU) shiftSprites() {
 // matchSprite is implemented in a duff machine fashion for optimization
 // purposes.
 func (ppu *PPU) matchSprite() sprite {
+	// Return nil sprite if sprite rendering is disabled
+	if ppu.Regs.ppuMask&(1<<4) == 0 {
+		return nilSprite
+	}
+
 	if ppu.sprites[0].x == 0 && ppu.sprites[0].shifted < 8 {
 		if ppu.sprites[0].getColor() != 0 {
 			return ppu.sprites[0]

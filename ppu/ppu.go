@@ -301,10 +301,11 @@ func (ppu *PPU) calcBgrValue() (bgr int) {
 
 	// Add x fine scroll to ppu.x
 	scrolledX := ppu.x + ppu.Regs.xScroll
+	scrolledY := ppu.scanline + ppu.Regs.yScroll
 
 	// Fetch byte from NT
 	baseNTAddr := getNTAddr(int(ppu.Regs.ppuCtrl)&3+scrolledX/256, ppu.mirror)
-	ntIdx := (ppu.scanline/8)*32 + scrolledX%0x100/8
+	ntIdx := (scrolledY/8)*32 + scrolledX%0x100/8
 	byteFromNT := ppu.VRAM.Read(baseNTAddr + ntIdx)
 
 	// Fetch pattern table address
@@ -312,7 +313,7 @@ func (ppu *PPU) calcBgrValue() (bgr int) {
 	patternAddr := basePTAddr + int(byteFromNT)*16
 
 	// Fetch pattern line from PT (Y coordinate)
-	pty := ppu.scanline % 8
+	pty := scrolledY % 8
 	ptLowByte := ppu.VRAM.Read(patternAddr + pty)
 	ptHighByte := ppu.VRAM.Read(patternAddr + pty + 8)
 
@@ -326,11 +327,11 @@ func (ppu *PPU) calcBgrValue() (bgr int) {
 
 	// Fetch byte from AT
 	baseATAddr := getATAddr(baseNTAddr)
-	atIdx := (ppu.scanline/32)*8 + scrolledX%0x100/32
+	atIdx := (scrolledY/32)*8 + scrolledX%0x100/32
 	byteFromAT := ppu.VRAM.Read(baseATAddr + atIdx)
 
 	// Calculate which 2 bits of the byte from AT are relevant
-	atQuarter := scrolledX%32/16 + ppu.scanline%32/16<<1
+	atQuarter := scrolledX%32/16 + scrolledY%32/16<<1
 
 	// Fetch BGR high 2 bits from the byte from AT
 	bgrHigh := (byteFromAT >> uint(2*atQuarter)) & 3

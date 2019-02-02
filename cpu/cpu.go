@@ -24,11 +24,11 @@ type CPU struct {
 	RAM *RAM
 	Reg *Registers
 
-	cycles int
-
 	irq   bool
 	nmi   bool
 	reset bool
+
+	oddCycle bool
 }
 
 // New creates an instance of the CPU struct.
@@ -125,9 +125,10 @@ func (cpu *CPU) ExecNext() (cycles int, err error) {
 		}
 	}
 
-	// TODO: decrement cycles after 1786830 cycles, as of now there's a
-	// potential overflow
-	cpu.cycles += cycles
+	if cycles%2 == 1 {
+		cpu.oddCycle = !cpu.oddCycle
+	}
+
 	return cycles, nil
 }
 

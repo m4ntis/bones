@@ -42,6 +42,7 @@ type PPU struct {
 	// Current pixel coordinates
 	scanline int
 	x        int
+	oddCycle bool
 
 	// Mirroring type
 	mirror int
@@ -52,8 +53,6 @@ type PPU struct {
 }
 
 // New initializes a PPU instance and returns it.
-//
-// NMI is the channel on which the PPU publishes NMIs.
 //
 // disp is the where the PPU outputs its frames.
 func New(disp Displayer) *PPU {
@@ -85,7 +84,7 @@ func (ppu *PPU) Load(rom *ines.ROM) {
 	ppu.mirror = rom.Header.Mirroring
 }
 
-//TODO: Take note of oamaddr
+//TODO: Take note of oamaddr when performing DMA
 
 // DMA is copies 256 bytes of OAM data to the PPU's OAM
 func (ppu *PPU) DMA(oamData [256]byte) {
@@ -150,16 +149,17 @@ func (ppu *PPU) vblankEnd() {
 }
 
 // incCoords increments ppu's coordinate parameters for next cycle.
+//
+// incCoords will skip from (339,261) to (0,0) on odd ppu frames.
 func (ppu *PPU) incCoords() {
-	// TODO: skip cycle (0, 0) on odd frames
-
 	ppu.x++
-	if ppu.x > 340 {
+	if ppu.x > 340 || (ppu.scanline == 261 && ppu.x == 339 || ppu.oddCycle) {
 		ppu.x = 0
 
 		ppu.scanline++
 		if ppu.scanline > 261 {
 			ppu.scanline = 0
+			ppu.oddCycle = !ppu.oddCycle
 		}
 	}
 }
@@ -203,6 +203,9 @@ func (ppu *PPU) resetEvaluatedSprites() {
 // evaluateSprite checks if the currently evaluated sprite matches the next
 // frame, and copies it to secondary OAM if so.
 func (ppu *PPU) evaluateSprite() {
+	// TODO: Use OAMAddr as starting point of sprite 0 on x==65. See:
+	// https://wiki.nesdev.com/w/index.php/PPU_registers#Values_during_rendering
+
 	sprData := ppu.OAM[ppu.evaluatedSprNum*sprDataSize : (ppu.evaluatedSprNum+1)*sprDataSize]
 	sprY := int(sprData[0])
 
@@ -389,7 +392,6 @@ func (ppu *PPU) muxPixel(bgr int, spr sprite) (paletteAddr byte) {
 	}
 
 	// Display background
-
 	if bgr&3 == 0 {
 		// BGR palette addresses 0x0, 0x4, 0x8, 0xc are mirrored down to 0x0
 		// when rendering

@@ -294,6 +294,11 @@ func (ppu *PPU) calcPixelValue() color.RGBA {
 // fetched from a pattern table, and the upper 2 (colour) are fetched from an
 // attribute table.
 func (ppu *PPU) calcBgrValue() (bgr int) {
+	// Return 0 if background rendering is disabled
+	if ppu.Regs.ppuMask&(1<<3) == 0 {
+		return 0
+	}
+
 	// Add x fine scroll to ppu.x
 	scrolledX := ppu.x + ppu.Regs.xScroll
 

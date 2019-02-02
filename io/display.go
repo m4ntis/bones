@@ -45,7 +45,7 @@ func NewDisplay(ctrl *Controller, fps bool, scale float64) *Display {
 
 	return &Display{
 		img:  img,
-		imgc: make(chan image.Image),
+		imgc: make(chan image.Image, 2),
 
 		ctrl: ctrl,
 

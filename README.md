@@ -35,13 +35,19 @@ Make sure that you add Go's bin directory to your `PATH` environment variable
 as explained the language's installation instructions.
 
 ## Caveats
-BoNES still currently implements only basic hardware features and basic
-rendering functionality, meaning that harder to emulate games such as the ones
-listed [here](https://wiki.nesdev.com/w/index.php/Tricky-to-emulate_games)
-aren't yet fully supported.
+BoNES currently implements most hardware features, but not many mappers. There
+are still some small timing issues that may cause some games to crash (such as
+super mario bros), meaning that harder to emulate games such as the ones listed
+[here](https://wiki.nesdev.com/w/index.php/Tricky-to-emulate_games) aren't yet
+fully supported.
+
+Oh, and the APU is still non existant :P.
 
 Currently being implemented:
-- [Sprite 0 detection](https://wiki.nesdev.com/w/index.php?title=PPU_OAM&redirect=no#Sprite_zero_hits)
+- Timing issue fixes
+- Some advanced optimization such as
+[Catch up](https://wiki.nesdev.com/w/index.php/Catch-up)
+- Nice-to-have interactive debugger features
 - Additional mappers (You can request a specific one with an issue)
 
 

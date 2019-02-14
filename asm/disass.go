@@ -99,10 +99,10 @@ func disassemble(asm []byte) Code {
 
 	code := Code(make([]Instruction, 0))
 	for i := 0; i < len(asm); i++ {
-		op, ok := cpu.OpCodes[asm[i]]
+		op := cpu.OpCodes[asm[i]]
 
 		var inst Instruction
-		if !ok {
+		if op.Name == "" {
 			inst = Instruction{
 				Addr: i + loadAddr,
 				Code: asm[i : i+1],
@@ -125,9 +125,9 @@ func disassemble(asm []byte) Code {
 }
 
 func disassOne(ram *cpu.RAM, addr int) Instruction {
-	op, ok := cpu.OpCodes[ram.MustRead(addr)]
+	op := cpu.OpCodes[ram.MustRead(addr)]
 
-	if !ok {
+	if op.Name == "" {
 		code := readSliceFromRAM(ram, addr, 1)
 		return Instruction{
 			Addr: addr,

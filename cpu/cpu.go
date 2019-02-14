@@ -88,8 +88,8 @@ func (cpu *CPU) ExecNext() (cycles int, err error) {
 		return 0, errors.Wrap(err, "Failed to read opcode from memory")
 	}
 
-	op, ok := OpCodes[code]
-	if !ok {
+	op := OpCodes[code]
+	if op.Name == "" {
 		return 0, errors.Errorf("Invalid opcode to execute: %02x, PC: %04x",
 			code, cpu.Reg.PC)
 	}

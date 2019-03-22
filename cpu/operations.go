@@ -420,6 +420,7 @@ func ROR(cpu *CPU, op Operand) (extraCycles int) {
 
 func RTI(cpu *CPU, op Operand) (extraCycles int) {
 	cpu.Reg.SetP(cpu.pull())
+	cpu.Reg.I = clear
 	// pull PCL and then PHC
 	cpu.Reg.PC = int(cpu.pull()) | int(cpu.pull())<<8
 	return

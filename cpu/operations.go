@@ -1,9 +1,5 @@
 package cpu
 
-import (
-	"math"
-)
-
 // Operation defines an operation that the CPU executes in one or more of its
 // opcodes.
 //
@@ -435,25 +431,26 @@ func RTS(cpu *CPU, op Operand) (extraCycles int) {
 
 func SBC(cpu *CPU, op Operand) (extraCycles int) {
 	// Calculate result and store in a
-	arg1 := int8(cpu.Reg.A)
-	arg2 := int8(op.Read())
-
-	var res byte
-	if cpu.Reg.C == clear {
-		res = byte(arg1-arg2) - 1
-	} else {
-		res = byte(arg1 - arg2)
+	arg1 := cpu.Reg.A
+	arg2 := op.Read()
+	arg3 := byte(0)
+	if cpu.Reg.C == set {
+		arg3 = 1
 	}
 
-	cpu.Reg.A = res
+	cpu.Reg.A = arg1 - arg2 - (1 - arg3)
 
 	// Set flags
-	setNZ(cpu, res)
+	setNZ(cpu, cpu.Reg.A)
 
-	cpu.Reg.C = (res >> 7) ^ 1
+	if int(arg1)-int(arg2)-int(1-arg3) >= 0 {
+		cpu.Reg.C = set
+	} else {
+		cpu.Reg.C = clear
+	}
 
 	// Overflow
-	if math.Abs(float64(arg1)-float64(arg2)) > 127 {
+	if (arg1^arg2)&0x80 != 0 && (arg1^cpu.Reg.A)&0x80 != 0 {
 		cpu.Reg.V = set
 	} else {
 		cpu.Reg.V = clear

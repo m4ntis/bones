@@ -1,9 +1,5 @@
 package ines
 
-import (
-	"github.com/pkg/errors"
-)
-
 type Mapper001 struct {
 	prgROM []PrgROMPage
 	sRAM   [SRAMSize]byte
@@ -40,7 +36,7 @@ func (m *Mapper001) Read(addr int) (d byte, err error) {
 		return m.sRAM[addr-0x6000], nil
 
 	default:
-		return 0, errors.Errorf("Invalid mapper reading addr %04x", addr)
+		return 0, nil
 	}
 }
 
